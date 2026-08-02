@@ -119,7 +119,7 @@ def validate_skills(root: Path = ROOT) -> dict[str, Any]:
     registry = json.loads((root / "config/trigger-registry.json").read_text(encoding="utf-8"))["skills"]
     if set(registry) != names:
         errors.append("trigger registry and skill directories differ")
-    empty_dirs = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_dir() and not any(p.iterdir())]
+    empty_dirs = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_dir() and not any(p.iterdir()) and "/.git/" not in p.as_posix()]
     if empty_dirs:
         errors.append("empty directories: " + ", ".join(empty_dirs))
     return {"skills": count, "errors": errors}
