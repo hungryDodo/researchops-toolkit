@@ -1,0 +1,6 @@
+{
+  "name": "researchops-toolkit",
+  "version": "1.4.0",
+  "description": "Evidence-driven research workflow with 12 progressively loaded Skills, proposal-only safeguards, experiments, adaptive agents, hardware safety, validation, writing, communication, and archive-first hygiene.",
+  "skills": "./skills/"
+}

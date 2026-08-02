@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "research-discovery",
+  "evals": [
+    {
+      "skill": "research-discovery",
+      "should_trigger": true,
+      "prompt": "Map the literature on streaming time-series foundation model serving and identify open systems gaps.",
+      "expected": "Freeze RQs, search adversarially, verify sources, and synthesize a traceable corpus."
+    },
+    {
+      "skill": "research-discovery",
+      "should_trigger": false,
+      "prompt": "Using this completed corpus, rank the three proposed implementation routes.",
+      "expected": "Route to research-route-evaluator."
+    }
+  ]
+}

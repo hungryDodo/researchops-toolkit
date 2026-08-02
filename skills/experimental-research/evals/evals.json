@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "experimental-research",
+  "evals": [
+    {
+      "skill": "experimental-research",
+      "should_trigger": true,
+      "prompt": "Design and run a software ablation comparing quantization policies.",
+      "expected": "Freeze design before execution and retain manifests, failures, analysis, and evidence."
+    },
+    {
+      "skill": "experimental-research",
+      "should_trigger": false,
+      "prompt": "Power this sensor board from a profiler and measure current.",
+      "expected": "Route to hardware-experiment-loop because physical topology and safety differ."
+    }
+  ]
+}

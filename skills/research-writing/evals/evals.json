@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "research-writing",
+  "evals": [
+    {
+      "skill": "research-writing",
+      "should_trigger": true,
+      "prompt": "Write the evaluation section from approved experiment artifacts.",
+      "expected": "Trace every numeric/comparative claim and preserve evidence strength."
+    },
+    {
+      "skill": "research-writing",
+      "should_trigger": false,
+      "prompt": "Design the baseline and repetition count for a new experiment.",
+      "expected": "Route to experimental-research design mode."
+    }
+  ]
+}

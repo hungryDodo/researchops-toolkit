@@ -1,0 +1,6 @@
+interface:
+  display_name: "Hardware Experiment Loop"
+  short_description: "Use when experiments touch physical devices, power supplies, profilers, radios, sensors, batteries, or exclusive hardware resources. Do not use for software-onl"
+  default_prompt: "Use $hardware-experiment-loop for this task and write authoritative artifacts under .research/."
+policy:
+  allow_implicit_invocation: false

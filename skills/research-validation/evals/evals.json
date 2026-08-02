@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "research-validation",
+  "evals": [
+    {
+      "skill": "research-validation",
+      "should_trigger": true,
+      "prompt": "Independently verify the headline throughput claim and its figure.",
+      "expected": "Use fresh context, manifests, reruns/artifact checks, and evidence-linked discrepancies."
+    },
+    {
+      "skill": "research-validation",
+      "should_trigger": false,
+      "prompt": "Improve the grammar of this accepted paragraph without changing meaning.",
+      "expected": "Route to research-writing."
+    }
+  ]
+}

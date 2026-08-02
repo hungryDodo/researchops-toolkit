@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "research-communication",
+  "evals": [
+    {
+      "skill": "research-communication",
+      "should_trigger": true,
+      "prompt": "Design a single-column system overview figure for a top systems paper.",
+      "expected": "Choose academic figure role, sources, layout, labels, legibility, and editable/vector export."
+    },
+    {
+      "skill": "research-communication",
+      "should_trigger": false,
+      "prompt": "Analyze linear.app and reproduce its brand design system.",
+      "expected": "Outside scope; do not invoke academic communication for website brand distillation."
+    }
+  ]
+}

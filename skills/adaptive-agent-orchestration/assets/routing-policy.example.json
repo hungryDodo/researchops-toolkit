@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "weights": {
+    "quality": 0.55,
+    "success": 0.2,
+    "cost": 0.08,
+    "latency": 0.07,
+    "correction": 0.05,
+    "verifier_disagreement": 0.05
+  },
+  "exploration": {
+    "enabled": true,
+    "max_risk": "medium",
+    "ucb_coefficient": 0.08,
+    "max_bonus": 0.12
+  },
+  "minimum_observations_for_empirical_routing": 5,
+  "privacy_provider_allowlist": {
+    "public": ["*"],
+    "internal": ["codex-native", "claude-native", "gemini-native", "openai-compatible"],
+    "confidential": ["codex-native", "local-openai-compatible"],
+    "restricted": ["codex-native"]
+  },
+  "strong_verification_required_for": [
+    "critical",
+    "hardware-write",
+    "destructive",
+    "paper-ready-claim",
+    "security-review"
+  ]
+}

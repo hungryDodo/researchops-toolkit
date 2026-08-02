@@ -1,0 +1,6 @@
+interface:
+  display_name: "Project Hygiene"
+  short_description: "Use when repositories, large data, logs, checkpoints, worktrees, temporary tests, internal IDs, or obsolete files need inventory, archive, restoration, quaranti"
+  default_prompt: "Use $project-hygiene for this task and write authoritative artifacts under .research/."
+policy:
+  allow_implicit_invocation: false

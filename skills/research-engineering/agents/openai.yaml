@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research Engineering"
+  short_description: "Use when a code change can alter research results, measurement, data transformation, baselines, cleanup, or reproducibility and therefore needs a specification,"
+  default_prompt: "Use $research-engineering for this task and write authoritative artifacts under .research/."
+policy:
+  allow_implicit_invocation: true

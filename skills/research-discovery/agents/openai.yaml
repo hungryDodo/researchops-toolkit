@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research Discovery"
+  short_description: "Use when building a traceable literature or technology survey, mapping closest work, or synthesizing a verified corpus into a taxonomy and Related Work structur"
+  default_prompt: "Use $research-discovery for this task and write authoritative artifacts under .research/."
+policy:
+  allow_implicit_invocation: true

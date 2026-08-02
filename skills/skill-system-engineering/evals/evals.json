@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "skill-system-engineering",
+  "evals": [
+    {
+      "skill": "skill-system-engineering",
+      "should_trigger": true,
+      "prompt": "Decide whether figure, slide, and dashboard work should be three top-level Skills.",
+      "expected": "Apply granularity, trigger, artifact, permission, and context-budget criteria."
+    },
+    {
+      "skill": "skill-system-engineering",
+      "should_trigger": false,
+      "prompt": "Perform the actual literature survey on edge model serving.",
+      "expected": "Route to research-discovery; this Skill only engineers the Skill system."
+    }
+  ]
+}

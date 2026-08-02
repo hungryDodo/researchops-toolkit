@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "worktrees": [
+    {
+      "path": "/absolute/path/to/project-worktrees/route-r1",
+      "branch": "research/route-r1",
+      "owner": "experiment-runner",
+      "task_id": "route-r1-feasibility",
+      "created_at": "2026-08-02T00:00:00Z",
+      "lease_expires_at": "2026-08-09T00:00:00Z",
+      "disposition": "ephemeral",
+      "status": "active"
+    }
+  ]
+}

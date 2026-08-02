@@ -1,0 +1,6 @@
+interface:
+  display_name: "Experimental Research"
+  short_description: "Use when freezing an experiment contract, executing approved software experiments, analyzing results, and registering reproducible evidence. Do not use for phys"
+  default_prompt: "Use $experimental-research for this task and write authoritative artifacts under .research/."
+policy:
+  allow_implicit_invocation: true

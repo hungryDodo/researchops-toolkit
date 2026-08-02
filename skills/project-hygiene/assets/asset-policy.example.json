@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "large_file_threshold_bytes": 104857600,
+  "hash_files_below_bytes": 268435456,
+  "quarantine_grace_days": 7,
+  "default_retention_days": {
+    "intermediate": 14,
+    "run-log": 14,
+    "raw-reproducible": 60,
+    "unknown": 30
+  },
+  "canonical_globs": [
+    ".research/evidence/**",
+    ".research/designs/**",
+    "paper/**",
+    "figures/source/**",
+    "src/**"
+  ],
+  "candidate_globs": [
+    "**/.cache/**",
+    "**/tmp/**",
+    "**/logs/**",
+    "**/runs/**",
+    "**/outputs/**",
+    "**/checkpoints/**",
+    "**/*.trace",
+    "**/*.prof"
+  ],
+  "exclude_globs": [
+    ".git/**",
+    ".research/trash/**",
+    ".research/archive/**",
+    ".venv/**",
+    "node_modules/**"
+  ],
+  "public_artifact_roots": [
+    "paper",
+    "figures",
+    ".research/evidence"
+  ],
+  "base_branch": "main",
+  "archive_grace_days": 30,
+  "archive_root": ".research/archive"
+}

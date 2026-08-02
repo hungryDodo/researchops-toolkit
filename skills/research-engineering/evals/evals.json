@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "research-engineering",
+  "evals": [
+    {
+      "skill": "research-engineering",
+      "should_trigger": true,
+      "prompt": "Change the parser that produces all paper tables.",
+      "expected": "Require SPEC, relevant RED, minimum fix, risk-calibrated tests, and fresh evidence."
+    },
+    {
+      "skill": "research-engineering",
+      "should_trigger": false,
+      "prompt": "Rename one private local variable and run the formatter.",
+      "expected": "Avoid gauntlet overhead unless research behavior or interfaces are affected."
+    }
+  ]
+}

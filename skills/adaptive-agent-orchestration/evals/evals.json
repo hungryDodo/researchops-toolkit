@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "adaptive-agent-orchestration",
+  "evals": [
+    {
+      "skill": "adaptive-agent-orchestration",
+      "should_trigger": true,
+      "prompt": "Delegate citation extraction to a cheaper approved model and independently validate it.",
+      "expected": "Define a bounded contract, hard-filter provider/privacy/tools, choose worker/verifier, and record outcome."
+    },
+    {
+      "skill": "adaptive-agent-orchestration",
+      "should_trigger": false,
+      "prompt": "Fix this typo in one local Markdown file.",
+      "expected": "Use the ordinary coding/editing path; subagent routing adds no value."
+    }
+  ]
+}

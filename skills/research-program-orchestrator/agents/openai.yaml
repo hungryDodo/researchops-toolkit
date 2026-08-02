@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research Program Orchestrator"
+  short_description: "Use when a request spans research stages, the current owner is unclear, or a lifecycle transition, gate, evidence freeze, dashboard update, or safeguard proposa"
+  default_prompt: "Use $research-program-orchestrator for this task and write authoritative artifacts under .research/."
+policy:
+  allow_implicit_invocation: false

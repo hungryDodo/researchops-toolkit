@@ -1,0 +1,6 @@
+interface:
+  display_name: "Research Validation"
+  short_description: "Use when results, artifacts, claims, or a mature manuscript need an independent reproduction, audit, or venue-style red-team review. Do not use from the same co"
+  default_prompt: "Use $research-validation for this task and write authoritative artifacts under .research/."
+policy:
+  allow_implicit_invocation: false

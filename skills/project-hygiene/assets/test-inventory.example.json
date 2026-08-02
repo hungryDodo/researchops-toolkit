@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "tests": [
+    {
+      "path": "tests/smoke/test_pipeline_smoke.py",
+      "purpose": "Fast connectivity check before the full pipeline suite.",
+      "owner": "runtime",
+      "status": "temporary",
+      "created_at": "2026-08-02T00:00:00Z",
+      "review_after": "2026-09-01T00:00:00Z",
+      "replacement": "tests/integration/test_pipeline_contract.py",
+      "validation_command": "pytest tests/integration/test_pipeline_contract.py"
+    }
+  ]
+}

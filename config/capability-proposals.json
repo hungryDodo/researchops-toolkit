@@ -1,0 +1,203 @@
+{
+  "schema_version": 2,
+  "principle": "surface consequential capabilities as proposals; never execute from the broker",
+  "capabilities": [
+    {
+      "id": "independent-result-validation",
+      "skill": "research-validation",
+      "mode": "reproduce",
+      "activation": "propose_before_execute",
+      "stages": [
+        "main-experiment",
+        "analysis",
+        "writing"
+      ],
+      "patterns": [
+        "headline claim",
+        "final result",
+        "publish",
+        "paper number",
+        "reproduce",
+        "independent"
+      ],
+      "benefit": "Detect irreproducible or context-dependent central claims before writing or submission.",
+      "approval": "user accepts independent validation scope and compute budget",
+      "context_cost": "medium",
+      "reason": "A stage or planned action may benefit from independent-result-validation.",
+      "auto_propose_stages": [
+        "analysis"
+      ]
+    },
+    {
+      "id": "paper-red-team-review",
+      "skill": "research-validation",
+      "mode": "paper-review",
+      "activation": "propose_before_execute",
+      "stages": [
+        "writing",
+        "revision",
+        "submission"
+      ],
+      "patterns": [
+        "submission",
+        "submit",
+        "camera-ready",
+        "final manuscript",
+        "rebuttal"
+      ],
+      "benefit": "Surface venue-style rejection risks using an independent context.",
+      "approval": "user chooses review scope and target venue",
+      "context_cost": "medium",
+      "reason": "A stage or planned action may benefit from paper-red-team-review.",
+      "auto_propose_stages": [
+        "submission"
+      ]
+    },
+    {
+      "id": "hardware-safety-loop",
+      "skill": "hardware-experiment-loop",
+      "mode": "preflight",
+      "activation": "propose_before_execute",
+      "stages": [
+        "feasibility",
+        "main-experiment",
+        "analysis"
+      ],
+      "patterns": [
+        "board",
+        "device",
+        "ppk",
+        "j-link",
+        "power supply",
+        "voltage",
+        "battery",
+        "radio",
+        "sensor",
+        "profiler",
+        "flash firmware"
+      ],
+      "benefit": "Protect equipment and measurement validity through topology, limits, leases, and calibration.",
+      "approval": "user confirms topology and physical state before writes or power actions",
+      "context_cost": "medium",
+      "reason": "A stage or planned action may benefit from hardware-safety-loop.",
+      "auto_propose_stages": []
+    },
+    {
+      "id": "archive-or-cleanup",
+      "skill": "project-hygiene",
+      "mode": "archive",
+      "activation": "propose_before_execute",
+      "stages": [
+        "main-experiment",
+        "analysis",
+        "writing",
+        "closeout"
+      ],
+      "patterns": [
+        "old file",
+        "obsolete",
+        "stale",
+        "cleanup",
+        "clean up",
+        "worktree",
+        "temporary test",
+        "smoke",
+        "archive",
+        "gigabyte",
+        "gb",
+        "large logs",
+        "raw traces"
+      ],
+      "benefit": "Reduce clutter while preserving evidence, restoration paths, and storage accounting.",
+      "approval": "user approves a content-bound plan; scan remains read-only",
+      "context_cost": "low",
+      "reason": "A stage or planned action may benefit from archive-or-cleanup.",
+      "auto_propose_stages": [
+        "closeout"
+      ]
+    },
+    {
+      "id": "permanent-purge",
+      "skill": "project-hygiene",
+      "mode": "purge",
+      "activation": "explicit_only",
+      "stages": [
+        "analysis",
+        "writing",
+        "closeout"
+      ],
+      "patterns": [
+        "delete permanently",
+        "permanent delete",
+        "purge",
+        "free disk",
+        "remove all raw data"
+      ],
+      "benefit": "Reclaim capacity only after evidence and regeneration checks.",
+      "approval": "two-stage content-bound approval with grace period",
+      "context_cost": "low",
+      "reason": "A stage or planned action may benefit from permanent-purge.",
+      "auto_propose_stages": []
+    },
+    {
+      "id": "external-model-provider",
+      "skill": "adaptive-agent-orchestration",
+      "mode": "external-provider",
+      "activation": "propose_before_execute",
+      "stages": [
+        "survey",
+        "feasibility",
+        "main-experiment",
+        "writing"
+      ],
+      "patterns": [
+        "third-party model",
+        "external api",
+        "cheap model",
+        "weak model",
+        "litellm",
+        "provider"
+      ],
+      "benefit": "Use lower-cost workers with explicit privacy, capability, and verifier boundaries.",
+      "approval": "user approves provider and data classification",
+      "context_cost": "low",
+      "reason": "A stage or planned action may benefit from external-model-provider.",
+      "auto_propose_stages": []
+    },
+    {
+      "id": "skill-governance-audit",
+      "skill": "skill-system-engineering",
+      "mode": "audit",
+      "activation": "propose_before_execute",
+      "stages": [
+        "charter",
+        "closeout"
+      ],
+      "patterns": [
+        "install skill",
+        "new skill",
+        "merge skill",
+        "publish skill",
+        "third-party skill",
+        "plugin"
+      ],
+      "benefit": "Check trigger overlap, permissions, provenance, license, and harness compatibility.",
+      "approval": "user accepts audit scope; audit is read-only",
+      "context_cost": "low",
+      "reason": "A stage or planned action may benefit from skill-governance-audit.",
+      "auto_propose_stages": []
+    }
+  ],
+  "design": {
+    "runtime_owner": "research-program-orchestrator",
+    "policy_owner": "skill-system-engineering",
+    "proposal_is_execution": false,
+    "proposal_is_operational_approval": false,
+    "scan_hinges": [
+      "stage entry",
+      "before consequential action",
+      "overdue gate"
+    ],
+    "anti_nag": "persist dismissed/snoozed/completed decisions by stable proposal fingerprint"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "research-program-orchestrator",
+  "evals": [
+    {
+      "skill": "research-program-orchestrator",
+      "should_trigger": true,
+      "prompt": "We have survey evidence, two candidate methods, and no approved experiment protocol. What happens next?",
+      "expected": "Name one next owner/action, gate, blocker, and proposal-only safeguards."
+    },
+    {
+      "skill": "research-program-orchestrator",
+      "should_trigger": false,
+      "prompt": "Run the approved quantization ablation exactly as specified.",
+      "expected": "Route directly to experimental-research; ownership is clear and narrow."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "hardware-experiment-loop",
+  "evals": [
+    {
+      "skill": "hardware-experiment-loop",
+      "should_trigger": true,
+      "prompt": "Measure nRF52840 power with PPK2 while using digital channels.",
+      "expected": "Require topology, limits, lease, calibration, preflight, and restoration."
+    },
+    {
+      "skill": "hardware-experiment-loop",
+      "should_trigger": false,
+      "prompt": "Run a PyTorch benchmark on one GPU.",
+      "expected": "Route to experimental-research."
+    }
+  ]
+}

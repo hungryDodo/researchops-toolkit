@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "project": "demo",
+  "devices": [
+    {
+      "id": "DUT-1",
+      "type": "development-board",
+      "serial": "REPLACE_ME",
+      "connection": "USB/J-Link"
+    }
+  ],
+  "allowed_actions": [
+    {
+      "name": "read_status",
+      "parameters": {},
+      "human_approval_required": false
+    },
+    {
+      "name": "set_supply_voltage",
+      "parameters": {
+        "volts": {
+          "min": 1.8,
+          "max": 3.3
+        }
+      },
+      "human_approval_required": true
+    }
+  ],
+  "stop_triggers": [
+    "identity mismatch",
+    "telemetry loss",
+    "temperature limit",
+    "current limit"
+  ],
+  "rollback": {
+    "command": "power_off",
+    "verified_by": "human"
+  },
+  "approval": {
+    "approved": false,
+    "approved_by": null,
+    "approved_at": null
+  }
+}

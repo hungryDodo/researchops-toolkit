@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "identifiers": [
+    {
+      "internal_id": "B03",
+      "kind": "baseline",
+      "semantic_slug": "local-wait-all",
+      "public_label": "Local wait-all baseline",
+      "definition": "Local execution using the same request shape and wait-all synchronization.",
+      "status": "active",
+      "superseded_by": null
+    },
+    {
+      "internal_id": "E12",
+      "kind": "experiment",
+      "semantic_slug": "pipeline-overlap-ablation",
+      "public_label": "Pipeline overlap ablation",
+      "definition": "Compares wait-all, layer-only, token-only, and tiled overlap variants.",
+      "status": "active",
+      "superseded_by": null
+    }
+  ],
+  "public_surface_globs": [
+    "README*.md",
+    "docs/**",
+    "paper/**",
+    "figures/**",
+    ".research/dashboard/**"
+  ]
+}

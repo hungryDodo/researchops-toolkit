@@ -1,0 +1,96 @@
+{
+  "schema_version": 2,
+  "principle": "semantic descriptions are primary; stage ownership and proposal broker reduce both forgotten capabilities and accidental execution",
+  "activation_modes": {
+    "implicit": "safe/medium capability may be selected semantically",
+    "stage_owner": "orchestrator owns stage transitions and next-owner routing",
+    "proposal_then_explicit": "orchestrator may propose; user approval is required before loading/executing the capability",
+    "explicit_only": "never surfaced as executable without explicit user request and native approval"
+  },
+  "skills": {
+    "adaptive-agent-orchestration": {
+      "activation": "implicit",
+      "description_summary": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, or when returned worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, or worker self-approval.",
+      "owner": "adaptive-agent-orchestration",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "experimental-research": {
+      "activation": "implicit",
+      "description_summary": "Use when freezing an experiment contract, executing approved software experiments, analyzing results, and registering reproducible evidence. Do not use for physical hardware actuation, unapproved protocol changes, or retrofitting metrics after results are visible.",
+      "owner": "experimental-research",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "hardware-experiment-loop": {
+      "activation": "proposal_then_explicit",
+      "description_summary": "Use when experiments touch physical devices, power supplies, profilers, radios, sensors, batteries, or exclusive hardware resources. Do not use for software-only runs or to bypass preflight, leases, calibration, and human safety limits.",
+      "owner": "hardware-experiment-loop",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "runtime broker surfaces high-risk usage without executing it"
+    },
+    "project-hygiene": {
+      "activation": "proposal_then_explicit",
+      "description_summary": "Use when repositories, large data, logs, checkpoints, worktrees, temporary tests, internal IDs, or obsolete files need inventory, archive, restoration, quarantine, or approved purge. Do not use on active, referenced, dirty, unregistered, or ambiguously owned assets.",
+      "owner": "project-hygiene",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "runtime broker surfaces high-risk usage without executing it"
+    },
+    "research-communication": {
+      "activation": "implicit",
+      "description_summary": "Use when turning verified research content into publication figures, diagrams, result plots, or research presentations. Do not use to imitate an existing website, build the operational dashboard, or compensate for weak evidence with visual styling.",
+      "owner": "research-communication",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "research-discovery": {
+      "activation": "implicit",
+      "description_summary": "Use when building a traceable literature or technology survey, mapping closest work, or synthesizing a verified corpus into a taxonomy and Related Work structure. Do not use to score one proposed route after the corpus exists or to draft unsupported paper prose.",
+      "owner": "research-discovery",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "research-engineering": {
+      "activation": "implicit",
+      "description_summary": "Use when a code change can alter research results, measurement, data transformation, baselines, cleanup, or reproducibility and therefore needs a specification, observed failure, risk-calibrated tests, and fresh evidence. Do not use for trivial formatting or disposable exploration.",
+      "owner": "research-engineering",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "research-program-orchestrator": {
+      "activation": "stage_owner",
+      "description_summary": "Use when a request spans research stages, the current owner is unclear, or a lifecycle transition, gate, evidence freeze, dashboard update, or safeguard proposal is needed. Do not use for one narrow survey, experiment, code change, or writing task with a clear owner.",
+      "owner": "research-program-orchestrator",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "research-route-evaluator": {
+      "activation": "implicit",
+      "description_summary": "Use when generating and ranking at most three falsifiable research routes or judging whether a proposed idea merits major implementation. Do not use for unconstrained brainstorming from nothing, broad corpus collection, or experiment execution.",
+      "owner": "research-route-evaluator",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "research-validation": {
+      "activation": "proposal_then_explicit",
+      "description_summary": "Use when results, artifacts, claims, or a mature manuscript need an independent reproduction, audit, or venue-style red-team review. Do not use from the same context that proposed and implemented the work, or as a substitute for missing experiments.",
+      "owner": "research-validation",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "runtime broker surfaces high-risk usage without executing it"
+    },
+    "research-writing": {
+      "activation": "implicit",
+      "description_summary": "Use when drafting evidence-gated paper prose or revising an existing LaTeX manuscript from author, advisor, or reviewer feedback. Do not use before the logic and key claims are settled, or to invent results, citations, novelty, or unsupported fixes.",
+      "owner": "research-writing",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "not applicable"
+    },
+    "skill-system-engineering": {
+      "activation": "proposal_then_explicit",
+      "description_summary": "Use when creating, merging, splitting, packaging, auditing, or evaluating Agent Skills, trigger policies, proposal policies, provenance, permissions, and cross-harness compatibility. Do not use to execute the research domain task that a Skill describes.",
+      "owner": "skill-system-engineering",
+      "keyword_policy": "examples_only_not_hard_match",
+      "proposal_policy": "runtime broker surfaces high-risk usage without executing it"
+    }
+  }
+}

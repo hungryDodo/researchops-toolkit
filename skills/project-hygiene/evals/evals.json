@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "project-hygiene",
+  "evals": [
+    {
+      "skill": "project-hygiene",
+      "should_trigger": true,
+      "prompt": "Archive obsolete smoke tests and old scripts, but keep a restoration path.",
+      "expected": "Inventory, verify replacements/ownership, create content-bound archive plan and restore manifest."
+    },
+    {
+      "skill": "project-hygiene",
+      "should_trigger": false,
+      "prompt": "Compare two attention kernels using a frozen latency protocol.",
+      "expected": "Route to experimental-research."
+    }
+  ]
+}

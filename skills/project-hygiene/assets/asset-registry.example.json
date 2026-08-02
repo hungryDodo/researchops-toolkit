@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {
+      "path": ".research/runs/interleaved-feasibility/raw/telemetry.parquet",
+      "class": "raw-reproducible",
+      "run_status": "complete",
+      "derived_status": "verified",
+      "derived_artifacts": [
+        ".research/evidence/interleaved-feasibility/aggregate.csv",
+        ".research/evidence/interleaved-feasibility/statistics.json"
+      ],
+      "regeneration_command": "python experiments/run.py --config configs/interleaved-feasibility.json",
+      "environment_manifest": ".research/runs/interleaved-feasibility/environment.json",
+      "cleanup_approved": false,
+      "approved_by": null,
+      "notes": "Set cleanup_approved only after evidence and regeneration review."
+    }
+  ]
+}

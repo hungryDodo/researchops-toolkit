@@ -1,0 +1,284 @@
+{
+  "schema_version": 2,
+  "suite": "researchops-toolkit",
+  "version": "1.4.0",
+  "statement": "All implementation files in this distribution were newly written for ResearchOps Toolkit. External projects were decomposed for design patterns; no upstream Skill, prompt, script, template, handbook, or asset is vendored by default.",
+  "audit_limitations": [
+    "Repository provenance declaration, not legal advice.",
+    "No claim of forensic similarity proof against every upstream revision."
+  ],
+  "third_party_projects": [
+    {
+      "name": "Orchestra Research AI-Research-SKILLs",
+      "relationship": "conceptual ecosystem reference for modular research capabilities and autoresearch-style execution",
+      "vendored": false,
+      "license_observed": "MIT",
+      "url": "https://github.com/Orchestra-Research/AI-research-SKILLs"
+    },
+    {
+      "name": "OpenJudge",
+      "relationship": "conceptual reference for independent evaluators, weakness analysis, and iterative evaluation",
+      "vendored": false,
+      "license_observed": "Apache-2.0",
+      "url": "https://github.com/agentscope-ai/OpenJudge"
+    },
+    {
+      "name": "ARS / ARS-Codex",
+      "relationship": "conceptual reference for end-to-end academic workflows, cross-model review, and adapters",
+      "vendored": false,
+      "license_observed": "CC BY-NC 4.0 observed for ARS-Codex",
+      "url": "https://github.com/Imbad0202/academic-research-skills-codex"
+    },
+    {
+      "name": "phd-skills",
+      "relationship": "conceptual reference for research integrity, experiment design, reproduction, and paper verification",
+      "vendored": false,
+      "license_observed": "MIT",
+      "url": "https://github.com/fcakyon/phd-skills"
+    },
+    {
+      "name": "CCFA-Skills",
+      "relationship": "conceptual reference for owner boundaries, negative triggers, shared governance references, and artifact contracts",
+      "vendored": false,
+      "url": "https://github.com/mikubaka88/CCFA-Skills"
+    },
+    {
+      "name": "AmazingAng/old-coder",
+      "relationship": "conceptual reference for SPEC, observed RED, minimum GREEN, gauntlet, and fresh evidence",
+      "vendored": false,
+      "url": "https://github.com/AmazingAng/old-coder"
+    },
+    {
+      "name": "CISLab-HKUST/revise-paper",
+      "relationship": "conceptual reference for LaTeX source/rendered-PDF dual authority and feedback-led revision",
+      "vendored": false,
+      "url": "https://github.com/CISLab-HKUST/revise-paper"
+    },
+    {
+      "name": "Microsoft ResearchStudio-Idea",
+      "relationship": "conceptual reference for disk-backed state, idempotent next actions, novelty axes, and clean-context workers",
+      "vendored": false,
+      "url": "https://github.com/microsoft/ResearchStudio/tree/main/ResearchStudio-Idea"
+    },
+    {
+      "name": "HKUSTDial/Supervisor-Skills",
+      "relationship": "conceptual reference for guide/skill layering, fatal-flaw idea evaluation, retrieval-grounded discovery, evidence-gated writing, paradigm-aware review, and figure-role classification",
+      "vendored": false,
+      "license_observed": "CC BY-NC-SA 4.0",
+      "url": "https://github.com/HKUSTDial/Supervisor-Skills"
+    },
+    {
+      "name": "ake77-code/distill-design",
+      "relationship": "negative-scope reference; URL/brand extraction rejected, compact reusable visual contract retained as an abstraction",
+      "vendored": false,
+      "url": "https://github.com/ake77-code/distill-design"
+    },
+    {
+      "name": "Anthropic skills",
+      "relationship": "conceptual reference for self-contained Skill folders, progressive disclosure, frontend accessibility, and artifact self-critique",
+      "vendored": false,
+      "url": "https://github.com/anthropics/skills"
+    },
+    {
+      "name": "Google skills",
+      "relationship": "conceptual reference for selective installation, evaluation flywheels, and machine/human reports",
+      "vendored": false,
+      "url": "https://github.com/google/skills"
+    },
+    {
+      "name": "DietrichGebert/ponytail",
+      "relationship": "conceptual reference for minimum sufficient change and dependency restraint",
+      "vendored": false,
+      "url": "https://github.com/DietrichGebert/ponytail"
+    },
+    {
+      "name": "Agent Skills specification",
+      "url": "https://agentskills.io/",
+      "relationship": "format and progressive-disclosure reference for Skill discovery and loading",
+      "vendored": false
+    },
+    {
+      "name": "OpenAI Codex documentation",
+      "url": "https://developers.openai.com/codex/",
+      "relationship": "platform compatibility and native sub-agent/Skill configuration conventions",
+      "vendored": false
+    },
+    {
+      "name": "Claude Code documentation",
+      "url": "https://docs.anthropic.com/en/docs/claude-code/overview",
+      "relationship": "platform compatibility and native sub-agent/Skill configuration conventions",
+      "vendored": false
+    },
+    {
+      "name": "Gemini CLI documentation",
+      "url": "https://geminicli.com/docs/",
+      "relationship": "platform compatibility and native sub-agent/Skill configuration conventions",
+      "vendored": false
+    },
+    {
+      "name": "LiteLLM",
+      "url": "https://docs.litellm.ai/",
+      "relationship": "optional third-party/local model gateway and provider normalization reference",
+      "vendored": false
+    },
+    {
+      "name": "OpenAI Agents SDK",
+      "url": "https://openai.github.io/openai-agents-python/",
+      "relationship": "optional handoff, tracing, and human-in-the-loop runtime reference",
+      "vendored": false
+    }
+  ],
+  "components": {
+    "evidence-ledger": {
+      "implementation_origin": "original_clean_room",
+      "owner": "research-program-orchestrator"
+    },
+    "dashboard": {
+      "implementation_origin": "original_clean_room",
+      "owner": "research-program-orchestrator"
+    }
+  },
+  "skills": {
+    "research-program-orchestrator": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "stage-gate research governance",
+        "ResearchStudio disk-backed/idempotent next-step patterns",
+        "proposal-only safeguard discovery designed for this project"
+      ]
+    },
+    "research-discovery": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "systematic and adversarial literature search",
+        "Supervisor-Skills deep-research separation of retrieval evidence from model memory",
+        "ResearchStudio clean-context paper search"
+      ]
+    },
+    "research-route-evaluator": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "falsifiable route triage",
+        "Supervisor-Skills fatal-flaw, lifecycle/capability fit, and contribution-axis judgment"
+      ]
+    },
+    "experimental-research": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "pre-registered experiment contracts",
+        "reproducible run manifests and failure retention"
+      ]
+    },
+    "hardware-experiment-loop": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "laboratory preflight, calibration, exclusive leases, safe restoration"
+      ]
+    },
+    "research-engineering": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "old-coder SPEC/RED/GREEN/gauntlet/fresh-evidence pattern",
+        "Ponytail minimum sufficient change and dependency budget"
+      ]
+    },
+    "adaptive-agent-orchestration": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "native subagent isolation and bounded handoff",
+        "OpenJudge-style independent evaluation",
+        "cost/quality/task-specific routing"
+      ]
+    },
+    "research-validation": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "artifact evaluation and independent reproduction",
+        "Supervisor-Skills paradigm-aware pre-submission review",
+        "severity-ranked red teaming"
+      ]
+    },
+    "research-writing": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "evidence-first scientific writing",
+        "Supervisor-Skills evidence-gated paper writing",
+        "revise-paper source/PDF dual authority"
+      ]
+    },
+    "research-communication": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "Supervisor-Skills motivated/overview/result figure roles",
+        "academic visual integrity and accessibility",
+        "compact reusable visual contract abstraction without URL distillation"
+      ]
+    },
+    "project-hygiene": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "archive-first reversible retirement",
+        "two-phase content-bound purge",
+        "Git worktree safety",
+        "semantic public naming"
+      ]
+    },
+    "skill-system-engineering": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": [],
+      "conceptual_influences": [
+        "Agent Skills progressive disclosure",
+        "CCFA-style positive/negative trigger and owner contracts",
+        "Anthropic/Google selective loading and evaluation patterns"
+      ]
+    }
+  },
+  "design_decisions": {
+    "top_level_skills": 12,
+    "v1_2_top_level_skills": 23,
+    "proposal_runtime_owner": "research-program-orchestrator",
+    "proposal_policy_owner": "skill-system-engineering",
+    "distill_design": "URL/brand extraction excluded; static academic visual policy retained"
+  },
+  "documentation_policy": {
+    "acknowledgements": "README.md and README_zh.md",
+    "stable_docs": "docs/",
+    "design_session_notes_in_release": false,
+    "third_party_code_vendored": false
+  }
+}

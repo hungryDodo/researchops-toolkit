@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "agents": [
+    {
+      "name": "research_scout",
+      "description": "Read-only scout for broad searches, repository mapping, and source triage.",
+      "required_capabilities": ["extraction"],
+      "allowed_mutability": "read-only",
+      "candidate_models": ["codex/gpt-5.6-luna", "codex/gpt-5.6"],
+      "instructions": "Collect evidence and return a compact structured summary. Do not modify the research direction or claim success."
+    },
+    {
+      "name": "independent_reviewer",
+      "description": "Adversarial reviewer for claims, methods, statistics, and missing controls.",
+      "required_capabilities": ["reasoning", "review"],
+      "allowed_mutability": "read-only",
+      "candidate_models": ["codex/gpt-5.6"],
+      "instructions": "Assume the main route may be wrong. Lead with concrete blocking findings and evidence needed to change the verdict."
+    },
+    {
+      "name": "routine_formatter",
+      "description": "Low-risk formatter and schema normalizer with deterministic checks.",
+      "required_capabilities": ["formatting"],
+      "allowed_mutability": "workspace-write",
+      "candidate_models": ["gateway/local-small", "codex/gpt-5.6-luna"],
+      "instructions": "Only transform the assigned files and preserve semantics. Stop on ambiguity."
+    }
+  ]
+}

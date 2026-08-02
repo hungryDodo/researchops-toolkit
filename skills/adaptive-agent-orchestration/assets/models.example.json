@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "id": "codex/gpt-5.6",
+      "provider": "codex-native",
+      "model": "gpt-5.6",
+      "enabled": true,
+      "trust_zone": "local-approved",
+      "risk_ceiling": "critical",
+      "capabilities": ["reasoning", "code", "tool-use", "review", "long-context"],
+      "task_affinity": {"synthesis": 0.9, "review": 0.9, "implementation": 0.85},
+      "cost_hint": 1.0,
+      "latency_hint": 1.0
+    },
+    {
+      "id": "codex/gpt-5.6-luna",
+      "provider": "codex-native",
+      "model": "gpt-5.6-luna",
+      "enabled": true,
+      "trust_zone": "local-approved",
+      "risk_ceiling": "medium",
+      "capabilities": ["code", "tool-use", "extraction", "large-scan"],
+      "task_affinity": {"search": 0.9, "extraction": 0.85, "formatting": 0.9},
+      "cost_hint": 0.25,
+      "latency_hint": 0.35
+    },
+    {
+      "id": "gateway/local-small",
+      "provider": "openai-compatible",
+      "model": "local-small",
+      "base_url": "http://127.0.0.1:4000/v1",
+      "credential_env": "LITELLM_API_KEY",
+      "enabled": false,
+      "trust_zone": "local-gateway",
+      "risk_ceiling": "low",
+      "capabilities": ["extraction", "classification", "formatting"],
+      "task_affinity": {"classification": 0.8, "formatting": 0.8},
+      "cost_hint": 0.05,
+      "latency_hint": 0.2
+    }
+  ]
+}

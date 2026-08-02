@@ -1,0 +1,149 @@
+{
+  "schema_version": 3,
+  "cases": [
+    {
+      "skill": "adaptive-agent-orchestration",
+      "should_trigger": true,
+      "prompt": "Delegate citation extraction to a cheaper approved model and independently validate it.",
+      "expected": "Define a bounded contract, hard-filter provider/privacy/tools, choose worker/verifier, and record outcome."
+    },
+    {
+      "skill": "adaptive-agent-orchestration",
+      "should_trigger": false,
+      "prompt": "Fix this typo in one local Markdown file.",
+      "expected": "Use the ordinary coding/editing path; subagent routing adds no value."
+    },
+    {
+      "skill": "experimental-research",
+      "should_trigger": true,
+      "prompt": "Design and run a software ablation comparing quantization policies.",
+      "expected": "Freeze design before execution and retain manifests, failures, analysis, and evidence."
+    },
+    {
+      "skill": "experimental-research",
+      "should_trigger": false,
+      "prompt": "Power this sensor board from a profiler and measure current.",
+      "expected": "Route to hardware-experiment-loop because physical topology and safety differ."
+    },
+    {
+      "skill": "hardware-experiment-loop",
+      "should_trigger": true,
+      "prompt": "Measure nRF52840 power with PPK2 while using digital channels.",
+      "expected": "Require topology, limits, lease, calibration, preflight, and restoration."
+    },
+    {
+      "skill": "hardware-experiment-loop",
+      "should_trigger": false,
+      "prompt": "Run a PyTorch benchmark on one GPU.",
+      "expected": "Route to experimental-research."
+    },
+    {
+      "skill": "project-hygiene",
+      "should_trigger": true,
+      "prompt": "Archive obsolete smoke tests and old scripts, but keep a restoration path.",
+      "expected": "Inventory, verify replacements/ownership, create content-bound archive plan and restore manifest."
+    },
+    {
+      "skill": "project-hygiene",
+      "should_trigger": false,
+      "prompt": "Compare two attention kernels using a frozen latency protocol.",
+      "expected": "Route to experimental-research."
+    },
+    {
+      "skill": "research-communication",
+      "should_trigger": true,
+      "prompt": "Design a single-column system overview figure for a top systems paper.",
+      "expected": "Choose academic figure role, sources, layout, labels, legibility, and editable/vector export."
+    },
+    {
+      "skill": "research-communication",
+      "should_trigger": false,
+      "prompt": "Analyze linear.app and reproduce its brand design system.",
+      "expected": "Outside scope; do not invoke academic communication for website brand distillation."
+    },
+    {
+      "skill": "research-discovery",
+      "should_trigger": true,
+      "prompt": "Map the literature on streaming time-series foundation model serving and identify open systems gaps.",
+      "expected": "Freeze RQs, search adversarially, verify sources, and synthesize a traceable corpus."
+    },
+    {
+      "skill": "research-discovery",
+      "should_trigger": false,
+      "prompt": "Using this completed corpus, rank the three proposed implementation routes.",
+      "expected": "Route to research-route-evaluator."
+    },
+    {
+      "skill": "research-engineering",
+      "should_trigger": true,
+      "prompt": "Change the parser that produces all paper tables.",
+      "expected": "Require SPEC, relevant RED, minimum fix, risk-calibrated tests, and fresh evidence."
+    },
+    {
+      "skill": "research-engineering",
+      "should_trigger": false,
+      "prompt": "Rename one private local variable and run the formatter.",
+      "expected": "Avoid gauntlet overhead unless research behavior or interfaces are affected."
+    },
+    {
+      "skill": "research-program-orchestrator",
+      "should_trigger": true,
+      "prompt": "We have survey evidence, two candidate methods, and no approved experiment protocol. What happens next?",
+      "expected": "Name one next owner/action, gate, blocker, and proposal-only safeguards."
+    },
+    {
+      "skill": "research-program-orchestrator",
+      "should_trigger": false,
+      "prompt": "Run the approved quantization ablation exactly as specified.",
+      "expected": "Route directly to experimental-research; ownership is clear and narrow."
+    },
+    {
+      "skill": "research-route-evaluator",
+      "should_trigger": true,
+      "prompt": "Using the completed survey, rank up to three routes for an 8x4090 server and six weeks of work.",
+      "expected": "Run fatal-flaw/resource-fit checks and produce falsifiable route cards and one probe."
+    },
+    {
+      "skill": "research-route-evaluator",
+      "should_trigger": false,
+      "prompt": "Collect and screen the full literature on mobile NPU scheduling.",
+      "expected": "Route to research-discovery."
+    },
+    {
+      "skill": "research-validation",
+      "should_trigger": true,
+      "prompt": "Independently verify the headline throughput claim and its figure.",
+      "expected": "Use fresh context, manifests, reruns/artifact checks, and evidence-linked discrepancies."
+    },
+    {
+      "skill": "research-validation",
+      "should_trigger": false,
+      "prompt": "Improve the grammar of this accepted paragraph without changing meaning.",
+      "expected": "Route to research-writing."
+    },
+    {
+      "skill": "research-writing",
+      "should_trigger": true,
+      "prompt": "Write the evaluation section from approved experiment artifacts.",
+      "expected": "Trace every numeric/comparative claim and preserve evidence strength."
+    },
+    {
+      "skill": "research-writing",
+      "should_trigger": false,
+      "prompt": "Design the baseline and repetition count for a new experiment.",
+      "expected": "Route to experimental-research design mode."
+    },
+    {
+      "skill": "skill-system-engineering",
+      "should_trigger": true,
+      "prompt": "Decide whether figure, slide, and dashboard work should be three top-level Skills.",
+      "expected": "Apply granularity, trigger, artifact, permission, and context-budget criteria."
+    },
+    {
+      "skill": "skill-system-engineering",
+      "should_trigger": false,
+      "prompt": "Perform the actual literature survey on edge model serving.",
+      "expected": "Route to research-discovery; this Skill only engineers the Skill system."
+    }
+  ]
+}

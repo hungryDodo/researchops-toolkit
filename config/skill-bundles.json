@@ -1,0 +1,71 @@
+{
+  "schema_version": 2,
+  "default_recommendation": "install research-core; add hardware, hygiene, or platform-dev only when needed",
+  "bundles": {
+    "minimal-control": [
+      "research-program-orchestrator",
+      "adaptive-agent-orchestration"
+    ],
+    "discovery": [
+      "research-program-orchestrator",
+      "research-discovery",
+      "research-route-evaluator",
+      "adaptive-agent-orchestration"
+    ],
+    "execution": [
+      "research-program-orchestrator",
+      "experimental-research",
+      "research-engineering",
+      "adaptive-agent-orchestration"
+    ],
+    "hardware": [
+      "research-program-orchestrator",
+      "experimental-research",
+      "hardware-experiment-loop",
+      "research-engineering",
+      "adaptive-agent-orchestration"
+    ],
+    "validation": [
+      "research-program-orchestrator",
+      "research-validation"
+    ],
+    "writing": [
+      "research-program-orchestrator",
+      "research-writing",
+      "research-communication",
+      "research-validation"
+    ],
+    "hygiene": [
+      "research-program-orchestrator",
+      "project-hygiene"
+    ],
+    "platform-dev": [
+      "skill-system-engineering"
+    ],
+    "research-core": [
+      "research-program-orchestrator",
+      "research-discovery",
+      "research-route-evaluator",
+      "experimental-research",
+      "research-engineering",
+      "adaptive-agent-orchestration",
+      "research-validation",
+      "research-writing",
+      "research-communication"
+    ],
+    "all": [
+      "adaptive-agent-orchestration",
+      "experimental-research",
+      "hardware-experiment-loop",
+      "project-hygiene",
+      "research-communication",
+      "research-discovery",
+      "research-engineering",
+      "research-program-orchestrator",
+      "research-route-evaluator",
+      "research-validation",
+      "research-writing",
+      "skill-system-engineering"
+    ]
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "schema_version": 2,
+  "contracts": {
+    "program-decision": {
+      "owner": "research-program-orchestrator",
+      "required": [
+        "phase",
+        "next_owner",
+        "gate",
+        "evidence_blocker",
+        "safeguard_proposals"
+      ]
+    },
+    "survey-corpus": {
+      "owner": "research-discovery",
+      "required": [
+        "research_questions",
+        "sources",
+        "query_log",
+        "inclusion_rules",
+        "provenance_labels",
+        "closest_work_matrix",
+        "evidence_gaps"
+      ]
+    },
+    "route-card": {
+      "owner": "research-route-evaluator",
+      "required": [
+        "hypothesis",
+        "mechanism",
+        "fatal_flaws",
+        "closest_work_collision",
+        "resource_fit",
+        "minimum_experiment",
+        "kill_criterion",
+        "budget"
+      ]
+    },
+    "experiment-package": {
+      "owner": "experimental-research",
+      "required": [
+        "design_hash",
+        "variables",
+        "baselines",
+        "metrics",
+        "statistics",
+        "commands",
+        "environment",
+        "artifacts",
+        "failures",
+        "structured_results"
+      ]
+    },
+    "hardware-run": {
+      "owner": "hardware-experiment-loop",
+      "required": [
+        "topology",
+        "preflight",
+        "approval",
+        "lease",
+        "calibration",
+        "measurements",
+        "restoration"
+      ]
+    },
+    "agent-dispatch": {
+      "owner": "adaptive-agent-orchestration",
+      "required": [
+        "contract",
+        "worker",
+        "verifier",
+        "acceptance",
+        "cost",
+        "latency",
+        "failure_attribution"
+      ]
+    },
+    "validation-report": {
+      "owner": "research-validation",
+      "required": [
+        "independent_context",
+        "scope",
+        "checks",
+        "discrepancies",
+        "severity",
+        "decision"
+      ]
+    },
+    "manuscript-package": {
+      "owner": "research-writing",
+      "required": [
+        "claim_map",
+        "prose_or_patch",
+        "citation_status",
+        "compile_or_delivery_check",
+        "unresolved_evidence"
+      ]
+    },
+    "visual-package": {
+      "owner": "research-communication",
+      "required": [
+        "intent",
+        "layout_or_slide_plan",
+        "claim_sources",
+        "tool_and_export",
+        "accessibility_audit"
+      ]
+    },
+    "hygiene-plan": {
+      "owner": "project-hygiene",
+      "required": [
+        "inventory",
+        "blockers",
+        "actions",
+        "space_impact",
+        "restore_path",
+        "approval_token"
+      ]
+    },
+    "skill-architecture-decision": {
+      "owner": "skill-system-engineering",
+      "required": [
+        "granularity_score",
+        "trigger_boundaries",
+        "permissions",
+        "context_budget",
+        "proposal_policy",
+        "migration"
+      ]
+    },
+    "claim-evidence-ledger": {
+      "owner": "research-program-orchestrator",
+      "component": "components/evidence-ledger",
+      "required": [
+        "claims",
+        "evidence_links",
+        "limitations",
+        "validation_status"
+      ]
+    },
+    "dashboard-state": {
+      "owner": "research-program-orchestrator",
+      "component": "components/dashboard",
+      "required": [
+        "status",
+        "human_actions",
+        "capability_proposals",
+        "evidence",
+        "logs"
+      ]
+    }
+  }
+}

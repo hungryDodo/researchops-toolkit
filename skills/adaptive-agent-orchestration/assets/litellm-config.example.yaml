@@ -1,0 +1,19 @@
+# Optional local LiteLLM gateway. Pin image/package versions in production.
+model_list:
+  - model_name: local-small
+    litellm_params:
+      model: openai/<your-openai-compatible-model-id>
+      api_base: os.environ/LOCAL_MODEL_BASE_URL
+      api_key: os.environ/LOCAL_MODEL_API_KEY
+  - model_name: external-reviewer
+    litellm_params:
+      model: anthropic/<your-model-id>
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+router_settings:
+  routing_strategy: least-busy
+  num_retries: 1
+  timeout: 120
+
+# Keep semantic/task routing in ResearchOps Toolkit. Use LiteLLM here for
+# provider normalization, health, budget, retry, fallback, and usage accounting.

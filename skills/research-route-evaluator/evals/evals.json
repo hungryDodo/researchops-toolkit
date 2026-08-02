@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "research-route-evaluator",
+  "evals": [
+    {
+      "skill": "research-route-evaluator",
+      "should_trigger": true,
+      "prompt": "Using the completed survey, rank up to three routes for an 8x4090 server and six weeks of work.",
+      "expected": "Run fatal-flaw/resource-fit checks and produce falsifiable route cards and one probe."
+    },
+    {
+      "skill": "research-route-evaluator",
+      "should_trigger": false,
+      "prompt": "Collect and screen the full literature on mobile NPU scheduling.",
+      "expected": "Route to research-discovery."
+    }
+  ]
+}

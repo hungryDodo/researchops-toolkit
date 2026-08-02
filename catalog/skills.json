@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "skill_count": 12,
+  "startup_catalog_chars_estimate": 3897,
+  "skills": [
+    {
+      "name": "adaptive-agent-orchestration",
+      "description": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, or when returned worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, or worker self-approval.",
+      "path": "skills/adaptive-agent-orchestration/SKILL.md",
+      "description_chars": 269
+    },
+    {
+      "name": "experimental-research",
+      "description": "Use when freezing an experiment contract, executing approved software experiments, analyzing results, and registering reproducible evidence. Do not use for physical hardware actuation, unapproved protocol changes, or retrofitting metrics after results are visible.",
+      "path": "skills/experimental-research/SKILL.md",
+      "description_chars": 264
+    },
+    {
+      "name": "hardware-experiment-loop",
+      "description": "Use when experiments touch physical devices, power supplies, profilers, radios, sensors, batteries, or exclusive hardware resources. Do not use for software-only runs or to bypass preflight, leases, calibration, and human safety limits.",
+      "path": "skills/hardware-experiment-loop/SKILL.md",
+      "description_chars": 236
+    },
+    {
+      "name": "project-hygiene",
+      "description": "Use when repositories, large data, logs, checkpoints, worktrees, temporary tests, internal IDs, or obsolete files need inventory, archive, restoration, quarantine, or approved purge. Do not use on active, referenced, dirty, unregistered, or ambiguously owned assets.",
+      "path": "skills/project-hygiene/SKILL.md",
+      "description_chars": 266
+    },
+    {
+      "name": "research-communication",
+      "description": "Use when turning verified research content into publication figures, diagrams, result plots, or research presentations. Do not use to imitate an existing website, build the operational dashboard, or compensate for weak evidence with visual styling.",
+      "path": "skills/research-communication/SKILL.md",
+      "description_chars": 248
+    },
+    {
+      "name": "research-discovery",
+      "description": "Use when building a traceable literature or technology survey, mapping closest work, or synthesizing a verified corpus into a taxonomy and Related Work structure. Do not use to score one proposed route after the corpus exists or to draft unsupported paper prose.",
+      "path": "skills/research-discovery/SKILL.md",
+      "description_chars": 262
+    },
+    {
+      "name": "research-engineering",
+      "description": "Use when a code change can alter research results, measurement, data transformation, baselines, cleanup, or reproducibility and therefore needs a specification, observed failure, risk-calibrated tests, and fresh evidence. Do not use for trivial formatting or disposable exploration.",
+      "path": "skills/research-engineering/SKILL.md",
+      "description_chars": 282
+    },
+    {
+      "name": "research-program-orchestrator",
+      "description": "Use when a request spans research stages, the current owner is unclear, or a lifecycle transition, gate, evidence freeze, dashboard update, or safeguard proposal is needed. Do not use for one narrow survey, experiment, code change, or writing task with a clear owner.",
+      "path": "skills/research-program-orchestrator/SKILL.md",
+      "description_chars": 267
+    },
+    {
+      "name": "research-route-evaluator",
+      "description": "Use when generating and ranking at most three falsifiable research routes or judging whether a proposed idea merits major implementation. Do not use for unconstrained brainstorming from nothing, broad corpus collection, or experiment execution.",
+      "path": "skills/research-route-evaluator/SKILL.md",
+      "description_chars": 244
+    },
+    {
+      "name": "research-validation",
+      "description": "Use when results, artifacts, claims, or a mature manuscript need an independent reproduction, audit, or venue-style red-team review. Do not use from the same context that proposed and implemented the work, or as a substitute for missing experiments.",
+      "path": "skills/research-validation/SKILL.md",
+      "description_chars": 249
+    },
+    {
+      "name": "research-writing",
+      "description": "Use when drafting evidence-gated paper prose or revising an existing LaTeX manuscript from author, advisor, or reviewer feedback. Do not use before the logic and key claims are settled, or to invent results, citations, novelty, or unsupported fixes.",
+      "path": "skills/research-writing/SKILL.md",
+      "description_chars": 249
+    },
+    {
+      "name": "skill-system-engineering",
+      "description": "Use when creating, merging, splitting, packaging, auditing, or evaluating Agent Skills, trigger policies, proposal policies, provenance, permissions, and cross-harness compatibility. Do not use to execute the research domain task that a Skill describes.",
+      "path": "skills/skill-system-engineering/SKILL.md",
+      "description_chars": 253
+    }
+  ]
+}
