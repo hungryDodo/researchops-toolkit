@@ -4,9 +4,30 @@ All notable user-visible changes are documented here. The project follows semant
 
 ## [Unreleased]
 
+No unreleased changes.
+
+## [1.5.0] - 2026-08-02
+
+### Added
+
+- Added a cross-cutting Behavior Runtime with a compact universal kernel, seven task-specific behavior packs, lifecycle-hook adapters, metadata-only audit events, and four operating modes.
+- Added project-scoped hook installation for Codex, Claude Code, and Gemini CLI, plus plugin/extension manifests for distribution.
+- Added exact-command, short-lived, concurrency-locked, one-use approvals for deterministic destructive, hardware-write, worktree-removal, and sensitive external-transfer checks.
+- Added behavior classification, evaluation, status, mode, approval, and installation commands under `python3 -m rops behavior`.
+- Added parent-session task-pack inheritance for Sub-Agents without persisting raw parent prompts.
+- Added Claude marketplace metadata and a native Gemini extension Hook manifest.
+
 ### Changed
 
-- No unreleased changes.
+- Renamed the public project to **ResearchOps Toolkit**.
+- Separated progressively loaded workflow Skills from cross-cutting task behavior and Harness adapters.
+- Project bootstrap can install the default behavior layer without turning it into another user-routable Skill.
+
+### Security
+
+- `guide` remains the default; `enforce` blocks only deterministic configured risks and never replaces platform sandbox or permission controls.
+- Runtime logs contain task classes, effects, hashes, and lengths rather than raw prompts or raw tool input.
+- Normal approval creation is operator-only from an interactive terminal; Agent self-approval attempts are classified as non-approvable `policy-bypass`.
 
 ## [1.4.0] - 2026-08-02
 

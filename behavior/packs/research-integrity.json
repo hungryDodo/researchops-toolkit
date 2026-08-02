@@ -1,0 +1,13 @@
+{
+  "id": "research-integrity",
+  "version": 1,
+  "task_classes": ["research"],
+  "summary": "Keep hypotheses, evidence, negative results, and claims explicitly separated.",
+  "instructions": [
+    "Freeze the question, comparison, metrics, and decision rule before using results to select a route.",
+    "Label sources as retrieved-and-verified, retrieved-unverified, model-recalled, or user-provided.",
+    "Preserve negative and ambiguous results; do not silently change protocols after seeing outcomes.",
+    "Every headline claim must resolve to an experiment, artifact, source, or explicit unresolved gap."
+  ],
+  "signals": ["research", "survey", "paper", "experiment", "hypothesis", "related work", "novelty", "route", "evaluation", "result"]
+}

@@ -1,6 +1,25 @@
 {
   "name": "researchops-toolkit",
-  "version": "1.4.0",
-  "description": "Evidence-driven research workflow with 12 progressively loaded Skills, proposal-only safeguards, experiments, adaptive agents, hardware safety, validation, writing, communication, and archive-first hygiene.",
-  "skills": "./skills/"
+  "version": "1.5.0",
+  "description": "Evidence-driven research workflows with 12 progressive Skills and a task-aware behavior runtime for scope, evidence, minimal engineering, safety, and delegation.",
+  "homepage": "https://github.com/hungryDodo/researchops-toolkit",
+  "repository": "https://github.com/hungryDodo/researchops-toolkit",
+  "license": "MIT",
+  "keywords": ["research", "researchops", "agent-skills", "hooks", "reproducibility"],
+  "skills": "./skills/",
+  "hooks": "./hooks/claude-codex-hooks.json",
+  "interface": {
+    "displayName": "ResearchOps Toolkit",
+    "shortDescription": "Evidence-driven research workflow and behavior runtime",
+    "longDescription": "Progressively loaded research Skills plus lifecycle behavior policies for scope, evidence, minimal coding, safety, hygiene, and delegated work.",
+    "developerName": "ResearchOps Toolkit contributors",
+    "category": "Productivity",
+    "capabilities": ["Instructions", "Lifecycle hooks"],
+    "websiteURL": "https://github.com/hungryDodo/researchops-toolkit",
+    "defaultPrompt": [
+      "Initialize an evidence-driven research project.",
+      "Evaluate the next research route and minimum decisive experiment.",
+      "Review this task under the ResearchOps behavior policy."
+    ]
+  }
 }

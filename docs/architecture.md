@@ -2,73 +2,79 @@
 
 ## First principles
 
-The minimum research loop is:
+ResearchOps Toolkit separates **capability discovery** from **execution behavior**:
 
-1. define the question, scope, resources, and kill criteria;
-2. retrieve and verify external evidence;
-3. select falsifiable routes;
-4. freeze an experiment contract before execution;
-5. challenge results from an independent context;
-6. write only claims supported by registered evidence;
-7. retain enough state to reproduce, audit, archive, and safely clean the project.
+- A Skill is a user-meaningful workflow owner. It answers what procedure to follow, what artifacts to create, and how acceptance is determined.
+- A Behavior Pack is a compact cross-cutting policy. It answers how an applicable task should be performed before a full Skill is selected or while a Skill is executing.
+- A Hook or middleware adapter exposes lifecycle events. It is transport, not policy content.
+- Platform permissions and sandboxing remain the final authority over tool execution.
 
-A top-level Skill represents a stable user intent, not every internal step. Capabilities that are almost always used internally should not compete in semantic routing.
+This avoids two failure modes: turning every policy into a competing top-level Skill, and burying all workflows inside an always-on prompt.
 
-## Planes
+## Four layers
 
-- **Control plane:** `research-program-orchestrator`, project Gates, proposals, dashboard, and `.research/` state.
-- **Research execution plane:** discovery, route evaluation, experiments, engineering, validation, writing, and communication.
-- **Resource execution plane:** hardware, adaptive agents, and project hygiene.
-- **System meta-layer:** Skill design, trigger evaluation, provenance, and harness adapters.
+```text
+1. Distribution
+   .codex-plugin/, .claude-plugin/, gemini-extension.json
+   Packages Skills, hooks, and metadata.
 
-The orchestrator selects an owner, freezes inputs, records transitions, and surfaces safeguards. It does not perform specialist work merely because it knows that work exists.
+2. Behavior control plane
+   behavior/ + hooks/
+   Runs a universal kernel, selects task packs, propagates compact parent policy to Sub-Agents, records metadata, and checks deterministic risks.
+
+3. Workflow capability plane
+   skills/
+   Progressively loaded procedures, references, scripts, assets, artifacts, and acceptance contracts.
+
+4. Execution authority
+   Harness permission prompts, sandbox, tool ACLs, hardware interlocks, and human approvals.
+```
+
+MCP may provide external tools or shared state, but a mandatory policy cannot rely solely on an optional model-selected tool call.
 
 ## Repository layout
 
 ```text
-skills/                 top-level capabilities eligible for Skill discovery
-components/             internal evidence-ledger and dashboard components
-rops/                   unified cross-platform CLI and internal command modules
-config/                 framework paths, bundles, triggers, proposals, contracts
-catalog/                generated Skill catalog for human/agent routing
-tests/                  trigger fixtures and end-to-end smoke validation
-templates/              one rendered project-agent policy template
-release/                validation report and internal file manifest
-docs/                   stable user and maintainer documentation
+researchops-toolkit/
+├── behavior/             policy registry, task packs, runtime, schema, evals
+├── hooks/                lifecycle adapter executable and manifests
+├── skills/               12 top-level routed capabilities
+├── components/           dashboard and evidence ledger
+├── rops/                  unified CLI
+├── config/               shared registries and contracts
+├── catalog/              generated Skill discovery catalog
+├── tests/                structural and end-to-end checks
+├── templates/            compact project policy
+├── release/              release validation and hash manifest
+└── docs/                 stable documentation
 ```
 
-## Bootstrapped project state
+## Installed project layout
 
 ```text
-.research/
-├── PROJECT.md           research question, scope, venue hypothesis, budgets
-├── suite.lock.json      suite version and installation source
-├── decisions.md         durable human/agent decisions
-├── human_actions.md     open approvals and physical actions
-├── governance/          project snapshot copied from package config
-├── designs/             frozen experiment and method contracts
-├── survey/              corpus, queries, source states, syntheses
-├── runs/                manifests, logs, structured outputs, failures
-├── evidence/            claim/evidence ledger and validated artifacts
-├── agents/              model registry, dispatches, acceptance, profiles
-├── proposals/           capability recommendations and decisions
-├── hygiene/             inventory, archive/purge plans, registries
-├── archive/             reversible retired content
-├── trash/               quarantine before approved permanent purge
-└── dashboard/           schema-versioned semantic project state
+project/
+├── .research/            authoritative research state
+│   ├── designs/          frozen hypotheses, variables, metrics, protocols
+│   ├── runs/             immutable run manifests and results
+│   ├── evidence/         claim/evidence ledger and artifacts
+│   ├── agents/           model registry, dispatches, acceptance, profiles
+│   ├── proposals/        capability recommendations and decisions
+│   ├── runtime/          behavior mode, approvals, metadata-only events
+│   ├── hygiene/          inventories, plans, registries
+│   ├── archive/          reversible retired content
+│   ├── trash/            quarantine before permanent purge
+│   └── dashboard/        semantic project state
+├── .researchops/         installed replaceable behavior runtime and hook entry point
+├── .codex/.claude/.gemini framework-native Skills, agents, and hook settings
+└── AGENTS.md etc.        compact always-on project policy
 ```
-
-Root-level `task_plan.md`, `findings.md`, and `progress.md` are lightweight working views. Validated findings must be promoted into authoritative designs, evidence, or decisions rather than remaining only in transient notes.
 
 ## Authority rules
 
-- Experiment design files are authoritative for hypotheses, variables, baselines, metrics, and stopping rules.
+- Experiment design files are authoritative for hypotheses, baselines, metrics, and stopping rules.
 - Run manifests and immutable run IDs are authoritative for execution.
-- The evidence ledger links claims to artifacts; a registered artifact is not automatically a scientifically valid interpretation.
-- LaTeX source is editable authority for a manuscript; the rendered PDF is visual authority.
+- The evidence ledger links claims to artifacts; registration alone does not make an interpretation scientifically valid.
+- LaTeX source is editable manuscript authority; rendered PDF is visual authority.
 - Dashboard cards summarize state but do not replace underlying evidence.
-- Chat history and terminal output are not authoritative unless captured into a registered artifact.
-
-## Internal components
-
-`evidence-ledger` and `dashboard` are components rather than top-level Skills because they are controlled by the orchestrator, used across many stages, and rarely represent a standalone user intent. This reduces trigger competition and startup catalog context.
+- Chat history and terminal output are transient unless captured into an artifact.
+- `.researchops/` may be reinstalled; `.research/` must be preserved across upgrades.

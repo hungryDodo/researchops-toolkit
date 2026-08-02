@@ -1,0 +1,58 @@
+{
+  "description": "ResearchOps task behavior injection and deterministic high-risk checks.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto",
+            "commandWindows": "py -3 \"%CLAUDE_PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto",
+            "timeout": 10,
+            "additionalContextLimit": 1800
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto",
+            "commandWindows": "py -3 \"%CLAUDE_PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto",
+            "timeout": 10,
+            "additionalContextLimit": 1800
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write|Agent|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto",
+            "commandWindows": "py -3 \"%CLAUDE_PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto",
+            "timeout": 10,
+            "additionalContextLimit": 1200
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto",
+            "commandWindows": "py -3 \"%CLAUDE_PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto",
+            "timeout": 10,
+            "additionalContextLimit": 1800
+          }
+        ]
+      }
+    ]
+  }
+}

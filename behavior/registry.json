@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "name": "ResearchOps Behavior Runtime",
+  "default_mode": "guide",
+  "modes": {
+    "off": "No runtime context, decisions, or telemetry.",
+    "observe": "Classify and record metadata-only decisions without changing agent behavior.",
+    "guide": "Inject compact task-specific behavior and propose consequential specialist workflows; do not hard-block normal work.",
+    "enforce": "Guide plus deterministic blocking for configured high-risk operations unless a matching explicit approval exists."
+  },
+  "privacy": {
+    "default_log_level": "metadata_only",
+    "raw_prompt_logging": false,
+    "raw_tool_input_logging": false
+  },
+  "kernel": [
+    "Stay inside the requested scope; do not opportunistically rewrite unrelated files.",
+    "Distinguish observed evidence, inference, proposal, and unverified claim.",
+    "Persist durable decisions and evidence in .research/ rather than relying on chat history.",
+    "Consequential actions require a proposal and the specialist workflow's own operational approval.",
+    "Use the least privilege, narrowest write scope, and smallest sufficient context."
+  ],
+  "task_pack_map": {
+    "coding": [
+      "coding-minimal-change",
+      "coding-evidence"
+    ],
+    "research": [
+      "research-integrity"
+    ],
+    "writing": [
+      "writing-claim-discipline"
+    ],
+    "hardware": [
+      "hardware-safety"
+    ],
+    "hygiene": [
+      "hygiene-archive-first"
+    ],
+    "delegation": [
+      "delegation-quality"
+    ]
+  },
+  "skill_pack_map": {
+    "research-engineering": [
+      "coding-minimal-change",
+      "coding-evidence"
+    ],
+    "experimental-research": [
+      "research-integrity",
+      "coding-evidence"
+    ],
+    "research-discovery": [
+      "research-integrity"
+    ],
+    "research-writing": [
+      "writing-claim-discipline",
+      "research-integrity"
+    ],
+    "hardware-experiment-loop": [
+      "hardware-safety",
+      "research-integrity"
+    ],
+    "project-hygiene": [
+      "hygiene-archive-first"
+    ],
+    "adaptive-agent-orchestration": [
+      "delegation-quality"
+    ]
+  },
+  "hard_risk_kinds": [
+    "destructive-delete",
+    "git-destructive",
+    "worktree-remove",
+    "hardware-write",
+    "external-sensitive-transfer"
+  ],
+  "non_approvable_risk_kinds": [
+    "policy-bypass"
+  ]
+}

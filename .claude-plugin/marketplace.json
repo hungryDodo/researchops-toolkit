@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "researchops-toolkit",
+  "version": "1.5.0",
+  "description": "Evidence-driven research workflow Skills and task-aware behavior hooks.",
+  "owner": {
+    "name": "ResearchOps Toolkit contributors"
+  },
+  "plugins": [
+    {
+      "name": "researchops-toolkit",
+      "description": "Progressive research Skills plus cross-cutting task behavior for evidence, minimal engineering, safety, hygiene, and delegation.",
+      "source": "./",
+      "category": "productivity",
+      "homepage": "https://github.com/hungryDodo/researchops-toolkit"
+    }
+  ]
+}

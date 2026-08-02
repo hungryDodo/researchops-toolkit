@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "suite": "researchops-toolkit",
-  "version": "1.4.0",
-  "statement": "All implementation files in this distribution were newly written for ResearchOps Toolkit. External projects were decomposed for design patterns; no upstream Skill, prompt, script, template, handbook, or asset is vendored by default.",
+  "version": "1.5.0",
+  "statement": "All implementation files in this distribution were newly written for ResearchOps Toolkit. External projects and platform documentation were decomposed for design patterns; no upstream Skill, prompt, script, template, handbook, hook, or asset is vendored by default.",
   "audit_limitations": [
     "Repository provenance declaration, not legal advice.",
     "No claim of forensic similarity proof against every upstream revision."
@@ -126,6 +126,18 @@
       "url": "https://openai.github.io/openai-agents-python/",
       "relationship": "optional handoff, tracing, and human-in-the-loop runtime reference",
       "vendored": false
+    },
+    {
+      "name": "LangChain agent middleware",
+      "relationship": "conceptual reference for before/after agent/model middleware, tool wrapping, guardrails, and execution-state interception",
+      "vendored": false,
+      "url": "https://docs.langchain.com/oss/python/langchain/middleware"
+    },
+    {
+      "name": "Codex, Claude Code, and Gemini CLI hook documentation",
+      "relationship": "platform contract reference for lifecycle events, context injection, pre-tool decisions, subagent propagation, trust, and permissions",
+      "vendored": false,
+      "url": "https://developers.openai.com/codex/hooks"
     }
   ],
   "components": {
@@ -273,12 +285,35 @@
     "v1_2_top_level_skills": 23,
     "proposal_runtime_owner": "research-program-orchestrator",
     "proposal_policy_owner": "skill-system-engineering",
-    "distill_design": "URL/brand extraction excluded; static academic visual policy retained"
+    "distill_design": "URL/brand extraction excluded; static academic visual policy retained",
+    "control_planes": "Skills for on-demand workflows; Behavior Runtime for cross-cutting execution policy",
+    "behavior_modes": [
+      "off",
+      "observe",
+      "guide",
+      "enforce"
+    ],
+    "behavior_default": "guide",
+    "mcp_role": "External tools and shared state only; not a mandatory policy enforcement boundary."
   },
   "documentation_policy": {
     "acknowledgements": "README.md and README_zh.md",
     "stable_docs": "docs/",
     "design_session_notes_in_release": false,
     "third_party_code_vendored": false
+  },
+  "behavior_runtime": {
+    "implementation_origin": "original_clean_room",
+    "copied_files": [],
+    "modified_upstream_files": [],
+    "external_runtime_dependencies": [],
+    "conceptual_influences": [
+      "Ponytail cross-cutting minimum-change behavior distribution and subagent propagation",
+      "old-coder evidence-gated coding discipline",
+      "agent middleware lifecycle interception",
+      "Codex, Claude Code, and Gemini CLI native hook contracts",
+      "capability proposal before consequential specialist execution"
+    ],
+    "scope": "Universal kernel plus task-specific packs; Skills retain workflow and artifact ownership."
   }
 }

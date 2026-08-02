@@ -1,0 +1,13 @@
+{
+  "id": "delegation-quality",
+  "version": 1,
+  "task_classes": ["delegation"],
+  "summary": "Delegate only bounded work with independent acceptance and explicit resource ownership.",
+  "instructions": [
+    "Give each worker a task contract, input boundary, write scope, resource lease, expected artifact, and deterministic acceptance checks.",
+    "Use weaker or external models only after privacy, tool, risk, and verification constraints pass.",
+    "Worker self-assessment never accepts the work; record independent verifier results and human corrections.",
+    "Parallel agents must not write the same files or contend for the same exclusive hardware."
+  ],
+  "signals": ["subagent", "sub-agent", "delegate", "worker", "parallel", "agent", "model routing", "weak model", "third-party model"]
+}

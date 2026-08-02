@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from . import ROOT, VERSION
-from . import project, proposals, quality
+from . import behavior, project, proposals, quality
 
 
 def emit(data) -> None:
@@ -35,6 +35,8 @@ def build_parser() -> argparse.ArgumentParser:
     group.add_argument("--skills", help="all or comma-separated Skill names")
     group.add_argument("--bundle", default="research-core")
     install.add_argument("--with-agents", action="store_true")
+    install.add_argument("--with-behavior", action="store_true", help="Install the project Behavior Runtime and lifecycle hooks")
+    install.add_argument("--behavior-mode", choices=["off", "observe", "guide", "enforce"], default="guide")
     install.add_argument("--legacy-codex", action="store_true")
 
     bootstrap = sub.add_parser("bootstrap", help="Initialize or upgrade a research project")
@@ -65,6 +67,32 @@ def build_parser() -> argparse.ArgumentParser:
     decide.add_argument("--decision", choices=["approved", "dismissed", "snoozed", "completed"], required=True)
     decide.add_argument("--note", default="")
 
+    behavior_parser = sub.add_parser("behavior", help="Manage the cross-cutting Behavior Runtime")
+    behavior_parser.add_argument("--root", default=".")
+    behavior_sub = behavior_parser.add_subparsers(dest="behavior_command", required=True)
+    behavior_install = behavior_sub.add_parser("install")
+    behavior_install.add_argument("--target", choices=["codex", "claude", "gemini", "all"], default="all")
+    behavior_install.add_argument("--mode", choices=["off", "observe", "guide", "enforce"], default="guide")
+    behavior_sub.add_parser("status")
+    behavior_mode = behavior_sub.add_parser("mode")
+    behavior_mode.add_argument("value", choices=["off", "observe", "guide", "enforce"])
+    behavior_classify = behavior_sub.add_parser("classify")
+    behavior_classify.add_argument("--text", required=True)
+    behavior_classify.add_argument("--event", default="UserPromptSubmit")
+    behavior_classify.add_argument("--tool-name", default="")
+    behavior_eval = behavior_sub.add_parser("evaluate")
+    behavior_eval.add_argument("--framework", choices=["portable", "codex", "claude", "gemini"], default="portable")
+    behavior_eval.add_argument("--event", default="UserPromptSubmit")
+    behavior_eval.add_argument("--text", default="")
+    behavior_eval.add_argument("--tool-name", default="")
+    behavior_eval.add_argument("--command", dest="tool_command", default="")
+    behavior_eval.add_argument("--record", action="store_true")
+    behavior_approve = behavior_sub.add_parser("approve")
+    behavior_approve.add_argument("--kind", required=True)
+    behavior_approve.add_argument("--command", dest="approved_command", required=True)
+    behavior_approve.add_argument("--reason", required=True)
+    behavior_approve.add_argument("--ttl", type=int, default=30)
+
     validate = sub.add_parser("validate", help="Run structural and release checks")
     validate.add_argument("--write-manifest", action="store_true")
     validate.add_argument("--smoke", action="store_true")
@@ -93,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
         return passthrough(passthrough_scripts[argv[0]], argv[1:])
     args = build_parser().parse_args(argv)
     if args.command == "install":
-        emit(project.install(args.target, args.scope, args.project, args.mode, args.skills, args.bundle, args.with_agents, args.legacy_codex))
+        emit(project.install(args.target, args.scope, args.project, args.mode, args.skills, args.bundle, args.with_agents, args.legacy_codex, args.with_behavior, args.behavior_mode))
     elif args.command == "bootstrap":
         emit(project.bootstrap(args.project, args.title, args.install, args.upgrade))
     elif args.command == "doctor":
@@ -116,6 +144,27 @@ def main(argv: list[str] | None = None) -> int:
             emit(proposals.load_state(root))
         else:
             emit(proposals.decide(root, args.id, args.decision, args.note))
+    elif args.command == "behavior":
+        root = Path(args.root).resolve()
+        if args.behavior_command == "install":
+            emit(behavior.install(root, args.target, args.mode))
+        elif args.behavior_command == "status":
+            emit(behavior.status(root))
+        elif args.behavior_command == "mode":
+            emit(behavior.set_mode(root, args.value))
+        elif args.behavior_command == "classify":
+            emit(behavior.classify(args.text, args.event, args.tool_name))
+        elif args.behavior_command == "evaluate":
+            payload = {
+                "hook_event_name": args.event,
+                "cwd": str(root),
+                "prompt": args.text,
+                "tool_name": args.tool_name,
+                "tool_input": {"command": args.tool_command} if args.tool_command else {},
+            }
+            emit(behavior.evaluate(root, payload, args.framework, args.record))
+        else:
+            emit(behavior.approve(root, args.kind, args.approved_command, args.reason, args.ttl))
     elif args.command == "catalog":
         emit(quality.generate_catalog())
     elif args.command == "validate":

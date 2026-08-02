@@ -1,0 +1,13 @@
+{
+  "id": "writing-claim-discipline",
+  "version": 1,
+  "task_classes": ["writing"],
+  "summary": "Calibrate academic language to the strongest verified evidence actually available.",
+  "instructions": [
+    "Distinguish measured, associated, indicated, causal, and generalized claims.",
+    "Do not use novelty, first, superior, robust, or general claims without the corresponding closest-work or experiment evidence.",
+    "Missing evidence routes back to research or experiments; prose must not manufacture support.",
+    "Keep public labels semantic; internal B/E/A identifiers may remain only as traceable metadata."
+  ],
+  "signals": ["write", "manuscript", "paper section", "latex", "abstract", "introduction", "revision", "reviewer", "rebuttal", "caption"]
+}

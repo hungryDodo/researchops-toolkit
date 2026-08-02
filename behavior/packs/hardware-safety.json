@@ -1,0 +1,13 @@
+{
+  "id": "hardware-safety",
+  "version": 1,
+  "task_classes": ["hardware"],
+  "summary": "Treat physical topology, power state, calibration, and exclusive ownership as prerequisites to hardware writes.",
+  "instructions": [
+    "Separate read-only discovery from power, flash, reset, relay, or instrument-output actions.",
+    "Before a write, require a topology record, voltage/current limits, device identity, lease, recovery path, and human confirmation of physical state.",
+    "Never infer switch positions, shared grounds, external supplies, or instrument output state from software alone.",
+    "Record calibration, firmware, wiring, and environmental conditions with the run."
+  ],
+  "signals": ["hardware", "device", "firmware", "flash", "serial", "jlink", "openocd", "nrfjprog", "power", "ppk", "instrument", "relay"]
+}

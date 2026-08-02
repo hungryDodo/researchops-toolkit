@@ -1,41 +1,49 @@
 # ResearchOps Toolkit
 
-ResearchOps Toolkit 是一套面向 Codex、Claude Code、Gemini CLI 与可选第三方模型的**证据驱动研究工作流**。它把调研、路线筛选、实验、独立验证、写作、审稿、可视化和项目清理组织为可审计、可恢复、可渐进加载的研究闭环。
+ResearchOps Toolkit 是一套面向 Codex、Claude Code、Gemini CLI 与可选第三方模型 worker 的**证据驱动科研工作流与 Agent 行为工具包**。它把研究调研、路线筛选、实验、独立验证、论文写作、可视化、Sub-Agent 协作和项目清理组织为可审计、可恢复、可渐进加载的闭环。
 
-> 目标不是让 Agent 自动“写出一篇论文”，而是让研究过程中的问题、假设、证据、失败、决策、风险和人工审批都有明确归属。
+项目由两套互补系统构成：
 
-当前发行版提供 **12 个顶层 Skill、2 个内部组件、跨框架安装器、Sub-Agent/多模型路由、Capability Proposal、安全清理与全屏研究看板**。
+- **Skills System**：按需加载，负责“这项工作具体怎么做、产物是什么、由谁验收”。
+- **Behavior Runtime**：通过 Harness 生命周期 Hook 横切任务，负责“执行时必须遵循哪些行为、何时提醒、何时阻止确定性高风险动作”。
 
-## 🚀 一句话快速开始
+> 目标不是让 Agent 自动“写出一篇论文”，而是让问题、假设、证据、失败、决策、风险、权限和人工审批都有明确归属。
 
-> **不想读文档？** 把下面这句话发给你的 AI Agent，它会自动完成克隆、安装、初始化的全部操作：
-
-**🤖 发给 Agent：**
-
-> 克隆 git@github.com:hungryDodo/researchops-toolkit.git，进入目录后依次执行 `python3 -m rops install --target codex --scope project --project . --mode link --with-agents`、`python3 -m rops bootstrap . --title "我的研究项目"`、`python3 -m rops doctor --target codex --project .`。
+当前发行版提供 **12 个顶层 Skill、7 个 Behavior Pack、1 个通用行为内核、2 个内部组件、三类 Harness 适配器、Sub-Agent/多模型路由、Capability Proposal、安全清理与研究看板**。
 
 ## 快速开始
 
-推荐在目标项目中使用项目级安装，并默认启用 `research-core` bundle：
+建议先初始化目标项目，再安装项目级 Skills、原生 Agent 和 Behavior Runtime：
 
 ```bash
 git clone git@github.com:hungryDodo/researchops-toolkit.git
 cd researchops-toolkit
+
+python3 -m rops bootstrap /path/to/project \
+  --title "My Research Project" \
+  --upgrade
 
 python3 -m rops install \
   --target codex \
   --scope project \
   --project /path/to/project \
   --mode link \
-  --with-agents
-
-python3 -m rops bootstrap /path/to/project \
-  --title "My Research Project" \
-  --upgrade
+  --bundle research-core \
+  --with-agents \
+  --with-behavior \
+  --behavior-mode guide
 
 python3 -m rops doctor \
   --target codex \
   --project /path/to/project
+```
+
+检查 Behavior Runtime：
+
+```bash
+python3 -m rops behavior --root /path/to/project status
+python3 -m rops behavior --root /path/to/project classify \
+  --text "Refactor this parser and add regression tests"
 ```
 
 启动研究看板：
@@ -46,48 +54,102 @@ python3 -m rops dashboard serve \
   --port 8765
 ```
 
-默认不会安装硬件、清理和 Skill 开发等低频/高风险能力。需要时再安装对应 bundle：
+完整安装、Hook 信任提示、模式选择与多框架说明见 [快速开始](docs/getting-started.md)。
 
-```bash
-python3 -m rops bundles
-python3 -m rops install --target codex --scope project --project . --bundle hardware
-python3 -m rops install --target codex --scope project --project . --bundle hygiene
-python3 -m rops install --target codex --scope project --project . --bundle platform-dev
+也可以从公开仓库安装分发层：Gemini CLI 会自动发现根目录的 Skills 与 `hooks/hooks.json`；Claude Code 可使用仓库中的 marketplace。Codex 当前推荐继续使用上面的项目级 `rops install` 路径，因为它能明确生成项目 Hook、Skill 和 Agent 配置，并避开不同版本本地 marketplace 对仓库根插件路径支持不一致的问题。
+
+## 两个控制面，四层结构
+
+```text
+Plugin / Extension                         分发 Skills、Hooks 与元数据
+          │
+          ▼
+Behavior Runtime + Harness Hooks           生命周期拦截、任务分类、提示与确定性检查
+          │
+          ├── Universal Kernel             所有任务的范围、证据、状态、权限和审批原则
+          └── Task Behavior Packs          编码、研究、写作、硬件、清理、委派等横切策略
+          │
+          ▼
+Progressive Skills                         具体流程、脚本、references、产物合同与验收
+          │
+          ▼
+Platform permissions / sandbox             最终工具权限和安全边界
 ```
 
-完整安装、跨框架用法和升级方式见 [快速开始](docs/getting-started.md)。
+**MCP 不承担强制行为控制。** MCP 适合外部工具和共享状态，但模型可以选择不调用某个 MCP 工具；必须执行的横切策略应放在 Hook、middleware、权限和紧凑常驻策略中。
+
+### Behavior Runtime 模式
+
+| 模式 | 行为 |
+|---|---|
+| `off` | 不注入、不记录、不决策 |
+| `observe` | 仅进行元数据级分类和审计 |
+| `guide` | 默认；注入紧凑任务策略并提出 Proposal，不阻断普通工作 |
+| `enforce` | 在 `guide` 基础上，对配置中的确定性高风险动作要求一次性、短时、内容绑定批准 |
+
+`enforce` 不是平台 sandbox 的替代品。Hook 只处理它实际覆盖到的生命周期事件，最终权限仍由 Codex、Claude Code、Gemini CLI 或外层 Harness 管理。
+
+## 行为内核与 Behavior Packs
+
+通用内核适用于所有任务：
+
+- 保持请求范围，不顺手重写无关部分；
+- 区分已观测证据、推断、Proposal 和未验证结论；
+- 将关键决策与证据写入 `.research/`，不依赖聊天记忆；
+- 高后果动作先提 Proposal，再进入专家流程和操作审批；
+- 使用最小权限、最窄写范围和最小充分上下文。
+
+任务特定 Pack 包括：
+
+| Pack | 作用 |
+|---|---|
+| `coding-minimal-change` | Ponytail 风格的最小充分改动、复用优先和依赖克制 |
+| `coding-evidence` | old-coder 风格的行为合同、RED/GREEN、风险校准验证和 fresh evidence |
+| `research-integrity` | 假设、协议、负结果、来源状态与 Claim–Evidence 分离 |
+| `writing-claim-discipline` | 让学术措辞与现有证据强度一致 |
+| `hardware-safety` | 拓扑、供电、校准、租约、恢复与物理确认 |
+| `hygiene-archive-first` | 先盘点和可恢复归档，再独立批准永久清除 |
+| `delegation-quality` | 有边界的委派、资源隔离、独立验收和模型画像 |
+
+这些 Pack 不是用户路由的顶层 Skill，也不会与 12 个 Skill 竞争触发；它们由 Hook 根据任务和活跃 Skill 选择性注入。
+
+## 仓库结构
+
+```text
+researchops-toolkit/
+├── behavior/               # 通用内核、7 个 Behavior Pack、分类/风险 runtime 与 eval
+├── hooks/                  # 共享 Hook 可执行文件与平台专用生命周期清单
+├── .codex-plugin/          # Codex 插件分发元数据
+├── .claude-plugin/         # Claude Code 插件与 marketplace 元数据
+├── gemini-extension.json   # Gemini CLI 扩展元数据
+├── skills/                 # 12 个可渐进加载的顶层 Skill
+├── components/             # evidence-ledger、dashboard；不参与语义触发
+├── rops/                    # 统一跨平台 CLI 与项目/行为/质量/发布模块
+├── config/                 # 框架路径、bundles、触发、proposal 与产物合同
+├── catalog/                # 生成式 Skill 目录
+├── tests/                  # Trigger fixture、Behavior eval 与端到端 smoke test
+├── templates/              # 项目级常驻 Agent 策略模板
+├── release/                # 发布验证与内部文件哈希
+└── docs/                   # 稳定的用户和维护文档
+```
+
+初始化后的目标项目以 `.research/` 为研究权威状态，以 `.researchops/` 保存可替换的 Behavior Runtime 副本和 Hook 入口。
 
 ## 文档导航
 
 | 文档 | 适用场景 |
 |---|---|
-| [Docs 索引](docs/README.md) | 人类或 Agent 第一次进入仓库时的最短阅读路径 |
-| [快速开始](docs/getting-started.md) | 安装、初始化、看板、升级与多设备部署 |
-| [架构与状态模型](docs/architecture.md) | 目录、控制面、执行面、`.research/` 权威状态 |
+| [Docs 索引](docs/README.md) | 人类或 Agent 第一次进入仓库的最短阅读路径 |
+| [快速开始](docs/getting-started.md) | 安装、初始化、Hook 信任、模式和多设备部署 |
+| [架构与状态模型](docs/architecture.md) | 两个控制面、四层结构、目录和权威状态 |
+| [Behavior Runtime](docs/behavior-runtime.md) | Pack、Hook、模式、批准、隐私和适配边界 |
 | [研究工作流](docs/workflows.md) | 阶段、Gate、证据状态、Capability Proposal 与交接 |
-| [Skills 与 Bundles](docs/skills-and-bundles.md) | 12 个 Skill、渐进加载、触发和颗粒度原则 |
-| [Sub-Agent 与模型路由](docs/agents-and-model-routing.md) | 任务拆分、弱模型/第三方模型、独立验收与模型画像 |
+| [Skills 与 Bundles](docs/skills-and-bundles.md) | 12 个 Skill、渐进加载、触发和颗粒度 |
+| [Sub-Agent 与模型路由](docs/agents-and-model-routing.md) | 弱模型、第三方模型、独立验收和模型画像 |
 | [安全、归档与清理](docs/safety-and-hygiene.md) | 硬件、Archive-first、两阶段删除、worktree 和隐私 |
-| [开发与发布](docs/development.md) | 新 Skill、跨 Harness 适配、测试、来源和发布检查 |
+| [开发与发布](docs/development.md) | 新 Skill、Behavior Pack、Harness 适配、测试和发布 |
 
-仓库根目录的 [`AGENTS.md`](AGENTS.md) 为直接进入本仓库的编程 Agent 提供最小阅读和修改约束。
-
-## 体系结构
-
-```text
-researchops-toolkit/
-├── skills/                 # 12 个可渐进加载的顶层 Skill
-├── components/             # evidence-ledger、dashboard；不参与语义触发
-├── rops/                   # 统一跨平台 CLI 及其内部模块
-├── config/                 # 框架路径、bundles、触发、proposal 与产物合同
-├── catalog/                # 面向人类和 Agent 的生成式 Skill 目录
-├── tests/                  # 触发 fixture 与端到端 smoke test
-├── templates/              # 单一的项目 Agent 策略模板
-├── release/                # 发布验证报告与内部文件哈希清单
-└── docs/                   # 稳定的用户与维护文档
-```
-
-目标项目初始化后，`.research/` 是研究状态的唯一权威来源；终端滚屏、聊天摘要和临时 Markdown 不能替代已登记的设计、运行、证据和决策。
+根目录 [`AGENTS.md`](AGENTS.md) 为直接进入本仓库的编程 Agent 提供最短阅读顺序和修改约束。
 
 ## 12 个顶层 Skill
 
@@ -101,49 +163,51 @@ researchops-toolkit/
 | `research-engineering` | 影响研究结论的代码变更：SPEC → RED → GREEN → Gauntlet |
 | `adaptive-agent-orchestration` | Sub-Agent 拆分、模型路由、独立验收和模型画像 |
 | `research-validation` | 独立复现、artifact audit 和论文 red-team review |
-| `research-writing` | 证据门控写作、LaTeX 修订、反馈 ledger 与视觉编译检查 |
+| `research-writing` | 证据门控写作、LaTeX 修订、反馈 ledger 与视觉检查 |
 | `research-communication` | 学术插图、结果图和研究型 PPT |
 | `project-hygiene` | Archive-first、数据/日志、worktree、临时测试与两阶段 purge |
-| `skill-system-engineering` | Skill 创建/合并/拆分、触发、安全、来源和跨 Harness 适配 |
+| `skill-system-engineering` | Skill/Pack 创建、合并、触发、安全、来源和 Harness 适配 |
 
-完整目录和 startup context 估算见 [`catalog/README.md`](catalog/README.md)。
+## 高风险能力：提醒与操作批准分离
 
-## 高风险能力：先建议，再决定是否加载
-
-为了兼顾“防误触”和“避免忘记功能”，Orchestrator 只在关键阶段或即将发生高风险动作时运行轻量 Capability Advisor，并生成 proposal：
+Behavior Runtime 和 Orchestrator 都可以发现“此时应该考虑某个高风险能力”，但只生成 Proposal：
 
 ```text
-轻量发现 → Proposal → 用户批准加载 Specialist → Specialist 自己的操作审批
+轻量发现 → Proposal → 用户批准加载 Specialist → Specialist 获取真正操作批准
 ```
 
-Proposal 只说明为什么可能需要某个能力、上下文/成本和所需批准；它**不会读取完整高风险 Skill、不会运行工具，也不等于硬件写入、第三方发送或永久删除的操作批准**。`dismissed`、`snoozed` 和 `completed` 状态会持久化，避免反复打扰。
+例如批准加载 `hardware-experiment-loop` 不等于批准打开电源或烧录；批准清理 Proposal 不等于批准永久删除。`enforce` 模式下的确定性高风险命令还需要精确命令绑定、短时、一次性批准。批准必须由用户在 Agent Harness 外的交互式终端创建；Agent 通过工具调用给自己签发批准会被视为 `policy-bypass`：
+
+```bash
+python3 -m rops behavior --root . approve \
+  --kind hardware-write \
+  --command 'nrfjprog --program app.hex --reset' \
+  --reason 'topology and recovery plan reviewed' \
+  --ttl 15
+```
 
 ## 设计参考与致谢
 
-本项目认真阅读并拆解了以下开源项目、规范和平台文档。我们学习的是它们解决问题的方式、Skill/Harness 组织、验证边界和工作流思想；**本发行包没有复制、修改或 vendor 这些项目的 Skill、Prompt、脚本、模板、Handbook 或前端资源**。所有实现均为针对 ResearchOps Toolkit 需求重新编写的 clean-room implementation。详细机器可读声明见 [`PROVENANCE.json`](PROVENANCE.json)。
+本项目阅读并拆解了以下开源项目、规范和平台文档。我们学习的是解决问题的方式、Skill/Harness 组织、生命周期控制、验证边界和工作流思想；**本发行包没有复制、修改或 vendor 这些项目的 Skill、Prompt、脚本、Hook、模板、Handbook 或视觉资源**。实现均针对本项目重新编写。机器可读声明见 [`PROVENANCE.json`](PROVENANCE.json)。
 
-| 项目 / 文档 | 对本项目的主要启发 |
+| 项目 / 文档 | 主要启发 |
 |---|---|
-| [Orchestra Research AI-research-SKILLs](https://github.com/Orchestra-Research/AI-research-SKILLs) | 模块化研究能力、AutoResearch 风格执行与按需工具箱 |
-| [OpenJudge](https://github.com/agentscope-ai/OpenJudge) | 独立 evaluator、弱点分析、持续评测与验收分离 |
-| [ARS-Codex](https://github.com/Imbad0202/academic-research-skills-codex) | 端到端学术工作流、跨模型审阅和平台适配边界 |
-| [phd-skills](https://github.com/fcakyon/phd-skills) | 实验设计、复现、研究诚信和论文核验 |
-| [CCFA-Skills](https://github.com/mikubaka88/CCFA-Skills) | owner 边界、正/负触发、共享 references 和 artifact contract |
-| [old-coder](https://github.com/AmazingAng/old-coder) | SPEC、observed RED、minimum GREEN、Gauntlet 与 fresh evidence |
-| [revise-paper](https://github.com/CISLab-HKUST/revise-paper) | LaTeX 源码与 PDF 双权威、反馈驱动修订和视觉检查 |
-| [ResearchStudio-Idea](https://github.com/microsoft/ResearchStudio/tree/main/ResearchStudio-Idea) | 磁盘状态、幂等 next action、novelty axes 和干净上下文 worker |
-| [Supervisor-Skills](https://github.com/HKUSTDial/Supervisor-Skills) | Guide/Skill 分层、fatal-flaw idea gate、证据门控写作、范式感知审稿 |
-| [Anthropic Skills](https://github.com/anthropics/skills) 与 [frontend-design](https://github.com/anthropics/skills/tree/main/skills/frontend-design) | 自包含 Skill、渐进披露、可访问性和产物自审 |
-| [Google Skills](https://github.com/google/skills) | 选择性安装、评测飞轮、机器/人类双报告 |
-| [Ponytail](https://github.com/DietrichGebert/ponytail) | 最小充分改动、依赖预算和真实可执行检查 |
-| [distill-design](https://github.com/ake77-code/distill-design) | 仅借鉴“紧凑、可复用视觉合同”；URL/品牌蒸馏不属于本项目正常路径 |
-| [Agent Skills specification](https://agentskills.io/) | Skill 目录结构、description discovery 与渐进加载模型 |
-| [OpenAI Codex](https://developers.openai.com/codex/)、[Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)、[Gemini CLI](https://geminicli.com/docs/) | 原生 Agent/Skill 配置、权限和跨 Harness 兼容约定 |
-| [LiteLLM](https://docs.litellm.ai/) 与 [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) | 可选模型网关、provider 统一、handoff、trace 和 human-in-the-loop 参考 |
+| Orchestra Research AI-research-SKILLs | 模块化研究能力和 AutoResearch 风格执行 |
+| OpenJudge | 独立 evaluator、弱点分析与验收分离 |
+| ARS-Codex、phd-skills、CCFA-Skills | 学术生命周期、研究诚信、owner/trigger/artifact contract |
+| old-coder | SPEC、observed RED、minimum GREEN、Gauntlet、fresh evidence |
+| Ponytail | 横切编码行为、最小充分改动、依赖预算和 Sub-Agent 传播 |
+| revise-paper | LaTeX 源码与 PDF 双权威、反馈驱动修订 |
+| ResearchStudio-Idea、Supervisor-Skills | 磁盘状态、干净上下文 worker、fatal-flaw gate、证据门控写作与范式感知审稿 |
+| Anthropic Skills、Google Skills、Agent Skills 规范 | 自包含 Skill、渐进披露、选择性安装和评测飞轮 |
+| Codex、Claude Code、Gemini CLI Hook/插件文档 | 生命周期事件、上下文注入、PreTool 决策、Sub-Agent 传播、信任与权限边界 |
+| LangChain Agent Middleware | before/after agent/model、tool wrapping、guardrail 与执行状态拦截的分层思路 |
+| distill-design | 仅保留“紧凑可复用视觉合同”的抽象，不采用 URL/品牌蒸馏 |
+| LiteLLM、OpenAI Agents SDK | 可选 provider 统一、handoff、trace 和 human-in-the-loop |
 
-如后续选择 vendor 第三方 Skill，必须固定 commit、单独记录许可证、运行安全审计并更新 provenance；默认发行包不包含第三方实现。
+外部项目仍受各自许可证约束；未来如 vendor 第三方实现，必须固定 commit、保留许可证、审计执行/网络行为并更新 provenance。
 
-## 验证与可信边界
+## 验证
 
 ```bash
 python3 -m rops validate
@@ -151,8 +215,8 @@ python3 -m rops validate --smoke
 python3 -m rops package --out /tmp/researchops-toolkit-release
 ```
 
-这些检查验证结构、触发 fixture 覆盖、安装、工具行为、归档恢复、安全边界和内部文件哈希；它们不等价于所有模型/Harness 版本上的真实触发准确率，也不保证某个研究方向必然达到顶会水平。
+这些检查覆盖 Skill 结构、Trigger fixture、Behavior Pack eval、Hook/扩展清单、父任务到 Sub-Agent 的策略传播、并发一次性批准、元数据日志、跨框架安装、模型路由、归档恢复、两阶段清除、worktree 保护和内部文件哈希。它们不等价于所有 Harness/模型版本上的真实语义触发准确率，也不保证某个研究方向必然达到顶会水平。
 
 ## License
 
-ResearchOps Toolkit 采用 [MIT License](LICENSE)。外部参考项目仍受各自许可证约束。
+ResearchOps Toolkit 采用 [MIT License](LICENSE)。

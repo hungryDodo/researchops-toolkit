@@ -3,14 +3,14 @@
 ## Requirements
 
 - Python 3.10 or newer;
-- Git when using worktree management or repository-aware cleanup;
+- Git for repository-aware cleanup and worktrees;
 - Codex, Claude Code, Gemini CLI, or a portable Skill directory.
 
-The default workflow has no third-party Python dependency and no model gateway requirement.
+The default runtime uses only the Python standard library.
 
-## Obtain the package
+## Obtain the toolkit
 
-Keep the toolkit checkout separate from the research project.
+Keep the toolkit checkout separate from the research project:
 
 ```bash
 git clone git@github.com:hungryDodo/researchops-toolkit.git
@@ -18,7 +18,17 @@ cd researchops-toolkit
 python3 -m rops --version
 ```
 
-## Install Skills into a project
+## Initialize authoritative state
+
+```bash
+python3 -m rops bootstrap /path/to/project \
+  --title "My Research Project" \
+  --upgrade
+```
+
+Bootstrap creates `.research/`, the evidence ledger, dashboard state, policy snapshots, and a toolkit lock. Existing authoritative artifacts are preserved.
+
+## Install Skills, native roles, and behavior hooks
 
 ```bash
 python3 -m rops install \
@@ -26,42 +36,49 @@ python3 -m rops install \
   --scope project \
   --project /path/to/project \
   --mode link \
-  --with-agents
+  --bundle research-core \
+  --with-agents \
+  --with-behavior \
+  --behavior-mode guide
 ```
+
+Supported targets are `codex`, `claude`, `gemini`, `portable`, and `all` for Skills. The Behavior Runtime supports `codex`, `claude`, `gemini`, and `all` at project scope.
 
 - Project scope avoids changing unrelated repositories.
-- Link mode is convenient during active toolkit development.
+- Link mode follows updates in the toolkit checkout.
 - Copy mode freezes a self-contained Skill snapshot.
-- `--with-agents` renders native role files where supported.
+- `--with-agents` renders native role files.
+- `--with-behavior` copies the runtime into `.researchops/` and merges project hook settings.
 
-Supported targets are `codex`, `claude`, `gemini`, `portable`, and `all`.
+Review the generated framework settings and accept the platform's trust prompt before expecting Hooks to run.
 
-## Initialize authoritative project state
 
-```bash
-python3 -m rops bootstrap /path/to/project \
-  --title "My Research Project" \
-  --upgrade
+## Repository extension paths
 
-python3 -m rops doctor \
-  --target codex \
-  --project /path/to/project
-```
+The repository can also be consumed as a distribution package:
 
-Bootstrap creates `.research/`, the evidence ledger, dashboard state, policy snapshots, project guidance files, and a toolkit lock. Existing authoritative artifacts are preserved.
+- Claude Code: add the repository as a marketplace and install `researchops-toolkit`; review the bundled Hooks before trusting them.
+- Gemini CLI: `gemini extensions install https://github.com/hungryDodo/researchops-toolkit`; the extension auto-discovers `skills/` and `hooks/hooks.json`.
+- Codex: prefer the project-level `python3 -m rops install --target codex ... --with-behavior` flow. The source includes a Codex plugin manifest, but this release does not claim that every Codex marketplace version handles a plugin rooted at the repository root identically.
 
-## Start the dashboard
+Extension installation provides the default `guide` behavior. Use the cloned toolkit's CLI for explicit project mode and operator approvals.
+
+## Inspect behavior before relying on it
 
 ```bash
-python3 -m rops dashboard serve \
-  --root /path/to/project \
-  --host 127.0.0.1 \
-  --port 8765
+python3 -m rops behavior --root /path/to/project status
+python3 -m rops behavior --root /path/to/project classify \
+  --text "Run an ablation and preserve negative results"
+python3 -m rops behavior --root /path/to/project evaluate \
+  --framework codex \
+  --event PreToolUse \
+  --tool-name Bash \
+  --command 'rm -rf raw_traces'
 ```
 
-The dashboard shows structured semantic state rather than raw terminal logs.
+The recommended rollout is `observe` → `guide` → `enforce` after adapter validation.
 
-## Install by stage
+## Install by research stage
 
 ```bash
 python3 -m rops bundles
@@ -69,22 +86,30 @@ python3 -m rops install --target codex --scope project \
   --project /path/to/project --mode link --bundle hygiene
 ```
 
-The default bundle is `research-core`. Optional bundles include `discovery`, `execution`, `hardware`, `validation`, `writing`, `hygiene`, and `platform-dev`. Use `all` only for maintenance or audit.
+The default bundle is `research-core`. Optional bundles include `discovery`, `execution`, `hardware`, `validation`, `writing`, `hygiene`, and `platform-dev`.
 
-Installing a new Skill does not require stopping a running experiment, but it must not silently change a frozen protocol, metric, code revision, or statistical plan. Apply new behavior at the next task or Gate and record the version change.
+Installing a new Skill or Pack must not silently change a frozen experiment protocol, metric, code revision, safety envelope, or statistical plan. Apply it at the next task or Gate and record the version change.
 
-## Upgrade or reinstall
+## Dashboard and diagnostics
 
-The toolkit does not retain version-specific migration scripts in the public root. To upgrade an existing project:
+```bash
+python3 -m rops doctor --target codex --project /path/to/project
+python3 -m rops dashboard serve \
+  --root /path/to/project \
+  --host 127.0.0.1 \
+  --port 8765
+```
 
-1. keep `.research/` unchanged;
-2. check out the desired tagged toolkit release;
-3. rerun `rops install` for the chosen bundle;
-4. rerun `rops bootstrap --upgrade`;
-5. review `.research/suite.lock.json` and run `rops doctor`.
+## Upgrade
 
-This keeps the persistent research state separate from replaceable Skill installations.
+1. Preserve `.research/`.
+2. Check out the desired toolkit tag.
+3. Rerun `rops install` with the chosen bundle and `--with-behavior`.
+4. Rerun `rops bootstrap --upgrade`.
+5. Review `.research/suite.lock.json`, Hook settings, and `rops doctor`.
+
+`.researchops/` is replaceable. The installer rewrites its runtime copy while retaining `.research/runtime/` mode, approvals, and metadata state.
 
 ## Multiple machines
 
-Filesystem Skills are not account-synchronized. Clone or pull the same tagged toolkit release on each machine, install at project scope, and keep secrets, private datasets, and local hardware envelopes outside Git.
+Filesystem Skills and Hooks are not account-synchronized. Clone the same tagged toolkit release on each machine, install at project scope, and keep secrets, private datasets, and local hardware limits outside Git.

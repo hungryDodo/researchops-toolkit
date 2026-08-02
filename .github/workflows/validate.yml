@@ -6,9 +6,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - run: python -m rops validate
-      - run: python -m compileall -q rops skills components tests
-      - run: python -m rops bootstrap /tmp/demo --title "CI Demo"
-      - run: python -m rops dashboard validate --root /tmp/demo
-      - run: python -m rops ledger --file /tmp/demo/.research/evidence/ledger.json validate
+        with:
+          python-version: '3.12'
+      - name: Structural validation
+        run: python -m rops validate
+      - name: Behavior runtime smoke
+        run: python3 tests/behavior_smoke.py
+      - name: End-to-end workflow smoke
+        run: python3 tests/smoke.py
+      - name: Compile executable Python
+        run: python -m compileall -q rops skills components behavior hooks tests
+      - name: Component sanity
+        run: |
+          python -m rops bootstrap /tmp/demo --title "CI Demo"
+          python -m rops dashboard validate --root /tmp/demo
+          python -m rops ledger --file /tmp/demo/.research/evidence/ledger.json validate

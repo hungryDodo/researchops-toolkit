@@ -42,6 +42,8 @@ def install(
     bundle: str = "research-core",
     with_agents: bool = False,
     legacy_codex: bool = False,
+    with_behavior: bool = False,
+    behavior_mode: str = "guide",
 ) -> dict[str, Any]:
     project_path = Path(project).resolve()
     frameworks = ["codex", "claude", "gemini"] if target == "all" else [target]
@@ -86,6 +88,12 @@ def install(
         run([sys.executable, str(ROOT / "skills/adaptive-agent-orchestration/scripts/agent_registry.py"), "--root", str(project_path), "init"])
         native = "all" if target in {"all", "portable"} else target
         run([sys.executable, str(ROOT / "skills/adaptive-agent-orchestration/scripts/render_native_agents.py"), "--root", str(project_path), "--framework", native])
+    if with_behavior:
+        if scope != "project":
+            raise ValueError("--with-behavior requires project scope")
+        from . import behavior
+        behavior_target = "all" if target in {"all", "portable"} else target
+        report["behavior"] = behavior.install(project_path, behavior_target, behavior_mode)
     return report
 
 
@@ -165,7 +173,7 @@ Use ResearchOps Toolkit defaults until customized.
     for filename, paths in policies.items():
         _write_missing(project_path / filename, _render_policy(*paths))
     if install_target != "none":
-        install(install_target, scope="project", project=project_path, mode="link", bundle="research-core")
+        install(install_target, scope="project", project=project_path, mode="link", bundle="research-core", with_behavior=True)
     return project_path
 
 
