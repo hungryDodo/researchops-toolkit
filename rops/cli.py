@@ -75,16 +75,22 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--out", default=str(ROOT.parent))
     package.add_argument("--skip-smoke", action="store_true")
 
-    dashboard = sub.add_parser("dashboard", help="Run the dashboard component")
-    dashboard.add_argument("args", nargs=argparse.REMAINDER)
-    ledger = sub.add_parser("ledger", help="Run the evidence-ledger component")
-    ledger.add_argument("args", nargs=argparse.REMAINDER)
-    audit = sub.add_parser("skill-audit", help="Audit one Skill directory")
-    audit.add_argument("args", nargs=argparse.REMAINDER)
+    sub.add_parser("dashboard", help="Run the dashboard component")
+    sub.add_parser("ledger", help="Run the evidence-ledger component")
+    sub.add_parser("skill-audit", help="Audit one Skill directory")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    passthrough_scripts = {
+        "dashboard": ROOT / "components/dashboard/dashboard.py",
+        "ledger": ROOT / "components/evidence-ledger/ledger.py",
+        "skill-audit": ROOT / "skills/skill-system-engineering/scripts/audit_skill.py",
+    }
+    if argv and argv[0] in passthrough_scripts:
+        return passthrough(passthrough_scripts[argv[0]], argv[1:])
     args = build_parser().parse_args(argv)
     if args.command == "install":
         emit(project.install(args.target, args.scope, args.project, args.mode, args.skills, args.bundle, args.with_agents, args.legacy_codex))
@@ -123,10 +129,4 @@ def main(argv: list[str] | None = None) -> int:
         from .release import package_release
         archive, checksum = package_release(Path(args.out), skip_smoke=args.skip_smoke)
         emit({"archive": str(archive), "checksum": str(checksum)})
-    elif args.command == "dashboard":
-        return passthrough(ROOT / "components/dashboard/dashboard.py", args.args)
-    elif args.command == "ledger":
-        return passthrough(ROOT / "components/evidence-ledger/ledger.py", args.args)
-    elif args.command == "skill-audit":
-        return passthrough(ROOT / "skills/skill-system-engineering/scripts/audit_skill.py", args.args)
     return 0
