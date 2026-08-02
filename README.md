@@ -6,11 +6,13 @@ ResearchOps Toolkit is an **evidence-driven research workflow** for Codex, Claud
 
 The current release includes **12 top-level Skills, two non-triggered components, cross-framework installers, sub-agent/model routing, capability proposals, safe cleanup, and a full-screen research dashboard**.
 
-## One-liner quick start
+## 🚀 One-liner quick start
 
-If you don't want to read anything and just want to get started, paste this line into your Agent:
+> **Skip the docs?** Send this to your Agent and it will clone, install, and bootstrap everything automatically:
 
-> Clone git@github.com/hungryDodo/researchops-toolkit.git, cd in, then run `python3 -m rops install --target codex --scope project --project . --mode link --with-agents`, then `python3 -m rops bootstrap . --title "My Research Project"`, then `python3 -m rops doctor --target codex --project .`.
+**🤖 Send to your Agent:**
+
+> Clone git@github.com:hungryDodo/researchops-toolkit.git, cd in, then run `python3 -m rops install --target codex --scope project --project . --mode link --with-agents`, then `python3 -m rops bootstrap . --title "My Research Project"`, then `python3 -m rops doctor --target codex --project .`.
 
 ## Quick start
 

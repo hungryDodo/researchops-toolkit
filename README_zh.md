@@ -6,9 +6,11 @@ ResearchOps Toolkit 是一套面向 Codex、Claude Code、Gemini CLI 与可选�
 
 当前发行版提供 **12 个顶层 Skill、2 个内部组件、跨框架安装器、Sub-Agent/多模型路由、Capability Proposal、安全清理与全屏研究看板**。
 
-## 一句话快速开始
+## 🚀 一句话快速开始
 
-如果你不想读任何文档，只想立刻开始，把这句话丢给你的 Agent 即可：
+> **不想读文档？** 把下面这句话发给你的 AI Agent，它会自动完成克隆、安装、初始化的全部操作：
+
+**🤖 发给 Agent：**
 
 > 克隆 git@github.com:hungryDodo/researchops-toolkit.git，进入目录后依次执行 `python3 -m rops install --target codex --scope project --project . --mode link --with-agents`、`python3 -m rops bootstrap . --title "我的研究项目"`、`python3 -m rops doctor --target codex --project .`。
 
