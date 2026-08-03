@@ -20,7 +20,7 @@ This avoids two failure modes: turning every policy into a competing top-level S
 
 2. Behavior control plane
    behavior/ + hooks/
-   Runs a universal kernel, selects task packs, propagates compact parent policy to Sub-Agents, records metadata, and checks deterministic risks.
+   Runs a universal kernel, selects task packs, propagates compact parent policy to Sub-Agents, records metadata, and applies structured inspection, parsed command policy, and optional semantic escalation.
 
 3. Workflow capability plane
    skills/

@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "suite": "researchops-toolkit",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "statement": "All implementation files in this distribution were newly written for ResearchOps Toolkit. External projects and platform documentation were decomposed for design patterns; no upstream Skill, prompt, script, template, handbook, hook, or asset is vendored by default.",
   "audit_limitations": [
     "Repository provenance declaration, not legal advice.",
@@ -138,6 +138,12 @@
       "relationship": "platform contract reference for lifecycle events, context injection, pre-tool decisions, subagent propagation, trust, and permissions",
       "vendored": false,
       "url": "https://developers.openai.com/codex/hooks"
+    },
+    {
+      "name": "Open Policy Agent documentation",
+      "relationship": "conceptual reference for policy-as-code, separating policy decision from enforcement, and testable declarative rules",
+      "vendored": false,
+      "url": "https://www.openpolicyagent.org/docs/"
     }
   ],
   "components": {
@@ -148,6 +154,20 @@
     "dashboard": {
       "implementation_origin": "original_clean_room",
       "owner": "research-program-orchestrator"
+    },
+    "behavior-runtime": {
+      "implementation_origin": "original_clean_room",
+      "owner": "skill-system-engineering",
+      "conceptual_influences": [
+        "Ponytail cross-cutting behavior delivery and sub-agent propagation",
+        "old-coder evidence discipline",
+        "platform lifecycle hook contracts",
+        "policy-as-code separation of decision and enforcement",
+        "defense-in-depth with deterministic analysis, semantic escalation, and platform permissions"
+      ],
+      "copied_files": [],
+      "modified_upstream_files": [],
+      "external_runtime_dependencies": []
     }
   },
   "skills": {

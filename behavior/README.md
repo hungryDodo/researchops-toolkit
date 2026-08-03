@@ -1,25 +1,16 @@
-# Behavior Runtime
+# ROPS Behavior Runtime
 
-The Behavior Runtime is the cross-cutting control plane of ResearchOps Toolkit. Skills describe **what workflow to perform**; the Behavior Runtime constrains **how any applicable task is performed**.
+This directory contains the cross-cutting behavior layer used beside progressively loaded Skills.
 
-It is intentionally not a top-level Skill. It runs through lifecycle hooks or a middleware adapter before the model plans, before consequential tools execute, and when subagents start. Parent task classes and pack IDs can be inherited within the same session without persisting the raw parent prompt.
+- `runtime.py` — task/policy orchestration, approvals, metadata logging, feedback, and hook output.
+- `shell_analyzer.py` — non-executing shell parsing, wrapper normalization, and static risk rules and canonical command fingerprints.
+- `semantic_reviewer.py` — strict opt-in command adapter for semantic review.
+- `policies/risk-policy.json` — declarative categories, severities, approval eligibility, and privacy defaults.
+- `packs/` — compact task behavior packs.
+- `reviewers/` — optional reviewer adapters and contract documentation.
+- `evals/cases.json` — task/pack lifecycle fixtures.
+- `evals/risk-cases.json` — adversarial command variants and benign-neighbor regression cases.
 
-## Layers
+The runtime supports `off`, `observe`, `guide`, and `enforce`. In `enforce`, static high/critical findings and completed configured semantic findings are denied unless an approvable category has a matching operator-created one-use token. Deterministic findings cannot be downgraded by a model reviewer.
 
-1. **Kernel** — small universal rules: scope, evidence status, durable state, least privilege, and proposal-before-consequence.
-2. **Behavior packs** — task-specific rules for coding, research, writing, hardware, hygiene, and delegation.
-3. **Skills** — progressively loaded procedures, scripts, references, and artifact contracts.
-4. **Specialist approval** — hardware, deletion, provider transfer, and similar operations retain their own explicit approval workflow.
-
-## Modes
-
-- `off`: runtime disabled.
-- `observe`: metadata-only classification and audit.
-- `guide`: default; injects compact relevant context and creates proposals, without hard-blocking ordinary work.
-- `enforce`: additionally blocks deterministic high-risk operations without a matching content-bound approval.
-
-The runtime never logs raw prompts or raw tool inputs by default. It records hashes, task classes, active packs, effects, and timestamps in `.research/runtime/`. High-risk approvals are exact-command, short-lived, concurrency-locked, and consumed once; normal approval creation requires a human-operated interactive terminal outside the Agent Harness.
-
-## Why not MCP?
-
-MCP is useful for external tools and shared state, but a model can choose not to call an MCP tool. Mandatory cross-cutting behavior therefore belongs in hooks, middleware, permissions, and compact always-on project policy—not in an optional tool call.
+The guardrail covers only exposed Harness lifecycle/tool paths. Platform permissions, sandboxing, OS/container policy, repository protection, human approval, and physical interlocks remain the security boundary.

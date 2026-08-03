@@ -5,7 +5,7 @@ ResearchOps Toolkit is an **evidence-driven research workflow and agent-behavior
 It contains two complementary systems:
 
 - **Skills System** — progressively loaded capabilities that own procedures, artifacts, and acceptance contracts.
-- **Behavior Runtime** — lifecycle-hook policies that constrain how applicable tasks are executed, suggest specialist workflows, and check deterministic high-risk actions.
+- **Behavior Runtime** — lifecycle-hook policies that constrain how applicable tasks are executed, suggest specialist workflows, and evaluate exposed tool use through structured inspection, non-executing shell normalization, declarative risk policy, and optional semantic escalation.
 
 > The goal is not to have an agent automatically “write a paper.” The goal is to give every question, hypothesis, result, failure, decision, risk, permission, and human approval an explicit owner and durable record.
 
@@ -56,7 +56,7 @@ See [Getting started](docs/getting-started.md) for installation, trust prompts, 
 ```text
 Plugin / Extension                         distribution envelope
           ↓
-Behavior Runtime + Harness Hooks           lifecycle interception and deterministic checks
+Behavior Runtime + Harness Hooks           lifecycle interception and layered risk evaluation
           ├── Universal Kernel             cross-task scope, evidence, state, privilege, approvals
           └── Task Behavior Packs          coding, research, writing, hardware, hygiene, delegation
           ↓
@@ -74,7 +74,7 @@ MCP remains useful for external tools and shared state, but it is not the mandat
 | `off` | No injection, records, or decisions |
 | `observe` | Metadata-only classification and audit |
 | `guide` | Default; compact task guidance and proposals without blocking ordinary work |
-| `enforce` | Guide plus deterministic blocking of configured high-risk operations without a matching short-lived one-use approval |
+| `enforce` | Guide plus fail-closed blocking of high/critical static or semantic findings without a matching content-bound one-use approval |
 
 Hooks do not replace the platform sandbox or permission system. Enforcement only covers lifecycle and tool paths exposed by the active Harness.
 
@@ -145,15 +145,38 @@ Agents modifying this repository should read [`AGENTS.md`](AGENTS.md).
 | `project-hygiene` | Archive-first cleanup, data/log lifecycle, worktrees, purge |
 | `skill-system-engineering` | Skill/Pack boundaries, triggers, safety, provenance, Harness adapters |
 
-## Consequential capabilities
+## Layered risk guardrail
 
-Discovery and execution approval are separate:
+The Behavior Runtime does not treat regular expressions as the primary security mechanism. Exposed tool use passes through four layers:
+
+1. structured tool-input inspection;
+2. non-executing shell parsing and canonicalization, including common wrappers, executable paths, split/long options, nested `sh -c`, `xargs`, and `find -exec`;
+3. declarative risk categories covering deletion, overwrite/device writes, recursive permissions, Git force/history operations, privileged containers, filesystem administration, persistence, egress/tunnels, remote execution, resource exhaustion, power control, hardware writes, and policy bypass;
+4. an optional strict-JSON semantic reviewer for dynamic code or unfamiliar tools. It may only add or escalate risk and can never clear a static finding.
+
+Inspect a command without executing it:
+
+```bash
+python3 -m rops behavior --root . analyze \
+  --command 'sudo /bin/rm --recursive --force /data'
+```
+
+Enable an approved local or external reviewer explicitly; raw tool input is sent only after opt-in:
+
+```bash
+python3 -m rops behavior --root . semantic \
+  --mode advisory \
+  --scope uncertain \
+  --command 'python3 /path/to/reviewer.py'
+```
+
+Discovery and execution approval remain separate:
 
 ```text
 lightweight discovery → proposal → approve specialist loading → specialist operational approval
 ```
 
-In `enforce` mode, configured deterministic risks additionally require an exact-command, short-lived, one-use approval:
+In `enforce` mode, approvable findings require a short-lived, one-use approval bound to the risk category, raw command hash, canonical command hash, and exact matched rule set:
 
 ```bash
 python3 -m rops behavior --root . approve \
@@ -162,6 +185,8 @@ python3 -m rops behavior --root . approve \
   --reason 'topology and recovery plan reviewed' \
   --ttl 15
 ```
+
+The runtime is a guardrail, not a complete command sandbox. Platform permissions, container/OS isolation, repository protection, hardware interlocks, and human review remain the final boundary.
 
 ## References and acknowledgements
 
@@ -177,7 +202,7 @@ python3 -m rops validate --smoke
 python3 -m rops package --out /tmp/researchops-toolkit-release
 ```
 
-The checks cover Skill structure, trigger fixtures, Behavior Pack evals, hook installation, one-use approvals, metadata-only logging, framework installation, model routing, archive/restore/purge, worktree safety, and internal hashes. They do not prove empirical routing accuracy for every Harness/model release or guarantee publication outcomes.
+The checks cover Skill structure, trigger fixtures, Behavior Pack evals, hook installation, 131 adversarial/benign risk cases, parsed and canonical content-bound approvals, optional semantic escalation, metadata-only logging, framework installation, model routing, archive/restore/purge, worktree safety, and internal hashes. They do not prove empirical routing accuracy for every Harness/model release or guarantee publication outcomes.
 
 ## License
 

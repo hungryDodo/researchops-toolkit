@@ -19,6 +19,7 @@ def _runtime_module(runtime_root: Path | None = None):
     if not spec or not spec.loader:
         raise RuntimeError(f"cannot load behavior runtime: {path}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -53,7 +54,7 @@ def _project_hook_config(framework: str, project: Path) -> dict[str, Any]:
         }
     common = {"type": "command", "command": posix, "commandWindows": windows, "timeout": 10}
     return {
-        "description": "ResearchOps task behavior and deterministic high-risk checks.",
+        "description": "ROPS task behavior, parsed command policy, and optional semantic risk review.",
         "hooks": {
             "SessionStart": [{"hooks": [{**common, "additionalContextLimit": 1800}]}],
             "UserPromptSubmit": [{"hooks": [{**common, "additionalContextLimit": 1800}]}],
@@ -88,7 +89,7 @@ def install(project: str | Path, target: str = "all", mode: str = "guide") -> di
         write_json(path, _merge_hook_groups(existing, _project_hook_config(framework, project_path)))
         paths[framework] = str(path)
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "project": str(project_path),
         "mode": mode,
         "runtime": str(runtime_root),
@@ -114,6 +115,9 @@ def status(project: str | Path) -> dict[str, Any]:
             "gemini": (project_path / ".gemini/settings.json").exists(),
         },
         "events": str(project_path / ".research/runtime/events.jsonl"),
+        "feedback": str(project_path / ".research/runtime/feedback.jsonl"),
+        "semantic_review": state.get("semantic_review", {"mode": "off"}),
+        "policy_version": runtime.load_policy((runtime_root / "behavior") if runtime_root.exists() else None).get("schema_version"),
     }
 
 
@@ -149,12 +153,40 @@ def approve(project: str | Path, kind: str, command: str, reason: str, ttl: int 
     # An Agent must not silently authorize itself. Normal approvals are created
     # by an operator in an interactive terminal outside the Agent Harness. The
     # environment escape hatch exists only for automated tests.
-    if not sys.stdin.isatty() and os.environ.get("RESEARCHOPS_ALLOW_NONINTERACTIVE_APPROVAL") != "1":
+    if not sys.stdin.isatty() and os.environ.get("ROPS_ALLOW_NONINTERACTIVE_APPROVAL") != "1":
         raise RuntimeError(
             "approval creation requires an interactive operator terminal outside the Agent Harness; "
-            "RESEARCHOPS_ALLOW_NONINTERACTIVE_APPROVAL=1 is reserved for isolated automated tests"
+            "ROPS_ALLOW_NONINTERACTIVE_APPROVAL=1 is reserved for isolated automated tests"
         )
     project_path = Path(project).resolve()
     runtime_root = project_path / ".researchops/behavior"
     runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.create_approval(project_path, kind, command, reason, ttl)
+    return runtime.create_approval(project_path, kind, command, reason, ttl, runtime_root if runtime_root.exists() else None)
+
+
+def set_semantic_review(project: str | Path, mode: str, command: str | None = None, timeout: int | None = None, scope: str | None = None) -> dict[str, Any]:
+    project_path = Path(project).resolve()
+    runtime_root = project_path / ".researchops/behavior"
+    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
+    return runtime.set_semantic_review(project_path, mode, command, timeout, scope)
+
+
+def feedback(project: str | Path, event_id: str, label: str, note: str = "") -> dict[str, Any]:
+    project_path = Path(project).resolve()
+    runtime_root = project_path / ".researchops/behavior"
+    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
+    return runtime.record_feedback(project_path, event_id, label, note)
+
+
+def feedback_report(project: str | Path) -> dict[str, Any]:
+    project_path = Path(project).resolve()
+    runtime_root = project_path / ".researchops/behavior"
+    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
+    return runtime.feedback_report(project_path)
+
+
+def analyze(project: str | Path, command: str) -> dict[str, Any]:
+    project_path = Path(project).resolve()
+    runtime_root = project_path / ".researchops/behavior"
+    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
+    return runtime.command_analysis(command, project_path, runtime_root if runtime_root.exists() else None)

@@ -17,4 +17,4 @@ python3 tests/smoke.py
 python3 -m compileall -q rops skills components behavior hooks tests
 ```
 
-Pull requests that change Gate semantics, evidence schemas, implicit invocation, Hook output, deletion, external-provider, hardware, approval, or fail-open behavior must include a compatibility and security note. Do not vendor third-party implementation text without compatible licensing and provenance.
+Pull requests that change Gate semantics, evidence schemas, implicit invocation, Hook output, deletion, external-provider, hardware, approval, fail-closed enforcement, or semantic-review behavior must include a compatibility and security note. Do not vendor third-party implementation text without compatible licensing and provenance.

@@ -35,9 +35,9 @@ def build_parser() -> argparse.ArgumentParser:
     group.add_argument("--skills", help="all or comma-separated Skill names")
     group.add_argument("--bundle", default="research-core")
     install.add_argument("--with-agents", action="store_true")
+    install.add_argument("--legacy-codex", action="store_true")
     install.add_argument("--with-behavior", action="store_true", help="Install the project Behavior Runtime and lifecycle hooks")
     install.add_argument("--behavior-mode", choices=["off", "observe", "guide", "enforce"], default="guide")
-    install.add_argument("--legacy-codex", action="store_true")
 
     bootstrap = sub.add_parser("bootstrap", help="Initialize or upgrade a research project")
     bootstrap.add_argument("project")
@@ -67,6 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     decide.add_argument("--decision", choices=["approved", "dismissed", "snoozed", "completed"], required=True)
     decide.add_argument("--note", default="")
 
+
     behavior_parser = sub.add_parser("behavior", help="Manage the cross-cutting Behavior Runtime")
     behavior_parser.add_argument("--root", default=".")
     behavior_sub = behavior_parser.add_subparsers(dest="behavior_command", required=True)
@@ -92,6 +93,18 @@ def build_parser() -> argparse.ArgumentParser:
     behavior_approve.add_argument("--command", dest="approved_command", required=True)
     behavior_approve.add_argument("--reason", required=True)
     behavior_approve.add_argument("--ttl", type=int, default=30)
+    behavior_analyze = behavior_sub.add_parser("analyze", help="Parse and classify one command without executing it")
+    behavior_analyze.add_argument("--command", dest="analyzed_command", required=True)
+    behavior_semantic = behavior_sub.add_parser("semantic", help="Configure optional semantic risk review")
+    behavior_semantic.add_argument("--mode", choices=["off", "advisory", "required"], required=True)
+    behavior_semantic.add_argument("--command", dest="reviewer_command")
+    behavior_semantic.add_argument("--timeout", type=int)
+    behavior_semantic.add_argument("--scope", choices=["uncertain", "all"], default="uncertain")
+    behavior_feedback = behavior_sub.add_parser("feedback", help="Record operator feedback for one behavior event")
+    behavior_feedback.add_argument("--event-id", required=True)
+    behavior_feedback.add_argument("--label", choices=["true-positive", "false-positive", "missed-risk", "acceptable-risk", "needs-policy-update"], required=True)
+    behavior_feedback.add_argument("--note", default="")
+    behavior_sub.add_parser("report", help="Summarize behavior feedback without auto-changing policy")
 
     validate = sub.add_parser("validate", help="Run structural and release checks")
     validate.add_argument("--write-manifest", action="store_true")
@@ -163,8 +176,16 @@ def main(argv: list[str] | None = None) -> int:
                 "tool_input": {"command": args.tool_command} if args.tool_command else {},
             }
             emit(behavior.evaluate(root, payload, args.framework, args.record))
-        else:
+        elif args.behavior_command == "approve":
             emit(behavior.approve(root, args.kind, args.approved_command, args.reason, args.ttl))
+        elif args.behavior_command == "analyze":
+            emit(behavior.analyze(root, args.analyzed_command))
+        elif args.behavior_command == "semantic":
+            emit(behavior.set_semantic_review(root, args.mode, args.reviewer_command, args.timeout, args.scope))
+        elif args.behavior_command == "feedback":
+            emit(behavior.feedback(root, args.event_id, args.label, args.note))
+        else:
+            emit(behavior.feedback_report(root))
     elif args.command == "catalog":
         emit(quality.generate_catalog())
     elif args.command == "validate":

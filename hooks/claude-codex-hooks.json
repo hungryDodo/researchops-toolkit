@@ -1,5 +1,5 @@
 {
-  "description": "ResearchOps task behavior injection and deterministic high-risk checks.",
+  "description": "ResearchOps task behavior injection, parsed high-risk policy, and optional semantic escalation.",
   "hooks": {
     "SessionStart": [
       {

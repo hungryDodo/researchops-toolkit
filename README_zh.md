@@ -5,7 +5,7 @@ ResearchOps Toolkit 是一套面向 Codex、Claude Code、Gemini CLI 与可选�
 项目由两套互补系统构成：
 
 - **Skills System**：按需加载，负责“这项工作具体怎么做、产物是什么、由谁验收”。
-- **Behavior Runtime**：通过 Harness 生命周期 Hook 横切任务，负责“执行时必须遵循哪些行为、何时提醒、何时阻止确定性高风险动作”。
+- **Behavior Runtime**：通过 Harness 生命周期 Hook 横切任务，负责“执行时必须遵循哪些行为、何时提醒，以及如何通过结构化输入检查、非执行式命令规范化、声明式风险策略和可选语义复核处理高风险动作”。
 
 > 目标不是让 Agent 自动“写出一篇论文”，而是让问题、假设、证据、失败、决策、风险、权限和人工审批都有明确归属。
 
@@ -64,7 +64,7 @@ python3 -m rops dashboard serve \
 Plugin / Extension                         分发 Skills、Hooks 与元数据
           │
           ▼
-Behavior Runtime + Harness Hooks           生命周期拦截、任务分类、提示与确定性检查
+Behavior Runtime + Harness Hooks           生命周期拦截、任务分类、提示与分层风险评估
           │
           ├── Universal Kernel             所有任务的范围、证据、状态、权限和审批原则
           └── Task Behavior Packs          编码、研究、写作、硬件、清理、委派等横切策略
@@ -85,7 +85,7 @@ Platform permissions / sandbox             最终工具权限和安全边界
 | `off` | 不注入、不记录、不决策 |
 | `observe` | 仅进行元数据级分类和审计 |
 | `guide` | 默认；注入紧凑任务策略并提出 Proposal，不阻断普通工作 |
-| `enforce` | 在 `guide` 基础上，对配置中的确定性高风险动作要求一次性、短时、内容绑定批准 |
+| `enforce` | 在 `guide` 基础上，对静态或语义层识别出的高/严重风险执行 fail-closed，并要求内容绑定的一次性批准（不可批准类别除外） |
 
 `enforce` 不是平台 sandbox 的替代品。Hook 只处理它实际覆盖到的生命周期事件，最终权限仍由 Codex、Claude Code、Gemini CLI 或外层 Harness 管理。
 
@@ -168,15 +168,38 @@ researchops-toolkit/
 | `project-hygiene` | Archive-first、数据/日志、worktree、临时测试与两阶段 purge |
 | `skill-system-engineering` | Skill/Pack 创建、合并、触发、安全、来源和 Harness 适配 |
 
-## 高风险能力：提醒与操作批准分离
+## 分层风险护栏与批准
 
-Behavior Runtime 和 Orchestrator 都可以发现“此时应该考虑某个高风险能力”，但只生成 Proposal：
+Behavior Runtime 不再把正则表达式当作主要安全机制。暴露给 Hook 的工具调用依次经过：
+
+1. **结构化工具输入检查**：区分真实命令、文件路径、补丁正文和普通文档内容；
+2. **非执行式 Shell 解析与规范化**：识别可执行文件路径、`sudo/env/busybox/timeout` 等包装器、长/短/分离选项、嵌套 `sh -c`、`xargs` 和 `find -exec`，但绝不执行 alias、变量或任意命令替换；
+3. **声明式风险类别策略**：覆盖递归删除、直接覆写与设备写入、递归权限修改、Git 强推/历史重写、特权容器、文件系统管理、持久化、数据外发与隧道、远程代码执行、资源耗尽、系统电源、硬件写入和策略绕过；
+4. **可选语义 Reviewer**：用于发现藏在通用解释器、动态代码或未知工具中的副作用。它只能增加或升级风险，不能清除静态命中。
+
+不执行命令即可查看规范化和规则命中：
+
+```bash
+python3 -m rops behavior --root . analyze \
+  --command 'sudo /bin/rm --recursive --force /data'
+```
+
+语义 Reviewer 必须由用户显式启用；启用后，原始工具输入会发送到用户指定的本地或已批准端点：
+
+```bash
+python3 -m rops behavior --root . semantic \
+  --mode advisory \
+  --scope uncertain \
+  --command 'python3 /path/to/reviewer.py'
+```
+
+能力提醒与操作批准仍然分离：
 
 ```text
 轻量发现 → Proposal → 用户批准加载 Specialist → Specialist 获取真正操作批准
 ```
 
-例如批准加载 `hardware-experiment-loop` 不等于批准打开电源或烧录；批准清理 Proposal 不等于批准永久删除。`enforce` 模式下的确定性高风险命令还需要精确命令绑定、短时、一次性批准。批准必须由用户在 Agent Harness 外的交互式终端创建；Agent 通过工具调用给自己签发批准会被视为 `policy-bypass`：
+`enforce` 模式下，可批准风险还需要短时、一次性的内容绑定批准。批准同时绑定风险类别、原始命令哈希、规范化命令哈希和精确规则集合，不能通过改写等价命令复用：
 
 ```bash
 python3 -m rops behavior --root . approve \
@@ -185,6 +208,8 @@ python3 -m rops behavior --root . approve \
   --reason 'topology and recovery plan reviewed' \
   --ttl 15
 ```
+
+批准必须由 Harness 外的人类交互终端创建；Agent 自行修改批准账本、关闭运行时或调用批准命令会被识别为不可批准的 `policy-bypass`。这仍然是护栏而非完整命令沙箱，最终边界由平台权限、OS/容器隔离、仓库保护、硬件联锁和人工确认共同构成。
 
 ## 设计参考与致谢
 
@@ -215,7 +240,7 @@ python3 -m rops validate --smoke
 python3 -m rops package --out /tmp/researchops-toolkit-release
 ```
 
-这些检查覆盖 Skill 结构、Trigger fixture、Behavior Pack eval、Hook/扩展清单、父任务到 Sub-Agent 的策略传播、并发一次性批准、元数据日志、跨框架安装、模型路由、归档恢复、两阶段清除、worktree 保护和内部文件哈希。它们不等价于所有 Harness/模型版本上的真实语义触发准确率，也不保证某个研究方向必然达到顶会水平。
+这些检查覆盖 Skill 结构、Trigger fixture、Behavior Pack eval、131 条高风险/相邻安全对抗用例、Hook/扩展清单、父任务到 Sub-Agent 的策略传播、并发内容绑定一次性批准、可选语义复核、元数据日志、跨框架安装、模型路由、归档恢复、两阶段清除、worktree 保护和内部文件哈希。它们不等价于所有 Harness/模型版本上的真实语义触发准确率，也不保证某个研究方向必然达到顶会水平。
 
 ## License
 

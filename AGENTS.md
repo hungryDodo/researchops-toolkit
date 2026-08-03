@@ -10,7 +10,7 @@
 
 ## Layer ownership
 
-- `behavior/` contains compact cross-cutting policy, task classification, and deterministic risk checks.
+- `behavior/` contains compact cross-cutting policy, task classification, parsed risk policy, and optional semantic escalation.
 - `hooks/` and plugin manifests contain Harness transport only; do not duplicate policy prose there.
 - `skills/` contains user-routable procedures and artifact/acceptance owners.
 - `components/` contains non-routed shared services.
@@ -22,8 +22,8 @@
 - Keep `SKILL.md` concise and move long conditional guidance to `references/`.
 - Keep Behavior Packs concise; a long multi-step procedure belongs in a Skill.
 - Preserve positive/negative trigger boundaries and update `tests/trigger-cases.json` when Skill descriptions change.
-- Update `behavior/evals/cases.json` and `tests/behavior_smoke.py` when Pack selection, risk checks, or Hook output changes.
-- Hard blocks must use deterministic configured checks, not an ambiguous semantic classification alone.
+- Update `behavior/evals/cases.json`, `behavior/evals/risk-cases.json`, and `tests/behavior_smoke.py` when Pack selection, risk policy, semantic review, or Hook output changes.
+- A semantic reviewer may add or escalate risk only under the strict configured JSON contract; it must never clear a static finding. Do not claim model review is a sandbox or allow feedback to weaken policy automatically.
 - Do not broaden hardware, deletion, external-provider, worktree, or implicit-invocation permissions silently.
 - Runtime logs must remain metadata-only by default; do not add raw prompt/tool logging without an explicit privacy design.
 - Do not vendor third-party content without pinned provenance, a compatible license, and security review.

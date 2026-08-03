@@ -23,6 +23,7 @@ def _load_runtime(root: Path):
     if not spec or not spec.loader:
         raise RuntimeError(f"cannot load behavior runtime: {path}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -40,23 +41,62 @@ def _detect_framework(payload: dict, explicit: str) -> str:
     return "portable"
 
 
+def _project_root(payload: dict) -> Path:
+    cwd = Path(payload.get("cwd") or os.environ.get("GEMINI_PROJECT_DIR") or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).resolve()
+    for candidate in (cwd, *cwd.parents):
+        if (candidate / ".research").exists() or (candidate / ".git").exists():
+            return candidate
+    return cwd
+
+
+def _configured_enforce(payload: dict) -> bool:
+    if os.environ.get("ROPS_HOOK_FAIL_CLOSED") == "1":
+        return True
+    config = _project_root(payload) / ".research" / "runtime" / "config.json"
+    try:
+        return json.loads(config.read_text(encoding="utf-8")).get("mode") == "enforce"
+    except (OSError, json.JSONDecodeError):
+        return False
+
+
+def _deny_on_failure(framework: str, event: str, message: str) -> dict:
+    if framework == "gemini":
+        return {"decision": "deny", "reason": message}
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": event,
+            "permissionDecision": "deny",
+            "permissionDecisionReason": message,
+        }
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--framework", choices=["auto", "codex", "claude", "gemini", "portable"], default="auto")
     args = parser.parse_args()
+    payload: dict = {}
+    framework = args.framework
+    event = ""
     try:
         payload = json.load(sys.stdin)
         root = _root()
-        runtime = _load_runtime(root)
         framework = _detect_framework(payload, args.framework)
         event = str(payload.get("hook_event_name") or "")
+        runtime = _load_runtime(root)
         result = runtime.evaluate(payload, framework=framework, runtime_root=root / "behavior")
         output = runtime.render_hook_output(result, framework, event)
         sys.stdout.write(json.dumps(output, ensure_ascii=False))
         return 0
-    except Exception as exc:  # fail open; platform permissions remain authoritative
-        print(f"ResearchOps hook warning: {exc}", file=sys.stderr)
-        sys.stdout.write("{}")
+    except Exception as exc:
+        message = f"ROPS guardrail failed before evaluating this tool call: {type(exc).__name__}: {exc}"
+        print(message, file=sys.stderr)
+        if event.lower() in {"pretooluse", "beforetool", "permissionrequest"} and _configured_enforce(payload):
+            sys.stdout.write(json.dumps(_deny_on_failure(framework, event, message), ensure_ascii=False))
+        else:
+            # In guide/observe mode, host permissions remain authoritative and a runtime
+            # failure is surfaced without pretending that the command was checked.
+            sys.stdout.write("{}")
         return 0
 
 

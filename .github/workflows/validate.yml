@@ -11,9 +11,9 @@ jobs:
       - name: Structural validation
         run: python -m rops validate
       - name: Behavior runtime smoke
-        run: python3 tests/behavior_smoke.py
+        run: python tests/behavior_smoke.py
       - name: End-to-end workflow smoke
-        run: python3 tests/smoke.py
+        run: python tests/smoke.py
       - name: Compile executable Python
         run: python -m compileall -q rops skills components behavior hooks tests
       - name: Component sanity

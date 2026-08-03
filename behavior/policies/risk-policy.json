@@ -1,0 +1,180 @@
+{
+  "schema_version": 2,
+  "name": "ROPS command risk policy",
+  "default_decision": "allow",
+  "principles": [
+    "Parse and normalize without executing shell expansions.",
+    "Deterministic findings cannot be downgraded by a semantic reviewer.",
+    "Unknown dynamic shell constructs are escalated rather than guessed safe.",
+    "Approvals are short-lived, one-use, and bound to raw and canonical command hashes.",
+    "The runtime is a guardrail; Harness permissions, sandboxing, OS controls, and hardware interlocks remain authoritative."
+  ],
+  "categories": {
+    "policy-bypass": {
+      "severity": "critical",
+      "approvable": false,
+      "specialist": "skill-system-engineering"
+    },
+    "destructive-delete": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "project-hygiene"
+    },
+    "destructive-overwrite": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "project-hygiene"
+    },
+    "block-device-write": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "hardware-experiment-loop"
+    },
+    "filesystem-admin": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "hardware-experiment-loop"
+    },
+    "permission-recursive": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "project-hygiene"
+    },
+    "git-history-rewrite": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "git-force-push": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "worktree-remove": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "project-hygiene"
+    },
+    "container-host-access": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "container-destructive": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "project-hygiene"
+    },
+    "cluster-cloud-destructive": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "persistence-modification": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "external-sensitive-transfer": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "adaptive-agent-orchestration"
+    },
+    "network-listener-or-tunnel": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "remote-code-execution": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "resource-exhaustion": {
+      "severity": "critical",
+      "approvable": false,
+      "specialist": "research-engineering"
+    },
+    "system-power-control": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "hardware-experiment-loop"
+    },
+    "hardware-write": {
+      "severity": "critical",
+      "approvable": true,
+      "specialist": "hardware-experiment-loop"
+    },
+    "dynamic-shell-review": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "semantic-risk": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "research-engineering"
+    },
+    "semantic-review-unavailable": {
+      "severity": "high",
+      "approvable": false,
+      "specialist": "skill-system-engineering"
+    },
+    "external-data-transfer": {
+      "severity": "high",
+      "approvable": true,
+      "specialist": "adaptive-agent-orchestration"
+    }
+  },
+  "sensitive_path_prefixes": [
+    "/",
+    "/boot",
+    "/dev",
+    "/etc",
+    "/root",
+    "/sys",
+    "/proc",
+    "/usr",
+    "/bin",
+    "/sbin",
+    "/lib",
+    "/lib64",
+    "/var/lib",
+    "/var/spool",
+    "~/.ssh",
+    "~/.gnupg",
+    "~/.aws",
+    "~/.config/gcloud",
+    ".git",
+    ".research",
+    ".researchops",
+    ".codex",
+    ".claude",
+    ".gemini"
+  ],
+  "sensitive_name_patterns": [
+    "(^|/|\\\\)\\.env($|\\.)",
+    "id_(rsa|ed25519)",
+    "credentials",
+    "secret",
+    "api[_-]?key",
+    "token",
+    "private[_-]?key",
+    "\\.pem$",
+    "\\.p12$",
+    "\\.kube/config",
+    "approvals\\.json$"
+  ],
+  "semantic_review": {
+    "default_mode": "off",
+    "allowed_modes": [
+      "off",
+      "advisory",
+      "required"
+    ],
+    "timeout_seconds": 12,
+    "max_output_bytes": 65536,
+    "review_uncertain_only": true,
+    "never_downgrade_deterministic": true
+  }
+}

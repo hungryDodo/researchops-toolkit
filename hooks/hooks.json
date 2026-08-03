@@ -35,7 +35,7 @@
             "type": "command",
             "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini",
             "timeout": 10000,
-            "description": "Check deterministic high-risk operations"
+            "description": "Apply parsed risk policy and optional semantic escalation before exposed tool use"
           }
         ]
       }

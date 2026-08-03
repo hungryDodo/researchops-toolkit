@@ -119,7 +119,14 @@ def validate_skills(root: Path = ROOT) -> dict[str, Any]:
     registry = json.loads((root / "config/trigger-registry.json").read_text(encoding="utf-8"))["skills"]
     if set(registry) != names:
         errors.append("trigger registry and skill directories differ")
-    empty_dirs = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_dir() and not any(p.iterdir()) and "/.git/" not in p.as_posix()]
+    empty_dirs = [
+        p.relative_to(root).as_posix()
+        for p in root.rglob("*")
+        if p.is_dir()
+        and ".git" not in p.relative_to(root).parts
+        and not p.is_symlink()
+        and not any(p.iterdir())
+    ]
     if empty_dirs:
         errors.append("empty directories: " + ", ".join(empty_dirs))
     return {"skills": count, "errors": errors}
@@ -154,10 +161,16 @@ def validate_triggers(root: Path = ROOT) -> dict[str, Any]:
     }
 
 
+
 def validate_behavior(root: Path = ROOT) -> dict[str, Any]:
     errors: list[str] = []
     behavior = root / "behavior"
-    required = [behavior / "registry.json", behavior / "runtime.py", behavior / "schema.json", behavior / "evals/cases.json"]
+    required = [
+        behavior / "registry.json", behavior / "runtime.py", behavior / "schema.json",
+        behavior / "shell_analyzer.py", behavior / "semantic_reviewer.py",
+        behavior / "policies/risk-policy.json", behavior / "evals/cases.json",
+        behavior / "evals/risk-cases.json",
+    ]
     for path in required:
         if not path.exists():
             errors.append(f"missing {path.relative_to(root)}")
@@ -166,6 +179,10 @@ def validate_behavior(root: Path = ROOT) -> dict[str, Any]:
     try:
         registry = json.loads((behavior / "registry.json").read_text(encoding="utf-8"))
         cases = json.loads((behavior / "evals/cases.json").read_text(encoding="utf-8"))["cases"]
+        risk_cases = json.loads((behavior / "evals/risk-cases.json").read_text(encoding="utf-8"))["cases"]
+        policy = json.loads((behavior / "policies/risk-policy.json").read_text(encoding="utf-8"))
+        if policy.get("schema_version") != 2:
+            errors.append("behavior risk policy must use schema_version 2")
         packs = {}
         for path in sorted((behavior / "packs").glob("*.json")):
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -214,6 +231,14 @@ def validate_behavior(root: Path = ROOT) -> dict[str, Any]:
                         errors.append(f"{case['id']}: decision {result['decision']} != {case['expect_decision']}")
                     if case.get("expect_context_contains") and case["expect_context_contains"] not in result.get("additional_context", ""):
                         errors.append(f"{case['id']}: context missing {case['expect_context_contains']}")
+                for case in risk_cases:
+                    analysis = runtime.command_analysis(case["command"], project, behavior)
+                    kinds = {item["kind"] for item in analysis.get("findings", [])}
+                    expected = case.get("expect_kind")
+                    if expected and expected not in kinds:
+                        errors.append(f"risk {case['id']}: missing {expected}: {sorted(kinds)}")
+                    if case.get("expect_no_findings") and kinds:
+                        errors.append(f"risk {case['id']}: expected no findings: {sorted(kinds)}")
                 # Stateful safety contract: deny, allow exactly once with a
                 # content-bound approval, deny again, and never log raw input.
                 runtime.set_mode(project, "enforce")
@@ -293,8 +318,7 @@ def validate_behavior(root: Path = ROOT) -> dict[str, Any]:
             json.loads(manifest.read_text(encoding="utf-8"))
         except Exception as exc:
             errors.append(f"{manifest.relative_to(root)}: {exc}")
-    return {"packs": len(packs), "cases": len(cases), "errors": errors}
-
+    return {"packs": len(packs), "cases": len(cases), "risk_cases": len(risk_cases) if "risk_cases" in locals() else 0, "errors": errors}
 
 
 def provenance_audit(root: Path = ROOT, write_manifest: bool = False) -> dict[str, Any]:

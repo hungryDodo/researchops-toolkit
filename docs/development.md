@@ -38,7 +38,7 @@ A Pack must be concise, cross-cutting, and independently testable. Update:
 - `docs/behavior-runtime.md` when the public contract changes;
 - `tests/behavior_smoke.py` for decision or adapter changes.
 
-Keep deterministic risk recognition separate from semantic guidance. Never hard-block based only on an ambiguous language-model classification.
+Keep deterministic parsing/policy decisions separate from semantic escalation. A semantic reviewer may add or increase risk, but must never remove a deterministic finding.
 
 ## Hook adapters
 
@@ -48,7 +48,7 @@ Keep deterministic risk recognition separate from semantic guidance. Never hard-
 - Claude marketplace metadata: `.claude-plugin/marketplace.json`.
 - Project installer: `rops/behavior.py`.
 
-Treat each platform's input/output schema as a strict external contract. Validate generated settings, lifecycle coverage, trust behavior, Windows/POSIX commands, and fail-open behavior.
+Treat each platform's input/output schema as a strict external contract. Validate generated settings, lifecycle coverage, trust behavior, Windows/POSIX commands, enforce-mode fail-closed behavior, semantic-review failure modes, and platform permission fallbacks.
 
 ## Unified tooling
 
@@ -78,7 +78,7 @@ python3 -m rops validate --smoke
 python3 -m rops package --out /tmp/researchops-toolkit-release
 ```
 
-The smoke suite covers Skills, Hook installation, Pack selection, exact-command one-use approval, metadata-only logging, sub-agent routing, archive/restore/purge, large-data quarantine, ID normalization, worktree safety, dashboard validation, and research-engineering utilities.
+The smoke suite covers Skills, Hook installation, Pack selection, parsed/canonical content-bound one-use approval, 131-case adversarial risk corpus, optional semantic escalation, metadata-only logging, sub-agent routing, archive/restore/purge, large-data quarantine, ID normalization, worktree safety, dashboard validation, and research-engineering utilities.
 
 ## Changelog policy
 

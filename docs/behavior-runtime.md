@@ -1,45 +1,43 @@
-# Behavior Runtime
+# Behavior Runtime and risk guardrails
 
-## Purpose
+## Purpose and boundary
 
-The Behavior Runtime is a cross-cutting control plane closer to the Agent execution loop than a progressively loaded Skill. It is intentionally small: it classifies the current task, selects compact policies, injects context at supported lifecycle events, records metadata, and applies deterministic checks before configured consequential tools.
+The ROPS Behavior Runtime is a cross-cutting control plane closer to the Agent execution loop than a progressively loaded Skill. It classifies the task, activates compact behavior packs, injects context at supported lifecycle events, analyzes exposed tool calls, records metadata, and can block configured high-risk operations.
 
-It does not own research artifacts and does not replace a Skill. A full workflow remains in the narrowest relevant Skill.
+It is **not a complete security boundary**. It cannot intercept a command that bypasses the configured Harness event, a process launched outside the Harness, an unknown privileged tool path, or a compromised host. Platform permissions, sandboxing, OS/container policy, repository protection, hardware interlocks, and human confirmation remain authoritative.
 
-## Universal kernel
+## Four-layer risk evaluation
 
-The kernel is always applicable in `guide` or `enforce` mode:
+Before an exposed tool call, the runtime evaluates risk in this order:
 
-1. Stay inside requested scope.
-2. Distinguish observation, inference, proposal, and unverified claim.
-3. Persist durable decisions and evidence in `.research/`.
-4. Propose consequential capabilities before operational approval.
-5. Use least privilege, narrow write scope, and minimum sufficient context.
+1. **Structured tool inspection** — distinguish an actual shell command from a patch, file body, or structured tool request. Direct writes to approval/runtime state and sensitive device/system paths are handled without interpreting documentation text as shell code.
+2. **Shell parsing and normalization** — tokenize without executing aliases, substitutions, or expansions; unwrap paths and common wrappers such as `sudo`, `env`, `busybox`, `command`, `timeout`, and nested `sh -c`; inspect `xargs` and `find -exec`; preserve uncertainty instead of guessing.
+3. **Declarative category policy** — `behavior/policies/risk-policy.json` maps rule IDs to severity, approval eligibility, and the specialist workflow. Regular expressions remain only for narrow syntax that the parser cannot model reliably.
+4. **Optional semantic review** — an explicitly configured local or approved model reviewer examines dynamic or all exposed tool inputs. It can add or escalate a finding, but it can never remove or downgrade a deterministic finding.
 
-## Task packs
+No shell expansion is executed during analysis. A syntactically safe substitution such as `$(which rm)` is resolved only to its literal executable name; arbitrary substitutions are marked uncertain and escalated.
 
-Task classification may activate one or more packs:
+## Covered risk categories
 
-- `coding-minimal-change`
-- `coding-evidence`
-- `research-integrity`
-- `writing-claim-discipline`
-- `hardware-safety`
-- `hygiene-archive-first`
-- `delegation-quality`
+The current policy includes:
 
-A pack is stored as compact JSON rather than another semantic Skill. `behavior/registry.json` maps task classes and active Skills to packs. `behavior/evals/cases.json` provides deterministic regression cases for classification, pack selection, risk discovery, and decisions.
+- recursive/forced deletion and destructive Git cleanup;
+- direct overwrite, truncation, shredding, and device writes;
+- filesystem/partition administration and mount changes;
+- recursive ownership/permission changes;
+- Git history rewrite and force push;
+- worktree removal;
+- privileged containers, host-root/control-socket mounts, and destructive container pruning;
+- destructive cluster, infrastructure-as-code, and cloud operations;
+- cron, systemd, launchd, shell-startup, and scheduler persistence;
+- sensitive or general outbound data transfer, listeners, tunnels, and process-connected sockets;
+- remote download/decode followed by execution;
+- fork bombs, broad process termination, and host power control;
+- firmware/device programming and protected device changes;
+- dynamic shell constructions that static analysis cannot resolve;
+- attempts to disable, rewrite, or self-authorize the installed policy runtime.
 
-## Lifecycle placement
-
-Adapters use the nearest platform-native hooks available:
-
-- session or prompt start: inject the kernel and task-relevant packs;
-- before a tool: identify dependency changes and deterministic configured risks;
-- subagent start: propagate delegation policy plus the parent session's recent task packs without storing the raw parent prompt;
-- later adapters may use after-tool or stop events for acceptance reminders and telemetry.
-
-The plugin/extension manifests distribute these adapters; project installation writes explicit local hook settings and copies a versioned runtime into `.researchops/`.
+The adversarial regression corpus is `behavior/evals/risk-cases.json`. It contains positive bypass variants and nearby benign commands. This corpus is a maintained test set, not a proof that every shell language or tool is covered.
 
 ## Modes
 
@@ -49,68 +47,114 @@ python3 -m rops behavior --root . mode guide
 python3 -m rops behavior --root . mode enforce
 ```
 
-- `off`: no runtime activity.
-- `observe`: classify and write metadata only.
-- `guide`: inject compact context and proposals; no ordinary hard block.
-- `enforce`: additionally deny configured deterministic high-risk operations without a matching approval.
+- `off`: no context, decision, or telemetry.
+- `observe`: classify and record metadata without changing behavior.
+- `guide`: inject behavior and produce proposals, but do not block ordinary work.
+- `enforce`: deny high/critical findings unless the category is approvable and a matching operator approval exists.
 
-Use `guide` while evaluating a new project or Harness. Move to `enforce` only after reviewing generated Hook settings and platform trust prompts.
+Use `observe` or `guide` while measuring false positives on a new project/Harness. Enable `enforce` only after reviewing hook trust, platform permissions, and the project policy.
 
-## High-risk approvals
+## Command analysis
 
-Current hard-risk classes are:
+Inspect a command without executing it:
 
-- destructive deletion;
-- destructive Git operations;
-- worktree removal;
-- hardware write/reset/program actions;
-- sensitive external transfer.
+```bash
+python3 -m rops behavior --root . analyze \
+  --command 'sudo /bin/rm --recursive --force /data'
+```
 
-An approval binds to the normalized exact command, has an expiry, and is consumed once. Approval state transitions use a small cross-platform lock so concurrent workers cannot normally consume the same approval twice. Create approvals from an interactive operator terminal outside the Agent Harness:
+The output includes:
+
+- normalized invocation chain and wrappers;
+- raw and canonical SHA-256 values;
+- parse warnings and dynamic constructs;
+- rule ID, category, severity, confidence, evidence, approval eligibility, and specialist owner.
+
+## Content-bound approvals
+
+Approvals are:
+
+- created by a human-operated interactive terminal outside the Agent Harness;
+- short-lived and consumed once;
+- protected by a small cross-platform lock;
+- bound to the risk category, raw command hash, canonical command hash, and exact rule-ID set;
+- rejected when the command does not currently produce the requested category;
+- unavailable for non-approvable categories such as policy bypass and resource exhaustion.
 
 ```bash
 python3 -m rops behavior --root . approve \
   --kind destructive-delete \
-  --command 'rm -rf raw_traces' \
-  --reason 'archive and reproducibility package verified' \
+  --command '/bin/rm -rf raw_traces' \
+  --reason 'archive, evidence package, and recovery path verified' \
   --ttl 10
 ```
 
-The CLI rejects non-interactive approval creation by default. In `enforce` mode, a tool command that invokes `rops behavior ... approve`, calls the internal approval function, or writes the approval ledger is classified as a non-approvable `policy-bypass`. This is a guardrail rather than a cryptographic authority: OS permissions and the host sandbox still determine whether an Agent can alter files directly.
+Changing `/bin/rm` to `rm`, adding a wrapper, changing a target, or changing the policy rule set produces a different fingerprint. Approval of a proposal only permits entering the specialist workflow; it does not replace the workflow's topology, archive, privacy, recovery, or physical-safety checks.
 
-This runtime approval does not replace the specialist Skill's design, topology, archive, privacy, or recovery checks. It is the last narrow execution token after those checks.
+## Optional semantic/adaptive review
 
-## Privacy and audit
+The deterministic engine is portable and remains primary. A semantic reviewer is useful for code hidden behind general-purpose interpreters, dynamic shell construction, complex structured tools, or new commands not represented in the policy.
 
-The default event log is `.research/runtime/events.jsonl`. It stores:
+Any reviewer command must read one JSON object from stdin and write one strict JSON object to stdout. Configure it explicitly:
 
-- timestamp, framework, event, mode, and decision;
-- task classes and active pack IDs;
-- configured risk kinds and consumed approval kinds;
-- input length and SHA-256 hash.
+```bash
+python3 -m rops behavior --root . semantic \
+  --mode advisory \
+  --scope uncertain \
+  --command 'python3 /path/to/reviewer.py'
+```
 
-It does not store raw prompts or raw tool input by default. Raw traces should not be enabled without an explicit retention and privacy policy.
+Modes:
 
-## Fail-open and enforcement boundary
+- `off`: no semantic review;
+- `advisory`: completed high/critical semantic findings are enforced, but reviewer failure does not itself block;
+- `required`: a selected review that times out, fails, or returns invalid JSON produces a non-approvable failure finding.
 
-The portable Hook executable fails open on internal errors so that a broken adapter does not brick the Harness. Platform permissions, sandboxing, repository protection, hardware interlocks, and human confirmation remain authoritative.
+Scopes:
 
-Consequently:
+- `uncertain`: review only inputs with parse uncertainty/dynamic construction;
+- `all`: review every exposed tool input; higher latency, cost, and privacy impact.
 
-- Hook coverage must be tested for every supported Harness release.
-- Plugin/extension adapters and project-installed adapters are separate packaging paths and must both remain valid.
-- A command executed outside the Harness is outside this runtime.
-- A tool path not exposed to the configured event is not intercepted.
-- Security-sensitive deployments should combine `enforce` with platform permissions and OS/container controls.
+The included `behavior/reviewers/openai_compatible.py` can call an explicitly approved local or OpenAI-compatible endpoint. API keys remain in environment variables. Raw tool input is sent to a reviewer only after the operator enables this feature. For private research, prefer a local endpoint.
 
-## Adding a pack
+A semantic reviewer may **escalate only**. A model response of `risk: none` cannot clear a deterministic `git-force-push`, device-write, deletion, or other finding.
 
-Create a new pack only when the behavior is cross-cutting across multiple workflows and can remain concise. Otherwise put the procedure in a Skill reference.
+## Human feedback and adaptation
 
-A new pack requires:
+Record the disposition of a runtime event:
 
-1. one JSON file under `behavior/packs/`;
-2. a registry mapping;
-3. positive and negative evaluation cases;
-4. documentation of conflicts and priority;
-5. adapter smoke coverage if it changes decisions or output schema.
+```bash
+python3 -m rops behavior --root . feedback \
+  --event-id evt-... \
+  --label false-positive \
+  --note 'read-only mount inspection in isolated namespace'
+
+python3 -m rops behavior --root . report
+```
+
+Feedback supports `true-positive`, `false-positive`, `missed-risk`, `acceptable-risk`, and `needs-policy-update`. It is used for offline policy/eval review. The runtime **never weakens a rule automatically** from model or operator feedback; changes require a reviewed policy update and new positive/negative regression cases.
+
+## Privacy and logging
+
+`.research/runtime/events.jsonl` stores event ID, time, framework, mode, decision, task classes, active pack IDs, rule/category/severity metadata, semantic status, input length, and SHA-256. It does not store raw prompts or raw tool input by default.
+
+Semantic review is an explicit exception: the configured reviewer receives raw exposed tool input. Review the provider, endpoint, retention, and data policy before enabling it.
+
+## Failure behavior
+
+- In `observe` and `guide`, an internal hook error is surfaced but does not claim the input was checked.
+- In configured `enforce` mode, an internal error during an exposed pre-tool event fails closed and emits a deny decision.
+- A command run outside the Harness or a tool path without a matching hook remains outside ROPS control.
+- Hook definitions and hashes must be trusted according to the host Harness.
+
+## Adding or changing policy
+
+A policy change requires:
+
+1. a stable category and rule ID;
+2. severity, approval eligibility, and specialist owner;
+3. positive adversarial variants;
+4. nearby negative cases to control false positives;
+5. approval and semantic-layer interaction tests;
+6. adapter smoke coverage when output/decision behavior changes;
+7. an explicit security note in the changelog.

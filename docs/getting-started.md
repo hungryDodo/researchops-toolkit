@@ -13,7 +13,7 @@ The default runtime uses only the Python standard library.
 Keep the toolkit checkout separate from the research project:
 
 ```bash
-git clone git@github.com:hungryDodo/researchops-toolkit.git
+unzip researchops-toolkit-v1.6.0.zip
 cd researchops-toolkit
 python3 -m rops --version
 ```
@@ -76,7 +76,23 @@ python3 -m rops behavior --root /path/to/project evaluate \
   --command 'rm -rf raw_traces'
 ```
 
-The recommended rollout is `observe` → `guide` → `enforce` after adapter validation.
+Inspect normalization and policy findings without executing a command:
+
+```bash
+python3 -m rops behavior --root /path/to/project analyze \
+  --command 'sudo /bin/rm --recursive --force /data'
+```
+
+Optional semantic review is disabled by default. Enable it only with a local or approved reviewer and after reviewing the data boundary:
+
+```bash
+python3 -m rops behavior --root /path/to/project semantic \
+  --mode advisory \
+  --scope uncertain \
+  --command 'python3 /path/to/reviewer.py'
+```
+
+The recommended rollout is `observe` → `guide` → `enforce` after adapter validation. Use `required` semantic mode only together with `enforce` when reviewer unavailability should block selected tool calls.
 
 ## Install by research stage
 
