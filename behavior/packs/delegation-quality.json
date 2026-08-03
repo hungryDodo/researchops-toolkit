@@ -1,13 +1,32 @@
 {
   "id": "delegation-quality",
-  "version": 1,
-  "task_classes": ["delegation"],
+  "version": 2,
+  "task_classes": [
+    "delegation"
+  ],
   "summary": "Delegate only bounded work with independent acceptance and explicit resource ownership.",
   "instructions": [
     "Give each worker a task contract, input boundary, write scope, resource lease, expected artifact, and deterministic acceptance checks.",
-    "Use weaker or external models only after privacy, tool, risk, and verification constraints pass.",
-    "Worker self-assessment never accepts the work; record independent verifier results and human corrections.",
+    "Use weaker or external models only after privacy, provider trust, tool, risk, cost, and verification constraints pass.",
+    "Never request, echo, log, or store API key values in chat, Git, Skills, .research, or task artifacts; resolve them from approved environment variables or a user-level secret store.",
+    "Onboarding smoke proves connectivity only. Update model profiles solely from independently evaluated real tasks and human corrections.",
+    "Inject only human-approved model-specific prompt overlays; worker self-assessment never accepts work.",
     "Parallel agents must not write the same files or contend for the same exclusive hardware."
   ],
-  "signals": ["subagent", "sub-agent", "delegate", "worker", "parallel", "agent", "model routing", "weak model", "third-party model"]
+  "signals": [
+    "subagent",
+    "sub-agent",
+    "delegate",
+    "worker",
+    "parallel",
+    "agent",
+    "model routing",
+    "weak model",
+    "third-party model",
+    "api key",
+    "provider onboarding",
+    "model profile",
+    "model dossier",
+    "prompt overlay"
+  ]
 }

@@ -13,7 +13,7 @@ The default runtime uses only the Python standard library.
 Keep the toolkit checkout separate from the research project:
 
 ```bash
-unzip researchops-toolkit-v1.6.0.zip
+unzip researchops-toolkit-v1.7.0.zip
 cd researchops-toolkit
 python3 -m rops --version
 ```
@@ -93,6 +93,20 @@ python3 -m rops behavior --root /path/to/project semantic \
 ```
 
 The recommended rollout is `observe` → `guide` → `enforce` after adapter validation. Use `required` semantic mode only together with `enforce` when reviewer unavailability should block selected tool calls.
+
+## Add a third-party or local model
+
+Tell the Agent the provider and intended model/capability. It should verify current official docs and create a non-secret onboarding plan. Do not paste the key into chat.
+
+```bash
+python3 -m rops models recipes
+python3 -m rops models --root /path/to/project onboard \
+  --provider openai --model <verified-model-id> \
+  --capability code --risk-ceiling low
+python3 -m rops models secret-template --provider openai --write
+```
+
+After editing `~/.config/rops/secrets.env` locally, run `models doctor`, `remote-list` when supported, `probe --enroll`, then `smoke`. Full workflow and profile semantics are in [Agents and model routing](agents-and-model-routing.md).
 
 ## Install by research stage
 

@@ -45,9 +45,11 @@ def clean_generated(root: Path = ROOT) -> None:
 def smoke() -> dict[str, Any]:
     workflow = _run([sys.executable, "tests/smoke.py"])
     behavior = _run([sys.executable, "tests/behavior_smoke.py"])
+    models = _run([sys.executable, "tests/model_control_plane_smoke.py"])
     return {
         "workflow": _json_from_stdout(workflow.stdout),
         "behavior": _json_from_stdout(behavior.stdout),
+        "model_control_plane": _json_from_stdout(models.stdout),
     }
 
 
@@ -66,8 +68,9 @@ def write_validation(smoke_report: dict[str, Any]) -> Path:
         f"- Python: {platform.python_version()}",
         f"- Platform: {platform.platform()}",
         f"- Top-level Skills: {catalog['skill_count']}",
-        "- Internal components: 2 (evidence ledger, dashboard)",
+        "- Internal components: 3 (evidence ledger, dashboard, model control plane)",
         "- Behavior Runtime: 1 universal kernel, 7 task packs, 3 Harness adapters, parsed risk policy, optional semantic reviewer",
+        "- Model Control Plane: 3 direct protocol adapters, provider recipes, secret-safe onboarding, routing dispatch, smoke tests, and evidence-backed dossiers",
         f"- Startup catalog estimate: {catalog['startup_catalog_chars_estimate']} / {context['allowed_chars']} characters",
         f"- Trigger fixtures: {trigger_count} structural positive/negative cases",
         f"- Behavior fixtures: {behavior_count} task, pack, lifecycle, and decision cases",
@@ -83,7 +86,8 @@ def write_validation(smoke_report: dict[str, Any]) -> Path:
         "- Parent-session policy propagation into Sub-Agents without raw-prompt persistence.",
         "- Interactive-operator, raw/canonical/rule-bound, short-lived, concurrency-safe one-use approvals and metadata-only behavior event logging.",
         "- Proposal-only safeguard discovery, persistence, snooze state, and no target execution.",
-        "- Sub-Agent routing, deterministic checks, independent verification, and profile recording.",
+        "- Provider/model onboarding, secret-safe doctor/probe/enrollment, remote model discovery, direct dispatch, deterministic smoke tests, and model-specific prompt-overlay approval.",
+        "- Sub-Agent routing, bounded exploration, deterministic checks, independent verification, routing-profile recording, and model-dossier refresh.",
         "- Archive-first cleanup, restore, separate purge, large-data quarantine, semantic ID normalization, and worktree safety.",
         "- Research engineering gauntlet, LaTeX discovery, dashboard validation, Python compilation, and ZIP integrity.",
         "",

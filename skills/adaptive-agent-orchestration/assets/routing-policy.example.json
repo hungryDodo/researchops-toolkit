@@ -16,10 +16,24 @@
   },
   "minimum_observations_for_empirical_routing": 5,
   "privacy_provider_allowlist": {
-    "public": ["*"],
-    "internal": ["codex-native", "claude-native", "gemini-native", "openai-compatible"],
-    "confidential": ["codex-native", "local-openai-compatible"],
-    "restricted": ["codex-native"]
+    "public": [
+      "*"
+    ],
+    "internal": [
+      "codex-native",
+      "claude-native",
+      "gemini-native",
+      "openai-compatible",
+      "anthropic-direct",
+      "google-direct"
+    ],
+    "confidential": [
+      "codex-native",
+      "local-openai-compatible"
+    ],
+    "restricted": [
+      "codex-native"
+    ]
   },
   "strong_verification_required_for": [
     "critical",

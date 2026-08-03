@@ -9,7 +9,7 @@ It contains two complementary systems:
 
 > The goal is not to have an agent automatically “write a paper.” The goal is to give every question, hypothesis, result, failure, decision, risk, permission, and human approval an explicit owner and durable record.
 
-The release includes **12 top-level Skills, seven task Behavior Packs, one universal behavior kernel, two internal components, three Harness adapters, sub-agent/model routing, capability proposals, safe cleanup, and a research dashboard**.
+The release includes **12 top-level Skills, seven task Behavior Packs, one universal behavior kernel, three internal components, three Harness adapters, sub-agent/model routing, capability proposals, safe cleanup, and a research dashboard**.
 
 ## 🚀 One-liner quick start
 
@@ -50,6 +50,21 @@ python3 -m rops dashboard serve --root /path/to/project --port 8765
 ```
 
 See [Getting started](docs/getting-started.md) for installation, trust prompts, modes, and cross-framework notes.
+
+## Third-party models and the Model Control Plane
+
+Provider setup is a low-frequency mode of `adaptive-agent-orchestration`, backed by the non-Skill `model-control-plane` component. Given a provider and intended model/capability, an Agent can verify current official documentation, create a non-secret onboarding plan, prepare probes, and tell the operator where to install the key. The operator enters the secret locally, then ROPS performs doctor/probe/enrollment and bounded smoke tests.
+
+```bash
+python3 -m rops models recipes
+python3 -m rops models --root /path/to/project onboard \
+  --provider anthropic --model <verified-model-id> \
+  --capability review --risk-ceiling low \
+  --agent independent_reviewer
+python3 -m rops models secret-template --provider anthropic --write
+```
+
+Keys never belong in chat, Git, Skills, `.research/`, or command-line arguments. Connectivity tests do not teach the router. Only independently evaluated real tasks update the model dossier; model-specific prompt overlays remain proposals until a human approves them. See [Agents and model routing](docs/agents-and-model-routing.md).
 
 ## Two control planes, four layers
 
@@ -202,7 +217,7 @@ python3 -m rops validate --smoke
 python3 -m rops package --out /tmp/researchops-toolkit-release
 ```
 
-The checks cover Skill structure, trigger fixtures, Behavior Pack evals, hook installation, 131 adversarial/benign risk cases, parsed and canonical content-bound approvals, optional semantic escalation, metadata-only logging, framework installation, model routing, archive/restore/purge, worktree safety, and internal hashes. They do not prove empirical routing accuracy for every Harness/model release or guarantee publication outcomes.
+The checks cover Skill structure, trigger fixtures, Behavior Pack evals, hook installation, 134 adversarial/benign risk cases, parsed and canonical content-bound approvals, optional semantic escalation, metadata-only logging, framework installation, model routing, archive/restore/purge, worktree safety, and internal hashes. They do not prove empirical routing accuracy for every Harness/model release or guarantee publication outcomes.
 
 ## License
 

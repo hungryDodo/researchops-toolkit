@@ -7,6 +7,7 @@ ResearchOps Toolkit separates **capability discovery** from **execution behavior
 - A Skill is a user-meaningful workflow owner. It answers what procedure to follow, what artifacts to create, and how acceptance is determined.
 - A Behavior Pack is a compact cross-cutting policy. It answers how an applicable task should be performed before a full Skill is selected or while a Skill is executing.
 - A Hook or middleware adapter exposes lifecycle events. It is transport, not policy content.
+- The Model Control Plane is a non-routed component for secret-safe provider mechanics, bounded dispatch, and model dossiers; the orchestration Skill owns decisions.
 - Platform permissions and sandboxing remain the final authority over tool execution.
 
 This avoids two failure modes: turning every policy into a competing top-level Skill, and burying all workflows inside an always-on prompt.
@@ -39,7 +40,7 @@ researchops-toolkit/
 ├── behavior/             policy registry, task packs, runtime, schema, evals
 ├── hooks/                lifecycle adapter executable and manifests
 ├── skills/               12 top-level routed capabilities
-├── components/           dashboard and evidence ledger
+├── components/           dashboard, evidence ledger, and model control plane
 ├── rops/                  unified CLI
 ├── config/               shared registries and contracts
 ├── catalog/              generated Skill discovery catalog
@@ -57,7 +58,7 @@ project/
 │   ├── designs/          frozen hypotheses, variables, metrics, protocols
 │   ├── runs/             immutable run manifests and results
 │   ├── evidence/         claim/evidence ledger and artifacts
-│   ├── agents/           model registry, dispatches, acceptance, profiles
+│   ├── agents/           providers/models, onboarding, dispatches, acceptance, routing profiles, model dossiers
 │   ├── proposals/        capability recommendations and decisions
 │   ├── runtime/          behavior mode, approvals, metadata-only events
 │   ├── hygiene/          inventories, plans, registries

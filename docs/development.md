@@ -50,6 +50,12 @@ Keep deterministic parsing/policy decisions separate from semantic escalation. A
 
 Treat each platform's input/output schema as a strict external contract. Validate generated settings, lifecycle coverage, trust behavior, Windows/POSIX commands, enforce-mode fail-closed behavior, semantic-review failure modes, and platform permission fallbacks.
 
+## Model Control Plane changes
+
+Provider recipes and smoke suites live under `config/`; persistent runtime code lives in `rops/models.py`; public protocol/state contracts live in `components/model-control-plane/`; the progressively loaded workflow remains in `adaptive-agent-orchestration`. Do not put API key values in fixtures, docs, example registries, or test output.
+
+A new provider adapter requires an official protocol reference, non-secret recipe, mocked offline probe/list/dispatch tests, privacy/trust defaults, failure handling, and a statement of unsupported authentication modes. Model smoke tests must not update performance profiles. Prompt overlays must remain proposed until explicit human approval.
+
 ## Unified tooling
 
 ```bash
@@ -78,7 +84,7 @@ python3 -m rops validate --smoke
 python3 -m rops package --out /tmp/researchops-toolkit-release
 ```
 
-The smoke suite covers Skills, Hook installation, Pack selection, parsed/canonical content-bound one-use approval, 131-case adversarial risk corpus, optional semantic escalation, metadata-only logging, sub-agent routing, archive/restore/purge, large-data quarantine, ID normalization, worktree safety, dashboard validation, and research-engineering utilities.
+The smoke suite covers Skills, Hook installation, Pack selection, parsed/canonical content-bound one-use approval, the generated adversarial risk corpus, optional semantic escalation, metadata-only logging, provider onboarding across three API protocols, secret-safe probes, model routing/dossiers/prompt overlays, archive/restore/purge, large-data quarantine, ID normalization, worktree safety, dashboard validation, and research-engineering utilities.
 
 ## Changelog policy
 

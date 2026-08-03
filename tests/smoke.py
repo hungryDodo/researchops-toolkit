@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = os.environ.get("PYTHON", "python3")
 
 
-def run(*args: str, cwd: Path | None = None, capture: bool = False, expect: int = 0) -> subprocess.CompletedProcess[str]:
+def run(*args: str, cwd: Path | None = None, capture: bool = True, expect: int = 0) -> subprocess.CompletedProcess[str]:
     completed = subprocess.run(list(args), cwd=cwd or ROOT, text=True, capture_output=capture)
     if completed.returncode != expect:
         raise RuntimeError(

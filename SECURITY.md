@@ -26,6 +26,14 @@ Never grant write access to `.research/runtime/approvals.json`, `.research/runti
 
 Semantic review is disabled by default. Enabling it sends raw exposed tool input to the configured reviewer command. Prefer an approved local endpoint for private projects, keep credentials in environment variables, and review provider retention/data-use terms. A semantic reviewer can add or escalate findings but cannot clear deterministic findings.
 
+## Provider credentials and model dispatch
+
+Never paste provider keys into an Agent conversation or store them in Git, Skills, `.research/`, prompt files, command-line arguments, model dossiers, logs, or test fixtures. ROPS reads provider-standard environment variables first and then the user-level `~/.config/rops/secrets.env` (or `$ROPS_SECRETS_FILE`). Keep the directory private and the file at mode `0600` or an equivalent OS permission. Organization secret managers should expose short-lived credentials as environment variables where possible.
+
+Provider/model onboarding plans contain only credential variable names, never values. `doctor` reports presence/source metadata only. Probe and smoke records hash outputs and may include short output previews but never credential values. External model dispatch remains subject to Behavior Runtime egress policy, provider trust/privacy filters, and Harness permissions.
+
+Model-specific prompt overlays are generated only from independently evaluated task history or explicit human notes. They are inactive until human approval and must not contain raw private prompts or secrets.
+
 ## Data handling
 
 Default audit events store metadata, lengths, hashes, rule IDs, and decisions rather than raw prompts or tool arguments. Do not attach real secrets, private papers, unpublished datasets, raw participant data, or unsafe hardware envelopes to issue reports.

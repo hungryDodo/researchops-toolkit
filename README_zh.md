@@ -9,7 +9,7 @@ ResearchOps Toolkit 是一套面向 Codex、Claude Code、Gemini CLI 与可选�
 
 > 目标不是让 Agent 自动“写出一篇论文”，而是让问题、假设、证据、失败、决策、风险、权限和人工审批都有明确归属。
 
-当前发行版提供 **12 个顶层 Skill、7 个 Behavior Pack、1 个通用行为内核、2 个内部组件、三类 Harness 适配器、Sub-Agent/多模型路由、Capability Proposal、安全清理与研究看板**。
+当前发行版提供 **12 个顶层 Skill、7 个 Behavior Pack、1 个通用行为内核、3 个内部组件、三类 Harness 适配器、Sub-Agent/多模型路由、Capability Proposal、安全清理与研究看板**。
 
 ## 快速开始
 
@@ -57,6 +57,26 @@ python3 -m rops dashboard serve \
 完整安装、Hook 信任提示、模式选择与多框架说明见 [快速开始](docs/getting-started.md)。
 
 也可以从公开仓库安装分发层：Gemini CLI 会自动发现根目录的 Skills 与 `hooks/hooks.json`；Claude Code 可使用仓库中的 marketplace。Codex 当前推荐继续使用上面的项目级 `rops install` 路径，因为它能明确生成项目 Hook、Skill 和 Agent 配置，并避开不同版本本地 marketplace 对仓库根插件路径支持不一致的问题。
+
+## 第三方模型与 Model Control Plane
+
+第三方模型接入不是新的常驻顶层 Skill，而是 `adaptive-agent-orchestration` 的低频 onboarding 模式，配合非 Skill 的 `model-control-plane` 组件。Agent 可以根据用户给出的 provider 和目标模型查阅当前官方文档、生成不含秘密的接入计划、准备 probe/smoke；用户只需在本机环境变量或 `~/.config/rops/secrets.env` 中填写 Key，再让 Agent 继续验证和注册。
+
+```bash
+python3 -m rops models recipes
+python3 -m rops models --root /path/to/project onboard \
+  --provider anthropic --model <verified-model-id> \
+  --capability review --risk-ceiling low \
+  --agent independent_reviewer
+
+python3 -m rops models secret-template --provider anthropic --write
+# 用户在 Harness 外本地填写 Key，然后：
+python3 -m rops models doctor --provider anthropic
+python3 -m rops models --root /path/to/project probe \
+  --plan <onboarding-plan.json> --enroll
+```
+
+Key 不得写入聊天、仓库、Skill、`.research/` 或命令行参数。连通性 probe 和 smoke 不会训练模型画像；只有经过确定性验收或独立 verifier 的真实任务结果才会更新档案。反复出现的弱点会生成模型专属提示词 proposal，必须由人批准后才会自动注入后续派发。详见 [Sub-Agent 与模型路由](docs/agents-and-model-routing.md)。
 
 ## 两个控制面，四层结构
 
@@ -123,7 +143,7 @@ researchops-toolkit/
 ├── .claude-plugin/         # Claude Code 插件与 marketplace 元数据
 ├── gemini-extension.json   # Gemini CLI 扩展元数据
 ├── skills/                 # 12 个可渐进加载的顶层 Skill
-├── components/             # evidence-ledger、dashboard；不参与语义触发
+├── components/             # evidence-ledger、dashboard、model-control-plane；不参与语义触发
 ├── rops/                    # 统一跨平台 CLI 与项目/行为/质量/发布模块
 ├── config/                 # 框架路径、bundles、触发、proposal 与产物合同
 ├── catalog/                # 生成式 Skill 目录
@@ -161,7 +181,7 @@ researchops-toolkit/
 | `experimental-research` | 软件实验设计、执行、分析和可复现实证 |
 | `hardware-experiment-loop` | 硬件拓扑、安全、校准、租约与恢复 |
 | `research-engineering` | 影响研究结论的代码变更：SPEC → RED → GREEN → Gauntlet |
-| `adaptive-agent-orchestration` | Sub-Agent 拆分、模型路由、独立验收和模型画像 |
+| `adaptive-agent-orchestration` | 第三方模型接入、Sub-Agent 拆分、模型路由、独立验收和模型画像 |
 | `research-validation` | 独立复现、artifact audit 和论文 red-team review |
 | `research-writing` | 证据门控写作、LaTeX 修订、反馈 ledger 与视觉检查 |
 | `research-communication` | 学术插图、结果图和研究型 PPT |
@@ -240,7 +260,7 @@ python3 -m rops validate --smoke
 python3 -m rops package --out /tmp/researchops-toolkit-release
 ```
 
-这些检查覆盖 Skill 结构、Trigger fixture、Behavior Pack eval、131 条高风险/相邻安全对抗用例、Hook/扩展清单、父任务到 Sub-Agent 的策略传播、并发内容绑定一次性批准、可选语义复核、元数据日志、跨框架安装、模型路由、归档恢复、两阶段清除、worktree 保护和内部文件哈希。它们不等价于所有 Harness/模型版本上的真实语义触发准确率，也不保证某个研究方向必然达到顶会水平。
+这些检查覆盖 Skill 结构、Trigger fixture、Behavior Pack eval、134 条高风险/相邻安全对抗用例、Hook/扩展清单、父任务到 Sub-Agent 的策略传播、并发内容绑定一次性批准、可选语义复核、元数据日志、跨框架安装、模型路由、归档恢复、两阶段清除、worktree 保护和内部文件哈希。它们不等价于所有 Harness/模型版本上的真实语义触发准确率，也不保证某个研究方向必然达到顶会水平。
 
 ## License
 

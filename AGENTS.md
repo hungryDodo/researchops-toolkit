@@ -13,7 +13,7 @@
 - `behavior/` contains compact cross-cutting policy, task classification, parsed risk policy, and optional semantic escalation.
 - `hooks/` and plugin manifests contain Harness transport only; do not duplicate policy prose there.
 - `skills/` contains user-routable procedures and artifact/acceptance owners.
-- `components/` contains non-routed shared services.
+- `components/` contains non-routed shared services, including the Model Control Plane.
 - Platform permissions and sandboxing remain authoritative; do not claim Hook coverage is a complete security boundary.
 
 ## Repository invariants
@@ -26,6 +26,8 @@
 - A semantic reviewer may add or escalate risk only under the strict configured JSON contract; it must never clear a static finding. Do not claim model review is a sandbox or allow feedback to weaken policy automatically.
 - Do not broaden hardware, deletion, external-provider, worktree, or implicit-invocation permissions silently.
 - Runtime logs must remain metadata-only by default; do not add raw prompt/tool logging without an explicit privacy design.
+- Provider API key values must never enter chat, Git, Skills, `.research/`, CLI arguments, fixtures, dossiers, or logs. Provider/model onboarding plans contain variable names only.
+- Probe and smoke results do not update model capability profiles. Only independently evaluated real tasks may update a dossier; prompt overlays require human approval.
 - Do not vendor third-party content without pinned provenance, a compatible license, and security review.
 - Do not create empty directories or duplicate generated/demo assets.
 - Use `python3 -m rops`; do not add a root script when an existing command or internal module can own the operation.

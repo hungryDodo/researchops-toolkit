@@ -6,6 +6,29 @@ All notable user-visible changes are documented here. The project follows semant
 
 No unreleased changes.
 
+## [1.7.0] - 2026-08-03
+
+### Added
+
+- Added a non-Skill Model Control Plane for secret-safe provider onboarding, official-recipe metadata, model discovery, connectivity probes, deterministic smoke tests, enrollment, direct dispatch, and structured model dossiers.
+- Added direct protocol adapters for OpenAI-compatible Chat Completions, Anthropic Messages, and Google Generate Content, plus recipes for OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter, LiteLLM, and local compatible servers.
+- Added `python3 -m rops models` commands for recipes, onboarding plans, secret templates, doctor, remote model listing, probe/enroll, dispatch/delegate, smoke tests, model profiles, and human profile notes.
+- Added a low-frequency provider-onboarding mode and model-profile protocol to `adaptive-agent-orchestration`.
+- Added evidence-backed model-specific prompt overlays that remain proposed until human approval, then inject into direct dispatch and generated native Agent roles.
+- Added an offline Model Control Plane smoke test covering three provider protocols, secret non-disclosure, Agent candidate attachment, profile isolation, routing, and prompt injection.
+
+### Changed
+
+- Provider/API configuration is split from credentials: repositories store only non-secret endpoint/model/policy data; credentials resolve from environment variables or the user-level ROPS secret file.
+- Evaluated dispatch recording now refreshes both task-routing aggregates and the corresponding model dossier. Probe and smoke results never update capability profiles.
+- Bounded exploration remains available only after privacy, trust, risk, mutability, candidate-Agent, and deterministic-verification filters pass.
+
+### Security
+
+- API key values are prohibited from chat, Git, Skills, `.research/`, prompts, command arguments, dossiers, and logs. `doctor` reports only presence/source metadata.
+- `rops models dispatch` and `delegate` are recognized as external-data-transfer events by the Behavior Runtime; sensitive research-state paths escalate the category.
+- Model-specific prompt changes require explicit human approval and cannot be self-activated by a worker.
+
 ## [1.6.0] - 2026-08-03
 
 ### Added

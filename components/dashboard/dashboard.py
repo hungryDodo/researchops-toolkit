@@ -3,7 +3,7 @@
 from __future__ import annotations
 import argparse, datetime as dt, http.server, json, os, shutil, socketserver, tempfile
 from pathlib import Path
-VERSION="1.5.0"
+VERSION="1.7.0"
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
 def dash(root): return Path(root).resolve()/'.research'/'dashboard'
 def state_path(root): return dash(root)/'project.json'

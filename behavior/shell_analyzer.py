@@ -567,6 +567,25 @@ def analyze_command(command: str, project_root: Path | None, policy: dict[str, A
     if re.search(r"(?:/etc/systemd/system|/usr/lib/systemd/system|/etc/crontab|/etc/cron\.|/var/spool/cron|\.config/systemd/user|\.bashrc|\.zshrc|\.profile|authorized_keys)", command, re.I) and re.search(r"(?:>|tee\b|cp\b|install\b|sed\s+-i|echo\b)", command, re.I):
         findings.append(_finding(policy, "persistence.file-write", "persistence-modification", "writes a service, scheduler, shell-startup, or authorization persistence file", command))
 
+    # ROPS model dispatch/delegation sends prompt content to an enrolled provider.
+    # Treat it as an explicit external-data event even when the underlying HTTP
+    # call is hidden behind the Python CLI rather than curl/wget.
+    rops_model_send = re.search(
+        r"\b(?:(?:python(?:3(?:\.\d+)?)?\s+-m\s+)?rops)\s+models\b[^;&|\n]*\b(?:dispatch|delegate)\b",
+        command,
+        re.I,
+    )
+    if rops_model_send and not re.search(r"(?:^|\s)--dry-run(?:\s|$)", command):
+        sensitive = any(re.search(pattern, command, re.I) for pattern in policy.get("sensitive_name_patterns", []))
+        sensitive = sensitive or bool(re.search(r"(?:^|\s)(?:--prompt-file|--system-file|--task-file)\s+(?:\.research|\.researchops|~?/\.ssh|~?/\.aws|~?/\.config/gcloud)", command, re.I))
+        findings.append(_finding(
+            policy,
+            "rops.model-dispatch-sensitive" if sensitive else "rops.model-dispatch",
+            "external-sensitive-transfer" if sensitive else "external-data-transfer",
+            "ROPS model dispatch sends task content to an enrolled external or gateway model provider",
+            command,
+        ))
+
     variable_target = bool(re.search(r"(?:>>?|>\|)\s*[\"']?\$\{?[A-Za-z_][A-Za-z0-9_]*\}?", command))
     dynamic_risky = bool(parsed["dynamic_constructs"] and (DYNAMIC_COMMAND_RE.search(parsed["transformed"]) or DANGEROUS_KEYWORDS.search(command))) or variable_target
     if dynamic_risky:

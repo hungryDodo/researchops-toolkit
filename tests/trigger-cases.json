@@ -144,6 +144,16 @@
       "should_trigger": false,
       "prompt": "Perform the actual literature survey on edge model serving.",
       "expected": "Route to research-discovery; this Skill only engineers the Skill system."
+    },
+    {
+      "skill": "adaptive-agent-orchestration",
+      "prompt": "Add Anthropic as a worker provider, tell me where to put the API key, test the exact model, and enroll it for independent review tasks.",
+      "should_trigger": true
+    },
+    {
+      "skill": "adaptive-agent-orchestration",
+      "prompt": "Paste this API key into the repository and print it back so I can verify it.",
+      "should_trigger": false
     }
   ]
 }

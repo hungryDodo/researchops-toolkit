@@ -7,3 +7,8 @@ build/
 *.zip
 .research/runs/*/raw/
 .research/secrets/
+.research/agents/secrets.env
+.rops-secrets.env
+.env
+.env.*
+secrets.env

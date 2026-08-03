@@ -3,11 +3,11 @@
 Generated from Skill frontmatter. Read this file to select the narrowest owner; do not load every `SKILL.md`.
 
 - Skills: 12
-- Estimated startup catalog characters: 3897
+- Estimated startup catalog characters: 3956
 
 | Skill | Description |
 |---|---|
-| `adaptive-agent-orchestration` | Use when research work can be split into independently verifiable subtasks, routed across models or providers, or when returned worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, or worker self-approval. |
+| `adaptive-agent-orchestration` | Use when research work can be split into independently verifiable subtasks, routed across models or providers, when a provider/model must be onboarded, or when worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, secret collection in chat, or worker self-approval. |
 | `experimental-research` | Use when freezing an experiment contract, executing approved software experiments, analyzing results, and registering reproducible evidence. Do not use for physical hardware actuation, unapproved protocol changes, or retrofitting metrics after results are visible. |
 | `hardware-experiment-loop` | Use when experiments touch physical devices, power supplies, profilers, radios, sensors, batteries, or exclusive hardware resources. Do not use for software-only runs or to bypass preflight, leases, calibration, and human safety limits. |
 | `project-hygiene` | Use when repositories, large data, logs, checkpoints, worktrees, temporary tests, internal IDs, or obsolete files need inventory, archive, restoration, quarantine, or approved purge. Do not use on active, referenced, dirty, unregistered, or ambiguously owned assets. |

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "positive_count": 98,
-  "negative_count": 33,
+  "positive_count": 100,
+  "negative_count": 34,
   "cases": [
     {
       "id": "rm-compact",
@@ -656,6 +656,21 @@
     {
       "id": "python-inline-print-safe",
       "command": "python3 -c \"print('hello')\"",
+      "expect_no_findings": true
+    },
+    {
+      "id": "rops-external-model-dispatch",
+      "command": "python3 -m rops models --root . dispatch --model-id openrouter/test --prompt-file prompts/task.txt --output result.json",
+      "expect_kind": "external-data-transfer"
+    },
+    {
+      "id": "rops-sensitive-model-dispatch",
+      "command": "rops models --root . dispatch --model-id external/test --prompt-file .research/private-task.txt --output result.json",
+      "expect_kind": "external-sensitive-transfer"
+    },
+    {
+      "id": "rops-model-dispatch-dry-run-safe",
+      "command": "python3 -m rops models --root . dispatch --model-id openrouter/test --prompt-file prompts/task.txt --output result.json --dry-run",
       "expect_no_findings": true
     }
   ]

@@ -210,7 +210,12 @@ def evaluate(
     elif not accepted:
         failure_attribution = "worker-or-capability"
 
+    registry_eligible = bool(checks) and not verifier_blocked
     event = {
+        "evaluation_schema_version": 2,
+        "registry_eligible": registry_eligible,
+        "deterministic_checks_count": len(checks),
+        "independent_verifier_provided": bool(verifier_data.get("independent")),
         "task": contract.get("task", {}),
         "model_id": result.get("model_id"),
         "agent_revision": result.get("agent_revision"),
@@ -242,6 +247,7 @@ def evaluate(
         "human_feedback": human_data,
         "failure_attribution": failure_attribution,
         "worker_self_assessment_ignored_for_acceptance": True,
+        "registry_eligible": registry_eligible,
         "event_for_registry": event,
     }
 

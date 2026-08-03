@@ -10,6 +10,12 @@
     },
     {
       "skill": "adaptive-agent-orchestration",
+      "should_trigger": true,
+      "prompt": "Onboard a new Gemini API model, prepare the config and smoke tests, then tell me where I should enter the key.",
+      "expected": "Verify official docs, create a non-secret plan, never request the key in chat, and stop for local secret installation before probing."
+    },
+    {
+      "skill": "adaptive-agent-orchestration",
       "should_trigger": false,
       "prompt": "Fix this typo in one local Markdown file.",
       "expected": "Use the ordinary coding/editing path; subagent routing adds no value."

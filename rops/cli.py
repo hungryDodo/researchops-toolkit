@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from . import ROOT, VERSION
-from . import behavior, project, proposals, quality
+from . import behavior, models, project, proposals, quality
 
 
 def emit(data) -> None:
@@ -106,6 +106,70 @@ def build_parser() -> argparse.ArgumentParser:
     behavior_feedback.add_argument("--note", default="")
     behavior_sub.add_parser("report", help="Summarize behavior feedback without auto-changing policy")
 
+    models_parser = sub.add_parser("models", help="Onboard, test, dispatch, and profile model providers")
+    models_parser.add_argument("--root", default=".")
+    models_sub = models_parser.add_subparsers(dest="models_command", required=True)
+    models_recipes = models_sub.add_parser("recipes", help="List built-in provider recipes")
+    models_recipes.add_argument("provider", nargs="?")
+    models_onboard = models_sub.add_parser("onboard", help="Create a non-secret provider/model onboarding plan")
+    models_onboard.add_argument("--provider", required=True)
+    models_onboard.add_argument("--model", required=True)
+    models_onboard.add_argument("--base-url")
+    models_onboard.add_argument("--protocol", choices=["openai-chat", "anthropic-messages", "google-generate-content"])
+    models_onboard.add_argument("--credential-env")
+    models_onboard.add_argument("--capability", action="append", default=[])
+    models_onboard.add_argument("--risk-ceiling", choices=["low", "medium", "high", "critical"], default="low")
+    models_onboard.add_argument("--trust-zone")
+    models_onboard.add_argument("--agent", action="append", default=[], help="Attach the enrolled model to an existing agent candidate list")
+    models_secret = models_sub.add_parser("secret-template", help="Show or create the user-level secret template")
+    models_secret.add_argument("--provider", required=True)
+    models_secret.add_argument("--write", action="store_true")
+    models_doctor = models_sub.add_parser("doctor", help="Check credential presence without printing secret values")
+    models_doctor.add_argument("--provider", required=True)
+    models_probe = models_sub.add_parser("probe", help="Run a small connectivity and exact-format probe")
+    models_probe.add_argument("--plan", required=True)
+    models_probe.add_argument("--timeout", type=float, default=60.0)
+    models_probe.add_argument("--enroll", action="store_true")
+    models_enroll = models_sub.add_parser("enroll", help="Enroll a model after a successful probe")
+    models_enroll.add_argument("--plan", required=True)
+    models_enroll.add_argument("--probe")
+    models_sub.add_parser("list", help="List configured providers and models")
+    models_remote = models_sub.add_parser("remote-list", help="List provider model IDs when the provider exposes an endpoint")
+    models_remote.add_argument("--provider", required=True)
+    models_remote.add_argument("--timeout", type=float, default=30.0)
+    models_dispatch = models_sub.add_parser("dispatch", help="Run one bounded model request with the approved model prompt overlay")
+    models_dispatch.add_argument("--model-id", required=True)
+    models_dispatch.add_argument("--prompt-file", type=Path, required=True)
+    models_dispatch.add_argument("--system-file", type=Path)
+    models_dispatch.add_argument("--output", type=Path, required=True)
+    models_dispatch.add_argument("--max-tokens", type=int, default=2048)
+    models_dispatch.add_argument("--temperature", type=float, default=0.0)
+    models_dispatch.add_argument("--timeout", type=float, default=120.0)
+    models_dispatch.add_argument("--dry-run", action="store_true")
+    models_dispatch.add_argument("--agent", help="Apply an existing agent role prompt and require candidate-model approval")
+    models_dispatch.add_argument("--privacy", choices=["public", "internal", "confidential", "restricted"], default="public")
+    models_dispatch.add_argument("--risk", choices=["low", "medium", "high", "critical"], default="low")
+    models_delegate = models_sub.add_parser("delegate", help="Route a task to an eligible model and dispatch it; evaluation remains a separate gate")
+    models_delegate.add_argument("--task-file", type=Path, required=True)
+    models_delegate.add_argument("--prompt-file", type=Path, required=True)
+    models_delegate.add_argument("--system-file", type=Path)
+    models_delegate.add_argument("--output-dir", type=Path, required=True)
+    models_delegate.add_argument("--agent")
+    models_delegate.add_argument("--max-tokens", type=int, default=2048)
+    models_delegate.add_argument("--temperature", type=float, default=0.0)
+    models_delegate.add_argument("--timeout", type=float, default=120.0)
+    models_delegate.add_argument("--dry-run", action="store_true")
+    models_smoke = models_sub.add_parser("smoke", help="Run small deterministic onboarding tests without updating performance profiles")
+    models_smoke.add_argument("--model-id", required=True)
+    models_smoke.add_argument("--timeout", type=float, default=60.0)
+    models_profile = models_sub.add_parser("profile", help="Rebuild or inspect model dossiers")
+    models_profile.add_argument("--model-id")
+    models_profile.add_argument("--approve-prompt", action="store_true")
+    models_note = models_sub.add_parser("profile-note", help="Add a human-authored model note")
+    models_note.add_argument("--model-id", required=True)
+    models_note.add_argument("--kind", choices=["strength", "weakness", "prompt", "general"], default="general")
+    models_note.add_argument("--text", required=True)
+
     validate = sub.add_parser("validate", help="Run structural and release checks")
     validate.add_argument("--write-manifest", action="store_true")
     validate.add_argument("--smoke", action="store_true")
@@ -186,6 +250,41 @@ def main(argv: list[str] | None = None) -> int:
             emit(behavior.feedback(root, args.event_id, args.label, args.note))
         else:
             emit(behavior.feedback_report(root))
+    elif args.command == "models":
+        root = Path(args.root).resolve()
+        if args.models_command == "recipes":
+            emit(models.list_recipes(args.provider))
+        elif args.models_command == "onboard":
+            emit(models.create_plan(root, args.provider, args.model, args.base_url, args.protocol, args.credential_env, args.capability or None, args.risk_ceiling, args.trust_zone, args.agent or None))
+        elif args.models_command == "secret-template":
+            emit(models.secret_template(args.provider, args.write))
+        elif args.models_command == "doctor":
+            emit(models.secret_status(args.provider, root))
+        elif args.models_command == "probe":
+            emit(models.probe(root, args.plan, args.timeout, args.enroll))
+        elif args.models_command == "enroll":
+            emit(models.enroll(root, args.plan, args.probe))
+        elif args.models_command == "list":
+            emit(models.configured(root))
+        elif args.models_command == "remote-list":
+            emit(models.list_remote_models(root, args.provider, args.timeout))
+        elif args.models_command == "dispatch":
+            emit(models.dispatch(root, args.model_id, args.prompt_file, args.output, args.system_file, args.max_tokens, args.temperature, args.timeout, args.dry_run, args.agent, args.privacy, args.risk))
+        elif args.models_command == "delegate":
+            emit(models.route_and_dispatch(root, args.task_file, args.prompt_file, args.output_dir, args.agent, args.system_file, args.max_tokens, args.temperature, args.timeout, args.dry_run))
+        elif args.models_command == "smoke":
+            emit(models.smoke(root, args.model_id, args.timeout))
+        elif args.models_command == "profile":
+            if args.approve_prompt:
+                if not args.model_id:
+                    raise SystemExit("--approve-prompt requires --model-id")
+                emit(models.approve_prompt(root, args.model_id))
+            elif args.model_id:
+                emit(models.rebuild_dossier(root, args.model_id))
+            else:
+                emit(models.rebuild_all_dossiers(root))
+        elif args.models_command == "profile-note":
+            emit(models.add_profile_note(root, args.model_id, args.kind, args.text))
     elif args.command == "catalog":
         emit(quality.generate_catalog())
     elif args.command == "validate":

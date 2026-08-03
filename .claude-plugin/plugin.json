@@ -1,6 +1,6 @@
 {
   "name": "researchops-toolkit",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Evidence-driven research workflows with progressively loaded Skills and a task-aware behavior runtime.",
   "author": {
     "name": "ResearchOps Toolkit contributors",

@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "skill_count": 12,
-  "startup_catalog_chars_estimate": 3897,
+  "startup_catalog_chars_estimate": 3956,
   "skills": [
     {
       "name": "adaptive-agent-orchestration",
-      "description": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, or when returned worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, or worker self-approval.",
+      "description": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, when a provider/model must be onboarded, or when worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, secret collection in chat, or worker self-approval.",
       "path": "skills/adaptive-agent-orchestration/SKILL.md",
-      "description_chars": 269
+      "description_chars": 328
     },
     {
       "name": "experimental-research",

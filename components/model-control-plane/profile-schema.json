@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ROPS model dossier",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "model_id",
+    "observations",
+    "strengths",
+    "weaknesses",
+    "prompt_overlay"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "observations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "weaknesses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "prompt_overlay": {
+      "type": "object",
+      "required": [
+        "active",
+        "proposed"
+      ],
+      "properties": {
+        "active": {
+          "type": "string"
+        },
+        "proposed": {
+          "type": "string"
+        },
+        "active_revision": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "provider_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "provider_protocol": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "trust_zone": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "risk_ceiling": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accepted": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "success_rate": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "mean_quality": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "mean_human_correction": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "mean_verifier_disagreement": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "failure_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "manual_notes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

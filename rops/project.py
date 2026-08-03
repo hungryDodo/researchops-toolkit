@@ -82,18 +82,18 @@ def install(
                     old.symlink_to(destination, target_is_directory=True)
                 except OSError:
                     pass
-    if with_agents:
-        if scope != "project":
-            raise ValueError("--with-agents requires project scope")
-        run([sys.executable, str(ROOT / "skills/adaptive-agent-orchestration/scripts/agent_registry.py"), "--root", str(project_path), "init"])
-        native = "all" if target in {"all", "portable"} else target
-        run([sys.executable, str(ROOT / "skills/adaptive-agent-orchestration/scripts/render_native_agents.py"), "--root", str(project_path), "--framework", native])
     if with_behavior:
         if scope != "project":
             raise ValueError("--with-behavior requires project scope")
         from . import behavior
         behavior_target = "all" if target in {"all", "portable"} else target
         report["behavior"] = behavior.install(project_path, behavior_target, behavior_mode)
+    if with_agents:
+        if scope != "project":
+            raise ValueError("--with-agents requires project scope")
+        run([sys.executable, str(ROOT / "skills/adaptive-agent-orchestration/scripts/agent_registry.py"), "--root", str(project_path), "init"])
+        native = "all" if target in {"all", "portable"} else target
+        run([sys.executable, str(ROOT / "skills/adaptive-agent-orchestration/scripts/render_native_agents.py"), "--root", str(project_path), "--framework", native])
     return report
 
 

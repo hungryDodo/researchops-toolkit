@@ -140,9 +140,9 @@
       "auto_propose_stages": []
     },
     {
-      "id": "external-model-provider",
+      "id": "external-model-onboarding",
       "skill": "adaptive-agent-orchestration",
-      "mode": "external-provider",
+      "mode": "provider-onboarding",
       "activation": "propose_before_execute",
       "stages": [
         "survey",
@@ -153,13 +153,20 @@
       "patterns": [
         "third-party model",
         "external api",
+        "api key",
+        "new model",
         "cheap model",
         "weak model",
         "litellm",
-        "provider"
+        "provider",
+        "model gateway",
+        "openrouter",
+        "anthropic api",
+        "gemini api",
+        "deepseek api"
       ],
-      "benefit": "Use lower-cost workers with explicit privacy, capability, and verifier boundaries.",
-      "approval": "user approves provider and data classification",
+      "benefit": "Onboard external workers without exposing secrets, verify current official API contracts, and enroll models with explicit privacy, risk, smoke, and verifier boundaries.",
+      "approval": "user approves provider/data classification and installs the credential outside the Agent conversation",
       "context_cost": "low",
       "reason": "A stage or planned action may benefit from external-model-provider.",
       "auto_propose_stages": []

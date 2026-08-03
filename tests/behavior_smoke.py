@@ -110,6 +110,13 @@ def main() -> None:
             assert result["decision"] == "deny", (kind, result)
             assert kind in {item["kind"] for item in result["proposals"]}, (kind, result)
 
+        rops_dispatch = evaluate(project, "python3 -m rops models --root . dispatch --model-id external/test --prompt-file prompts/task.txt --output result.json")
+        assert rops_dispatch["decision"] == "deny"
+        assert "external-data-transfer" in {item["kind"] for item in rops_dispatch["proposals"]}
+        rops_sensitive = evaluate(project, "rops models --root . dispatch --model-id external/test --prompt-file .research/private-task.txt --output result.json")
+        assert "external-sensitive-transfer" in {item["kind"] for item in rops_sensitive["proposals"]}
+        assert evaluate(project, "python3 -m rops models --root . dispatch --model-id external/test --prompt-file prompts/task.txt --output result.json --dry-run")["decision"] == "allow"
+
         # Benign neighbors remain allowed.
         for command in ("git push origin main", "docker run --rm ubuntu echo hi", "chmod 644 file", "curl -O https://example/file", "echo hi > output.txt"):
             result = evaluate(project, command)
@@ -246,7 +253,8 @@ def main() -> None:
             "framework_hook_configs": 3,
             "rm_bypass_variants": len(rm_variants),
             "high_risk_categories_smoked": len(category_commands),
-            "benign_neighbors": 5,
+            "benign_neighbors": 6,
+            "rops_external_dispatch_guarded": True,
             "parsed_command_policy": True,
             "content_bound_one_use_approval": True,
             "semantic_escalation": True,

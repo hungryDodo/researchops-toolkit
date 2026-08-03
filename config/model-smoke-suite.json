@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "tests": [
+    {
+      "id": "exact-token",
+      "system": "Follow the requested output format exactly.",
+      "prompt": "Reply with exactly ROPS_OK and nothing else.",
+      "expect": {"type": "exact", "value": "ROPS_OK"},
+      "max_tokens": 32
+    },
+    {
+      "id": "simple-json",
+      "system": "Return only valid compact JSON and no markdown.",
+      "prompt": "Return an object with key status and string value ready.",
+      "expect": {"type": "json-path-equals", "path": "status", "value": "ready"},
+      "max_tokens": 64
+    }
+  ]
+}

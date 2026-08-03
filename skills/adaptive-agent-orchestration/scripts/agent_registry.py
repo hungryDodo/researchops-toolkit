@@ -13,6 +13,7 @@ import json
 import math
 import os
 import tempfile
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -68,6 +69,10 @@ def paths(root: Path) -> dict[str, Path]:
         "history": d / "task-history.jsonl",
         "profiles": d / "profiles.json",
         "decisions": d / "routing-decisions.jsonl",
+        "providers": d / "providers.json",
+        "model_profiles": d / "model-profiles",
+        "onboarding": d / "onboarding",
+        "smoke": d / "smoke",
     }
 
 
@@ -84,6 +89,10 @@ def init_project(root: Path, assets: Path, force: bool = False) -> None:
             atomic(dst, load(assets / src_name, {}))
     if force or not ps["profiles"].exists():
         atomic(ps["profiles"], {"schema_version": 1, "generated_at": iso(), "profiles": {}})
+    if force or not ps["providers"].exists():
+        atomic(ps["providers"], {"schema_version": 1, "providers": []})
+    for key in ("model_profiles", "onboarding", "smoke"):
+        ps[key].mkdir(parents=True, exist_ok=True)
     for key in ("history", "decisions"):
         if force or not ps[key].exists():
             ps[key].touch()
@@ -308,10 +317,30 @@ def record(root: Path, event: dict[str, Any]) -> dict[str, Any]:
     missing = [k for k in required if k not in event]
     if missing: raise SystemExit("missing event fields: " + ", ".join(missing))
     if not isinstance(event.get("task"), dict): raise SystemExit("event.task must be an object")
+    if event.get("registry_eligible") is not True:
+        raise SystemExit("event is not registry-eligible; record only evaluated real-task outcomes")
+    if int(event.get("deterministic_checks_count", 0)) < 1:
+        raise SystemExit("registry-eligible event must include at least one deterministic acceptance check")
     event = {"schema_version": 1, "recorded_at": iso(), **event}
     append_jsonl(paths(root)["history"], event)
     profiles = rebuild(root)
-    return {"recorded": event, "profile": profiles.get("profiles", {}).get(key_for(str(event["model_id"]), event["task"]))}
+    dossier = None
+    dossier_error = None
+    try:
+        toolkit_root = Path(__file__).resolve().parents[3]
+        if str(toolkit_root) not in sys.path:
+            sys.path.insert(0, str(toolkit_root))
+        from rops.models import rebuild_dossier
+        dossier = rebuild_dossier(root, str(event["model_id"]))
+    except Exception as exc:  # copy-only Skill installs may not include the ROPS runtime
+        dossier_error = str(exc)
+    return {
+        "recorded": event,
+        "profile": profiles.get("profiles", {}).get(key_for(str(event["model_id"]), event["task"])),
+        "model_dossier_updated": dossier is not None,
+        "model_dossier": dossier,
+        "model_dossier_error": dossier_error,
+    }
 
 
 def summary(root: Path) -> dict[str, Any]:
