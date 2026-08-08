@@ -8,16 +8,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Structural validation
-        run: python -m rops validate
-      - name: Behavior runtime smoke
-        run: python tests/behavior_smoke.py
-      - name: End-to-end workflow smoke
-        run: python tests/smoke.py
-      - name: Compile executable Python
-        run: python -m compileall -q rops skills components behavior hooks tests
-      - name: Component sanity
-        run: |
-          python -m rops bootstrap /tmp/demo --title "CI Demo"
-          python -m rops dashboard validate --root /tmp/demo
-          python -m rops ledger --file /tmp/demo/.research/evidence/ledger.json validate
+      - run: python -m compileall -q rops skills components behavior hooks tests
+      - run: python -m rops validate
+      - run: python tests/smoke.py
+      - run: python tests/intelligence_smoke.py
+      - run: python tests/behavior_smoke.py
+      - run: python tests/model_control_plane_smoke.py
+      - run: python tests/adoption_memory_smoke.py
+      - run: python tests/product_benchmark_smoke.py
+      - run: python -m rops evaluate --out /tmp/researchops-product-benchmark
+      - run: python tests/package_smoke.py
+      - run: python -m rops bootstrap /tmp/demo --title "CI Demo"
+      - run: python -m rops dashboard validate --root /tmp/demo
+      - run: python -m rops ledger --file /tmp/demo/.researchops/state/evidence/ledger.json validate

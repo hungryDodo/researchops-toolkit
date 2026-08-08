@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "approval_ttl_minutes": 15,
+  "one_use": true,
+  "risk_categories": {
+    "destructive-filesystem": "explicit-approval",
+    "history-rewrite": "explicit-approval",
+    "external-disclosure": "explicit-approval",
+    "hardware-power-write": "explicit-approval",
+    "credential-exposure": "block"
+  }
+}

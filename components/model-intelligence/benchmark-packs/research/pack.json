@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "research-benchmark-v1",
+  "operations": [
+    "discover",
+    "design",
+    "validate",
+    "communicate"
+  ],
+  "orientation": "research-led",
+  "evaluators": [
+    "evidence-linkage",
+    "protocol-integrity",
+    "claim-discipline"
+  ]
+}

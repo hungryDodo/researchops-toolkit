@@ -1,6 +1,6 @@
 interface:
   display_name: "Research Writing"
   short_description: "Use when drafting evidence-gated paper prose or revising an existing LaTeX manuscript from author, advisor, or reviewer feedback. Do not use before the logic an"
-  default_prompt: "Use $research-writing for this task and write authoritative artifacts under .research/."
+  default_prompt: "Use $research-writing for this task and write authoritative artifacts under .researchops/state/."
 policy:
   allow_implicit_invocation: true

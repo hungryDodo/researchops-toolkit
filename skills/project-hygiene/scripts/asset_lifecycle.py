@@ -34,8 +34,8 @@ DEFAULT_POLICY = {
         "unknown": 30,
     },
     "canonical_globs": [
-        ".research/evidence/**",
-        ".research/designs/**",
+        ".researchops/state/evidence/**",
+        ".researchops/state/designs/**",
         "paper/**",
         "figures/source/**",
         "src/**",
@@ -52,8 +52,8 @@ DEFAULT_POLICY = {
     ],
     "exclude_globs": [
         ".git/**",
-        ".research/trash/**",
-        ".research/archive/**",
+        ".researchops/state/trash/**",
+        ".researchops/state/archive/**",
         ".venv/**",
         "node_modules/**",
     ],
@@ -155,9 +155,9 @@ def git_tracked(root: Path, relative: str) -> bool:
 
 def ledger_text(root: Path) -> str:
     candidates = [
-        root / ".research/evidence/ledger.json",
-        root / ".research/dashboard/project.json",
-        root / ".research/PROJECT.md",
+        root / ".researchops/state/evidence/ledger.json",
+        root / ".researchops/state/dashboard/project.json",
+        root / ".researchops/state/PROJECT.md",
     ]
     chunks: list[str] = []
     for p in candidates:
@@ -273,9 +273,9 @@ def parse_git_worktrees(root: Path, registry: dict[str, Any], policy: dict[str, 
             s = run(["git", "status", "--porcelain=v1", "--untracked-files=all"], wt)
             item["clean"] = s.returncode == 0 and not s.stdout.strip()
             item["status_lines"] = [x for x in s.stdout.splitlines()[:50]]
-            lease = wt / ".research/lease.json"
+            lease = wt / ".researchops/state/lease.json"
             item["lease_file"] = str(lease) if lease.exists() else None
-            item["active_process_hint"] = (wt / ".research/ACTIVE").exists()
+            item["active_process_hint"] = (wt / ".researchops/state/ACTIVE").exists()
         else:
             item["clean"] = None
         lease_expired = False
@@ -301,7 +301,7 @@ def parse_git_worktrees(root: Path, registry: dict[str, Any], policy: dict[str, 
 
 
 def init_project(root: Path, force: bool) -> None:
-    h = root / ".research/hygiene"
+    h = root / ".researchops/state/hygiene"
     h.mkdir(parents=True, exist_ok=True)
     files = {
         h / "asset-policy.json": DEFAULT_POLICY,
@@ -311,16 +311,16 @@ def init_project(root: Path, force: bool) -> None:
     for path, data in files.items():
         if force or not path.exists():
             atomic_json(path, data)
-    (root / ".research/trash").mkdir(parents=True, exist_ok=True)
-    (root / ".research/archive").mkdir(parents=True, exist_ok=True)
+    (root / ".researchops/state/trash").mkdir(parents=True, exist_ok=True)
+    (root / ".researchops/state/archive").mkdir(parents=True, exist_ok=True)
     print(h)
 
 
 def scan(root: Path, include_small: bool, out: Path | None) -> dict[str, Any]:
-    policy_path = root / ".research/hygiene/asset-policy.json"
+    policy_path = root / ".researchops/state/hygiene/asset-policy.json"
     policy = load_json(policy_path, DEFAULT_POLICY)
-    registry = load_json(root / ".research/hygiene/worktree-registry.json", {"worktrees": []})
-    asset_registry = load_json(root / ".research/hygiene/asset-registry.json", {"assets": []})
+    registry = load_json(root / ".researchops/state/hygiene/worktree-registry.json", {"worktrees": []})
+    asset_registry = load_json(root / ".researchops/state/hygiene/asset-registry.json", {"assets": []})
     asset_map = {str(x.get("path", "")): x for x in asset_registry.get("assets", []) if x.get("path")}
     files = list_files(root, policy, include_small)
     for item in files:
@@ -339,7 +339,7 @@ def scan(root: Path, include_small: bool, out: Path | None) -> dict[str, Any]:
         "bytes": sum(x.get("size_bytes", 0) for x in data["files"]),
         "worktree_count": len(data["worktrees"]),
     }
-    out = out or root / ".research/hygiene/asset-inventory.json"
+    out = out or root / ".researchops/state/hygiene/asset-inventory.json"
     atomic_json(out, data)
     return data
 
@@ -443,7 +443,7 @@ def action_for_worktree(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_plan(root: Path, inventory: dict[str, Any], out: Path | None) -> dict[str, Any]:
-    policy = load_json(root / ".research/hygiene/asset-policy.json", DEFAULT_POLICY)
+    policy = load_json(root / ".researchops/state/hygiene/asset-policy.json", DEFAULT_POLICY)
     actions = [action_for_file(x, policy) for x in inventory.get("files", [])]
     actions += [action_for_worktree(x) for x in inventory.get("worktrees", []) if not x.get("error")]
     plan_core = {
@@ -461,7 +461,7 @@ def build_plan(root: Path, inventory: dict[str, Any], out: Path | None) -> dict[
         "review_actions": sum(1 for x in actions if not x.get("safe_to_apply")),
         "reclaim_bytes": sum(int(x.get("reclaim_bytes", 0)) for x in actions if x.get("safe_to_apply")),
     }
-    out = out or root / ".research/hygiene/cleanup-plan.json"
+    out = out or root / ".researchops/state/hygiene/cleanup-plan.json"
     atomic_json(out, plan)
     return plan
 
@@ -490,7 +490,7 @@ def apply_plan(root: Path, plan_path: Path, token: str) -> dict[str, Any]:
     if Path(plan.get("root", "")).resolve() != root.resolve():
         raise SystemExit("plan root mismatch")
     stamp = now().strftime("%Y%m%dT%H%M%SZ")
-    trash_root = root / ".research/trash" / stamp
+    trash_root = root / ".researchops/state/trash" / stamp
     events: list[dict[str, Any]] = []
     for action in plan.get("actions", []):
         if not action.get("safe_to_apply"):
@@ -513,7 +513,7 @@ def apply_plan(root: Path, plan_path: Path, token: str) -> dict[str, Any]:
                 "size_bytes": action.get("reclaim_bytes", 0),
                 "plan_token": token,
             }
-            append_jsonl(root / ".research/hygiene/deletion-log.jsonl", event)
+            append_jsonl(root / ".researchops/state/hygiene/deletion-log.jsonl", event)
             events.append(event)
         elif kind == "worktree" and action.get("action") == "remove_worktree":
             wt = Path(str(action["path"]))
@@ -531,15 +531,15 @@ def apply_plan(root: Path, plan_path: Path, token: str) -> dict[str, Any]:
                 "stderr": p.stderr.strip(),
                 "plan_token": token,
             }
-            append_jsonl(root / ".research/hygiene/deletion-log.jsonl", event)
+            append_jsonl(root / ".researchops/state/hygiene/deletion-log.jsonl", event)
             events.append(event)
     result = {"schema_version": 1, "applied_at": iso(), "plan_token": token, "events": events}
-    atomic_json(root / ".research/hygiene/last-apply.json", result)
+    atomic_json(root / ".researchops/state/hygiene/last-apply.json", result)
     return result
 
 
 def build_purge_plan(root: Path, days: int, out: Path | None) -> dict[str, Any]:
-    trash = root / ".research/trash"
+    trash = root / ".researchops/state/trash"
     cutoff = now() - dt.timedelta(days=days)
     entries: list[dict[str, Any]] = []
     if trash.exists():
@@ -557,7 +557,7 @@ def build_purge_plan(root: Path, days: int, out: Path | None) -> dict[str, Any]:
             })
     core = {"schema_version": 1, "generated_at": iso(), "root": str(root), "grace_days": days, "entries": entries}
     plan = {**core, "approval_token": canonical_hash(core)}
-    out = out or root / ".research/hygiene/purge-plan.json"
+    out = out or root / ".researchops/state/hygiene/purge-plan.json"
     atomic_json(out, plan)
     return plan
 
@@ -573,15 +573,15 @@ def purge(root: Path, plan_path: Path, token: str) -> dict[str, Any]:
         if not item.get("eligible"):
             continue
         p = root / item["path"]
-        if not safe_under(root / ".research/trash", p) or p.is_symlink() or not p.is_dir():
+        if not safe_under(root / ".researchops/state/trash", p) or p.is_symlink() or not p.is_dir():
             events.append({"status": "blocked", "path": item["path"]})
             continue
         shutil.rmtree(p)
         event = {"at": iso(), "status": "purged", "path": item["path"], "size_bytes": item.get("size_bytes", 0), "plan_token": token}
-        append_jsonl(root / ".research/hygiene/deletion-log.jsonl", event)
+        append_jsonl(root / ".researchops/state/hygiene/deletion-log.jsonl", event)
         events.append(event)
     result = {"schema_version": 1, "purged_at": iso(), "events": events}
-    atomic_json(root / ".research/hygiene/last-purge.json", result)
+    atomic_json(root / ".researchops/state/hygiene/last-purge.json", result)
     return result
 
 
@@ -602,20 +602,20 @@ def main() -> int:
     if args.cmd == "scan":
         data = scan(root, args.include_small, Path(args.out) if args.out else None); print(json.dumps(data["summary"], indent=2)); return 0
     if args.cmd == "plan":
-        inv_path = Path(args.inventory) if args.inventory else root / ".research/hygiene/asset-inventory.json"
+        inv_path = Path(args.inventory) if args.inventory else root / ".researchops/state/hygiene/asset-inventory.json"
         inv = load_json(inv_path, None) or scan(root, False, inv_path)
         plan = build_plan(root, inv, Path(args.out) if args.out else None)
         print(json.dumps({"summary": plan["summary"], "approval_token": plan["approval_token"]}, indent=2)); return 0
     if args.cmd == "apply":
-        plan_path = Path(args.plan) if args.plan else root / ".research/hygiene/cleanup-plan.json"
+        plan_path = Path(args.plan) if args.plan else root / ".researchops/state/hygiene/cleanup-plan.json"
         print(json.dumps(apply_plan(root, plan_path, args.approve_token), indent=2)); return 0
     if args.cmd == "purge-plan":
-        policy = load_json(root / ".research/hygiene/asset-policy.json", DEFAULT_POLICY)
+        policy = load_json(root / ".researchops/state/hygiene/asset-policy.json", DEFAULT_POLICY)
         days = args.grace_days if args.grace_days is not None else int(policy.get("quarantine_grace_days", 7))
         plan = build_purge_plan(root, days, Path(args.out) if args.out else None)
         print(json.dumps({"entries": len(plan["entries"]), "approval_token": plan["approval_token"]}, indent=2)); return 0
     if args.cmd == "purge":
-        plan_path = Path(args.plan) if args.plan else root / ".research/hygiene/purge-plan.json"
+        plan_path = Path(args.plan) if args.plan else root / ".researchops/state/hygiene/purge-plan.json"
         print(json.dumps(purge(root, plan_path, args.approve_token), indent=2)); return 0
     return 2
 

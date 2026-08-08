@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "hardware-safety",
+  "description": "Require topology, limits, power state, preflight, lease, restoration, and explicit approval for hardware writes.",
+  "domains": [
+    "hardware"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

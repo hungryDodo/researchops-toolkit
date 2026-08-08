@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "coding-evidence",
+  "description": "Require a task contract, relevant failing observation when possible, fresh tests, regression evidence, and residual-risk reporting.",
+  "domains": [
+    "research-led",
+    "development-led"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

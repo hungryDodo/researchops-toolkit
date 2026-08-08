@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "core-benchmark-v1",
+  "operations": [
+    "discover",
+    "design",
+    "implement",
+    "debug",
+    "validate",
+    "communicate",
+    "operate"
+  ],
+  "sources": [
+    "anchor",
+    "shadow",
+    "live"
+  ],
+  "metrics": [
+    "verified_progress",
+    "quality",
+    "success",
+    "cost",
+    "latency",
+    "human_correction",
+    "verifier_disagreement"
+  ]
+}

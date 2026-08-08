@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "coding-minimal-change",
+  "description": "Prefer the smallest sufficient change; do not broaden scope, rewrite unrelated code, or add dependencies without evidence.",
+  "domains": [
+    "research-led",
+    "development-led"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

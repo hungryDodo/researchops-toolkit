@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "visual-consistency",
+  "description": "Apply the project design contract, semantic hierarchy, accessibility, and editable output before subjective aesthetics.",
+  "domains": [
+    "communication"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

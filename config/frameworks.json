@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "canonical_skill_root": "skills",
-  "shared_agent_registry": ".research/agents",
+  "shared_agent_registry": ".researchops/governance",
   "frameworks": {
     "codex": {
       "skill_user": "~/.agents/skills",
@@ -9,7 +9,10 @@
       "agent_user": "~/.codex/agents",
       "agent_project": ".codex/agents",
       "agent_format": "toml",
-      "legacy_skill_paths": ["~/.codex/skills", ".codex/skills"]
+      "legacy_skill_paths": [
+        "~/.codex/skills",
+        ".codex/skills"
+      ]
     },
     "claude": {
       "skill_user": "~/.claude/skills",

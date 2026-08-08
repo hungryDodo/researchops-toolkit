@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "id": "model-gateway",
+  "kind": "optional-cross-cutting-feature",
+  "provides": ["provider-normalization", "endpoint-health", "effective-dated-pricing", "secret-indirection", "dispatch"],
+  "does_not_provide": ["semantic-routing", "competence-scoring"]
+}

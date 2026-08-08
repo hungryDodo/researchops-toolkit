@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "archive-first-hygiene",
+  "description": "Prefer reversible quarantine/archive with manifests and hashes before deletion; purge requires explicit content-bound approval.",
+  "domains": [
+    "hygiene"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

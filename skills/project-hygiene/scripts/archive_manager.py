@@ -48,15 +48,15 @@ def git_tracked(root:Path,rp:str):
     return cp.returncode==0
 def state_references(root:Path,rp:str)->list[str]:
     hits=[]
-    for p in [root/'.research/evidence/ledger.json',root/'.research/dashboard/project.json',root/'.research/hygiene/asset-registry.json']:
+    for p in [root/'.researchops/state/evidence/ledger.json',root/'.researchops/state/dashboard/project.json',root/'.researchops/state/hygiene/asset-registry.json']:
         if p.exists() and rp in p.read_text(encoding='utf-8',errors='ignore'): hits.append(rel(root,p))
     return hits
 def init(root:Path):
-    for p in (root/'.research/archive',root/'.research/hygiene/archive-plans'): p.mkdir(parents=True,exist_ok=True)
+    for p in (root/'.researchops/state/archive',root/'.researchops/state/hygiene/archive-plans'): p.mkdir(parents=True,exist_ok=True)
 
 def build_plan(root:Path,paths:list[str],reason:str,out:Path,allow_tracked:bool=False,allow_referenced:bool=False,archive_root:Path|None=None):
-    init(root); archive_root=(archive_root or root/'.research/archive').resolve(); actions=[]
-    forbidden={'.git','.research/archive','.research/trash'}
+    init(root); archive_root=(archive_root or root/'.researchops/state/archive').resolve(); actions=[]
+    forbidden={'.git','.researchops/state/archive','.researchops/state/trash'}
     for raw in paths:
         p=(root/raw).resolve(strict=False) if not Path(raw).is_absolute() else Path(raw).resolve(strict=False)
         if not safe_under(root,p): actions.append({'source':raw,'safe_to_apply':False,'reason':'outside project root'}); continue
@@ -98,9 +98,9 @@ def apply_archive(root:Path,plan_path:Path,token:str):
         dst=batch_root/'content'/a['source']; move(src,dst)
         events.append({'source':a['source'],'archive_path':str(dst.resolve()),'status':'archived','snapshot':current})
     manifest={'schema_version':1,'batch_id':plan['batch_id'],'archived_at':iso(),'root':str(root),'archive_root':str(archive_root),'reason':plan['reason'],'plan_token':token,'events':events,'restore_status':'available'}
-    atomic(batch_root/'manifest.json',manifest); atomic(root/'.research/hygiene/last-archive.json',manifest); return manifest
+    atomic(batch_root/'manifest.json',manifest); atomic(root/'.researchops/state/hygiene/last-archive.json',manifest); return manifest
 def find_batch(root:Path,batch:str,archive_root:Path|None=None):
-    ar=(archive_root or root/'.research/archive').resolve(); p=ar/batch
+    ar=(archive_root or root/'.researchops/state/archive').resolve(); p=ar/batch
     if not (p/'manifest.json').exists(): raise SystemExit(f'archive batch not found: {p}')
     return p,json.loads((p/'manifest.json').read_text(encoding='utf-8'))
 def restore_plan(root:Path,batch:str,out:Path,archive_root:Path|None=None):
@@ -130,10 +130,10 @@ def purge_plan(root:Path,batch:str,out:Path,min_age_days:int,archive_root:Path|N
 def apply_purge(root:Path,plan_path:Path,token:str):
     plan=json.loads(plan_path.read_text()); verify_plan(root,plan,token,'archive-purge')
     if not plan.get('safe_to_apply'): raise SystemExit('purge plan is not safe to apply')
-    br=Path(plan['batch_root']); ar=root/'.research/archive'
-    if not safe_under(ar,br): raise SystemExit('default purge only permits project .research/archive')
+    br=Path(plan['batch_root']); ar=root/'.researchops/state/archive'
+    if not safe_under(ar,br): raise SystemExit('default purge only permits project .researchops/state/archive')
     if not br.exists() or tree_snapshot(br)!=plan['snapshot']: raise SystemExit('archive batch changed')
-    shutil.rmtree(br); result={'batch_id':plan['batch_id'],'status':'purged','at':iso(),'plan_token':token}; atomic(root/'.research/hygiene/last-archive-purge.json',result); return result
+    shutil.rmtree(br); result={'batch_id':plan['batch_id'],'status':'purged','at':iso(),'plan_token':token}; atomic(root/'.researchops/state/hygiene/last-archive-purge.json',result); return result
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--root',default='.'); sp=ap.add_subparsers(dest='cmd',required=True)
     sp.add_parser('init')
@@ -144,7 +144,7 @@ def main():
     p=sp.add_parser('purge-plan'); p.add_argument('--batch',required=True); p.add_argument('--out',required=True); p.add_argument('--min-age-days',type=int,default=30); p.add_argument('--archive-root')
     p=sp.add_parser('purge'); p.add_argument('--plan',required=True); p.add_argument('--approve-token',required=True)
     a=ap.parse_args(); root=Path(a.root).resolve()
-    if a.cmd=='init': init(root); print(root/'.research/archive'); return
+    if a.cmd=='init': init(root); print(root/'.researchops/state/archive'); return
     if a.cmd=='plan':
         d=build_plan(root,a.path,a.reason,Path(a.out),a.allow_tracked,a.allow_referenced,Path(a.archive_root) if a.archive_root else None); print(json.dumps({'approval_token':d['approval_token'],'summary':d['summary'],'batch_id':d['batch_id']},indent=2)); return
     if a.cmd=='apply': print(json.dumps(apply_archive(root,Path(a.plan),a.approve_token),indent=2)); return

@@ -1,19 +1,12 @@
 {
-  "schema_version": 1,
-  "tests": [
-    {
-      "id": "exact-token",
-      "system": "Follow the requested output format exactly.",
-      "prompt": "Reply with exactly ROPS_OK and nothing else.",
-      "expect": {"type": "exact", "value": "ROPS_OK"},
-      "max_tokens": 32
-    },
-    {
-      "id": "simple-json",
-      "system": "Return only valid compact JSON and no markdown.",
-      "prompt": "Return an object with key status and string value ready.",
-      "expect": {"type": "json-path-equals", "path": "status", "value": "ready"},
-      "max_tokens": 64
-    }
-  ]
+  "schema_version": 2,
+  "purpose": "Bounded service and identity checks that never update competence profiles.",
+  "checks": [
+    {"id": "connectivity", "kind": "endpoint", "updates": ["endpoint-health"]},
+    {"id": "strict-json", "kind": "format", "updates": ["identity-observation"]},
+    {"id": "tool-shape", "kind": "tool-schema", "updates": ["identity-observation"]},
+    {"id": "returned-model", "kind": "declared-identity", "updates": ["identity-observation"]},
+    {"id": "latency-token-shape", "kind": "operational-fingerprint", "updates": ["endpoint-health", "identity-observation"]}
+  ],
+  "forbidden_updates": ["evaluation-events", "profile-slices", "failure-patterns", "routing-competence"]
 }

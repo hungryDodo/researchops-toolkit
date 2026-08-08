@@ -2,7 +2,7 @@
 
 ## Default disposition: archive first
 
-For stale material whose deletion confidence is not yet high, move it to `.research/archive/<batch>/` through `archive_manager.py`. Each batch has a content-bound plan, manifest, hashes, reason, and restore path. Archive on the same filesystem improves repository clarity but does not reclaim storage.
+For stale material whose deletion confidence is not yet high, move it to `.researchops/state/archive/<batch>/` through `archive_manager.py`. Each batch has a content-bound plan, manifest, hashes, reason, and restore path. Archive on the same filesystem improves repository clarity but does not reclaim storage.
 
 ## Evidence-preserving purge contract
 

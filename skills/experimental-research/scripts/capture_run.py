@@ -19,7 +19,7 @@ def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--root',default='.'); ap.add_argument('--run-id',required=True); ap.add_argument('--design-id',required=True); ap.add_argument('--config'); ap.add_argument('--timeout',type=int,default=0); ap.add_argument('command',nargs=argparse.REMAINDER)
     a=ap.parse_args(); cmd=a.command[1:] if a.command[:1]==['--'] else a.command
     if not cmd: raise SystemExit('command required after --')
-    root=Path(a.root).resolve(); d=root/'.research'/'runs'/a.run_id
+    root=Path(a.root).resolve(); d=root/'.researchops'/'state'/'runs'/a.run_id
     if d.exists(): raise SystemExit(f'run directory exists: {d}')
     d.mkdir(parents=True)
     config=json.loads(Path(a.config).read_text()) if a.config else {}

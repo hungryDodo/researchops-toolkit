@@ -210,26 +210,65 @@ def evaluate(
     elif not accepted:
         failure_attribution = "worker-or-capability"
 
-    registry_eligible = bool(checks) and not verifier_blocked
+    raw_task = dict(contract.get("task", {}))
+    failure_observations = [
+        {
+            "code": str(mode).strip().lower().replace(" ", "_"),
+            "severity": "medium",
+            "attribution": failure_attribution,
+            "description": str(mode),
+        }
+        for mode in verifier_data["failure_modes"]
+    ]
+    failure_observations.extend(
+        {
+            "code": "acceptance_check_failed",
+            "severity": "high" if check["required"] else "medium",
+            "attribution": "worker-model" if failure_attribution == "worker-or-capability" else failure_attribution,
+            "description": f"{check['name']}: {check['detail']}",
+        }
+        for check in required_failures
+    )
     event = {
-        "evaluation_schema_version": 2,
-        "registry_eligible": registry_eligible,
-        "deterministic_checks_count": len(checks),
-        "independent_verifier_provided": bool(verifier_data.get("independent")),
-        "task": contract.get("task", {}),
-        "model_id": result.get("model_id"),
-        "agent_revision": result.get("agent_revision"),
-        "accepted": accepted,
-        "disposition": disposition,
-        "quality": round(quality, 6),
-        "latency_seconds": float(result.get("latency_seconds", 0.0)),
-        "cost": float(result.get("cost", 0.0)),
-        "human_correction": human_data["correction_fraction"],
-        "verifier_disagreement": verifier_data["verifier_disagreement"],
-        "failure_attribution": failure_attribution,
-        "failure_modes": verifier_data["failure_modes"],
+        "schema_version": 2,
+        "source": "live",
+        "project_id": contract.get("project_id") or root.name,
         "task_id": contract.get("task_id"),
-        "result_artifacts": result.get("artifacts", []),
+        "work_unit_id": contract.get("work_unit_id") or contract.get("task_id"),
+        "route_decision_id": result.get("route_decision_id"),
+        "task": raw_task,
+        "execution_arm_id": result.get("execution_arm_id") or result.get("model_id"),
+        "outcome": {
+            "accepted": accepted,
+            "disposition": disposition,
+            "verified_progress": deterministic_quality,
+            "quality": round(quality, 6),
+            "human_correction": human_data["correction_fraction"],
+            "verifier_disagreement": verifier_data["verifier_disagreement"],
+        },
+        "usage": {
+            "latency_seconds": float(result.get("latency_seconds", 0.0)),
+            "cost_amount": float(result.get("cost", 0.0)),
+            "currency": result.get("currency", "USD"),
+            "input_tokens": int((result.get("usage") or {}).get("prompt_tokens", result.get("input_tokens", 0)) or 0),
+            "output_tokens": int((result.get("usage") or {}).get("completion_tokens", result.get("output_tokens", 0)) or 0),
+            "price_quote_id": result.get("price_quote_id"),
+        },
+        "verification": {
+            "deterministic_checks_count": len(checks),
+            "deterministic_checks_passed": sum(int(check["passed"]) for check in checks),
+            "requires_independent_verifier": requires_independent,
+            "independent_verifier_provided": verifier_data["independent"],
+            "evidence_refs": result.get("artifacts", []),
+        },
+        "failure_observations": failure_observations,
+        "versions": {
+            "agent_revision": result.get("agent_revision"),
+            "evaluator": "evaluate-dispatch-v2",
+            "verifier_id": verifier_data.get("verifier_id"),
+        },
+        "selection_probability": result.get("selection_probability"),
+        "registry_eligible": True,
     }
     return {
         "schema_version": 2,
@@ -247,7 +286,6 @@ def evaluate(
         "human_feedback": human_data,
         "failure_attribution": failure_attribution,
         "worker_self_assessment_ignored_for_acceptance": True,
-        "registry_eligible": registry_eligible,
         "event_for_registry": event,
     }
 

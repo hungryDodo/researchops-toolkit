@@ -1,37 +1,8 @@
-# Model Control Plane
+# Model Control Plane compatibility component
 
-The Model Control Plane is the persistent, non-Skill runtime for adding and using local or third-party model workers. The progressively loaded `adaptive-agent-orchestration` Skill owns human decisions and workflow; this component owns repeatable mechanics.
+`model-control-plane` was the v1.7 name for provider onboarding, dispatch and model dossiers. In v2 its responsibilities are split deliberately:
 
-## Responsibilities
+- [`../model-gateway/`](../model-gateway/) owns provider calls, secrets, endpoint health and pricing;
+- [`../model-intelligence/`](../model-intelligence/) owns evaluation events, profiles, routing, warmup, failure patterns, mitigations, drift and Judge calibration.
 
-- provider recipes and non-secret provider configuration;
-- environment/user-secret resolution without displaying key values;
-- current model-list discovery when an endpoint exists;
-- connectivity probes and deterministic smoke tests;
-- enrollment into `.research/agents/providers.json` and `models.json`;
-- candidate-Agent attachment;
-- bounded direct dispatch for OpenAI-compatible, Anthropic Messages, and Google Generate Content protocols;
-- task-specific routing handoffs;
-- model dossiers, human notes, and approved prompt overlays.
-
-## Secret storage
-
-Secrets are resolved from process environment variables first and then `~/.config/rops/secrets.env` or `$ROPS_SECRETS_FILE`. They must never be committed, copied into `.research/`, written into a Skill, pasted into chat, passed as command-line arguments, or recorded in output metadata.
-
-## State
-
-```text
-.research/agents/
-├── providers.json
-├── models.json
-├── agents.json
-├── routing-policy.json
-├── task-history.jsonl
-├── profiles.json
-├── onboarding/
-├── smoke/
-├── dispatches/
-└── model-profiles/
-```
-
-Smoke/probe results establish API connectivity only. Model dossiers learn exclusively from evaluated real-task events. Generated prompt overlays require human approval before activation.
+The `rops models` command remains a compatibility facade. New integrations should depend on the two explicit components rather than this alias.

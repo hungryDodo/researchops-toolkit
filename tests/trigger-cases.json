@@ -146,14 +146,16 @@
       "expected": "Route to research-discovery; this Skill only engineers the Skill system."
     },
     {
-      "skill": "adaptive-agent-orchestration",
-      "prompt": "Add Anthropic as a worker provider, tell me where to put the API key, test the exact model, and enroll it for independent review tasks.",
-      "should_trigger": true
+      "skill": "software-development",
+      "should_trigger": true,
+      "prompt": "Investigate two cache designs, choose the maintainable one, implement it, and prepare a rollback-safe release.",
+      "expected": "Use development-led R&D with a frozen acceptance contract, minimal implementation, fresh tests, and operational trade-offs."
     },
     {
-      "skill": "adaptive-agent-orchestration",
-      "prompt": "Paste this API key into the repository and print it back so I can verify it.",
-      "should_trigger": false
+      "skill": "software-development",
+      "should_trigger": false,
+      "prompt": "Modify the metric code that determines the paper headline result.",
+      "expected": "Route to research-engineering because experiment meaning and claims are primary."
     }
   ]
 }

@@ -1,44 +1,7 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "name": "researchops-session",
-            "type": "command",
-            "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini",
-            "timeout": 10000,
-            "description": "Load compact ResearchOps behavior context"
-          }
-        ]
-      }
-    ],
-    "BeforeAgent": [
-      {
-        "hooks": [
-          {
-            "name": "researchops-task-behavior",
-            "type": "command",
-            "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini",
-            "timeout": 10000,
-            "description": "Classify the task and inject relevant behavior packs"
-          }
-        ]
-      }
-    ],
-    "BeforeTool": [
-      {
-        "matcher": "run_shell_command|write_file|replace|mcp_.*",
-        "hooks": [
-          {
-            "name": "researchops-tool-policy",
-            "type": "command",
-            "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini",
-            "timeout": 10000,
-            "description": "Apply parsed risk policy and optional semantic escalation before exposed tool use"
-          }
-        ]
-      }
-    ]
+    "SessionStart": [{"hooks": [{"name": "researchops-session", "type": "command", "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini", "timeout": 10000, "description": "Load compact ResearchOps behavior context"}]}],
+    "BeforeAgent": [{"hooks": [{"name": "researchops-task-behavior", "type": "command", "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini", "timeout": 10000, "description": "Classify the task and inject relevant behavior packs"}]}],
+    "BeforeTool": [{"matcher": "run_shell_command|write_file|replace|mcp_.*", "hooks": [{"name": "researchops-tool-policy", "type": "command", "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini", "timeout": 10000, "description": "Apply content-bound risk policy before exposed tool use"}]}]
   }
 }

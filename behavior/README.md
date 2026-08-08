@@ -1,16 +1,5 @@
-# ROPS Behavior Runtime
+# Behavior runtime
 
-This directory contains the cross-cutting behavior layer used beside progressively loaded Skills.
+Behavior packs are cross-cutting execution constraints. They are not user-facing workflow Skills and they do not own project state. The deterministic runtime may block or require explicit approval for risky actions; semantic guidance is loaded only when applicable.
 
-- `runtime.py` — task/policy orchestration, approvals, metadata logging, feedback, and hook output.
-- `shell_analyzer.py` — non-executing shell parsing, wrapper normalization, and static risk rules and canonical command fingerprints.
-- `semantic_reviewer.py` — strict opt-in command adapter for semantic review.
-- `policies/risk-policy.json` — declarative categories, severities, approval eligibility, and privacy defaults.
-- `packs/` — compact task behavior packs.
-- `reviewers/` — optional reviewer adapters and contract documentation.
-- `evals/cases.json` — task/pack lifecycle fixtures.
-- `evals/risk-cases.json` — adversarial command variants and benign-neighbor regression cases.
-
-The runtime supports `off`, `observe`, `guide`, and `enforce`. In `enforce`, static high/critical findings and completed configured semantic findings are denied unless an approvable category has a matching operator-created one-use token. Deterministic findings cannot be downgraded by a model reviewer.
-
-The guardrail covers only exposed Harness lifecycle/tool paths. Platform permissions, sandboxing, OS/container policy, repository protection, human approval, and physical interlocks remain the security boundary.
+High-risk operation approval and prompt-mitigation approval are intentionally separate. A mitigation can improve model behavior but can never authorize deletion, force-push, external disclosure, hardware writes, or other consequential actions.

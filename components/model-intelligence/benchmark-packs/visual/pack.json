@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "visual-benchmark-v1",
+  "operations": [
+    "communicate"
+  ],
+  "primary_artifact": "visual",
+  "evaluators": [
+    "visual-contract",
+    "accessibility",
+    "blind-pairwise-hierarchy"
+  ]
+}

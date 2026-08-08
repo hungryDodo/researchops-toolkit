@@ -23,7 +23,7 @@ Use only the needed script:
 ## Modes
 
 - `scan`: read-only inventory and ownership/evidence checks;
-- `archive`: default reversible retirement into `.research/archive/` with manifest;
+- `archive`: default reversible retirement into `.researchops/state/archive/` with manifest;
 - `restore`: content-checked reversal;
 - `quarantine`: staged removal when actual storage must be reclaimed;
 - `purge`: second-token permanent deletion after grace period;

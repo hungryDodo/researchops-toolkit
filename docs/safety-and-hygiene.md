@@ -4,7 +4,7 @@
 
 - Capability proposals are advisory and never authorize the underlying operation.
 - Hardware actions begin with read-only discovery and preflight.
-- External-provider routing applies privacy, trust-zone, candidate-Agent, risk, and provider hard filters before cost/quality scoring.
+- External-provider routing applies privacy and provider hard filters before cost/quality scoring.
 - Permanent deletion uses content-bound plans, quarantine or archive, and a second approval.
 - Main, dirty, active, locked, unknown, or unmerged worktrees are not automatically removed.
 - Public artifacts use semantic names; internal B/E/A identifiers may remain as stable keys but not as the only visible label.
@@ -15,7 +15,7 @@ The default path for obsolete scripts, tests, documents, and moderate-size artif
 
 ```text
 inventory → explicit plan → content-bound approval token
-→ .research/archive/<batch> + manifest → restore or later purge
+→ .researchops/state/archive/<batch> + manifest → restore or later purge
 ```
 
 Example:
@@ -24,7 +24,7 @@ Example:
 python3 skills/project-hygiene/scripts/archive_manager.py --root . plan \
   --path old_scripts \
   --reason "superseded after validation" \
-  --out .research/hygiene/archive-plan.json
+  --out .researchops/state/hygiene/archive-plan.json
 ```
 
 The archive manifest records original paths, checksums, sizes, reason, and batch identity. Restore refuses destination conflicts or changed archive contents.
@@ -57,10 +57,6 @@ A child worktree is eligible for removal only when it is registered, not the mai
 
 Hardware workflows require a topology record, power-source boundaries, exclusive leases, calibration state, safe operating limits, preflight, human confirmation for physical state when needed, and a restoration procedure. Proposal approval only loads the hardware workflow; it does not authorize power output or flashing.
 
-## External providers and API keys
+## External providers
 
-Do not send private manuscripts, unpublished results, credentials, device identifiers, participant data, or proprietary datasets to a third-party provider without an explicit data boundary and approval. Record provider/model identity, trust zone, disclosure scope, and verifier requirement in the task contract.
-
-API key values belong only in provider-standard environment variables, an operating-system/organization secret manager, or the user-level `~/.config/rops/secrets.env` file with restrictive permissions. They must not appear in chat, Git, Skills, `.research/`, prompt files, CLI arguments, model dossiers, logs, issue reports, or test fixtures.
-
-`rops models dispatch` and `delegate` are classified as external-data-transfer events by the Behavior Runtime. A connectivity probe and smoke test prove API function only; they do not justify sending higher-classification data or updating a model capability profile.
+Do not send private manuscripts, unpublished results, credentials, device identifiers, or proprietary datasets to a third-party provider without an explicit data boundary and approval. Record provider/model/version and disclosure scope in the task contract.

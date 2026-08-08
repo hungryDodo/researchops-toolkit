@@ -14,4 +14,4 @@ The body must be sufficient after loading, yet navigational. Put volatile detail
 
 ## Cross-harness compatibility
 
-Use portable Agent Skills frontmatter as the canonical layer. Keep always-on project invariants in `AGENTS.md`/equivalent, native subagent model/tool settings in framework-specific files, and research state under `.research/`.
+Use portable Agent Skills frontmatter as the canonical layer. Keep always-on project invariants in `AGENTS.md`/equivalent, native subagent model/tool settings in framework-specific files, and research state under `.researchops/state/`.

@@ -10,8 +10,8 @@
     "unknown": 30
   },
   "canonical_globs": [
-    ".research/evidence/**",
-    ".research/designs/**",
+    ".researchops/state/evidence/**",
+    ".researchops/state/designs/**",
     "paper/**",
     "figures/source/**",
     "src/**"
@@ -28,17 +28,17 @@
   ],
   "exclude_globs": [
     ".git/**",
-    ".research/trash/**",
-    ".research/archive/**",
+    ".researchops/state/trash/**",
+    ".researchops/state/archive/**",
     ".venv/**",
     "node_modules/**"
   ],
   "public_artifact_roots": [
     "paper",
     "figures",
-    ".research/evidence"
+    ".researchops/state/evidence"
   ],
   "base_branch": "main",
   "archive_grace_days": 30,
-  "archive_root": ".research/archive"
+  "archive_root": ".researchops/state/archive"
 }

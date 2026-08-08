@@ -16,7 +16,7 @@ Read `references/HARDWARE_PROTOCOL.md` and the project hardware envelope only af
 ## Procedure
 
 1. Discover exact boards, instruments, ports, firmware, switches, power sources, and shared grounds.
-2. Load the approved voltage/current/radio/thermal envelope from `.research/hardware/`.
+2. Load the approved voltage/current/radio/thermal envelope from `.researchops/state/hardware/`.
 3. Acquire exclusive leases and record topology photographs or diagrams when wiring matters.
 4. Run read-only preflight first; ask for human confirmation for ambiguous physical state.
 5. Separate flashing/debug configuration from measurement configuration.

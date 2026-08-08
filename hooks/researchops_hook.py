@@ -44,7 +44,7 @@ def _detect_framework(payload: dict, explicit: str) -> str:
 def _project_root(payload: dict) -> Path:
     cwd = Path(payload.get("cwd") or os.environ.get("GEMINI_PROJECT_DIR") or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).resolve()
     for candidate in (cwd, *cwd.parents):
-        if (candidate / ".research").exists() or (candidate / ".git").exists():
+        if (candidate / ".researchops").exists() or (candidate / ".git").exists():
             return candidate
     return cwd
 
@@ -52,7 +52,7 @@ def _project_root(payload: dict) -> Path:
 def _configured_enforce(payload: dict) -> bool:
     if os.environ.get("ROPS_HOOK_FAIL_CLOSED") == "1":
         return True
-    config = _project_root(payload) / ".research" / "runtime" / "config.json"
+    config = _project_root(payload) / ".researchops" / "runtime" / "behavior" / "config.json"
     try:
         return json.loads(config.read_text(encoding="utf-8")).get("mode") == "enforce"
     except (OSError, json.JSONDecodeError):
@@ -62,13 +62,7 @@ def _configured_enforce(payload: dict) -> bool:
 def _deny_on_failure(framework: str, event: str, message: str) -> dict:
     if framework == "gemini":
         return {"decision": "deny", "reason": message}
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": event,
-            "permissionDecision": "deny",
-            "permissionDecisionReason": message,
-        }
-    }
+    return {"hookSpecificOutput": {"hookEventName": event, "permissionDecision": "deny", "permissionDecisionReason": message}}
 
 
 def main() -> int:
@@ -81,12 +75,13 @@ def main() -> int:
     try:
         payload = json.load(sys.stdin)
         root = _root()
+        if str(root) not in sys.path:
+            sys.path.insert(0, str(root))
         framework = _detect_framework(payload, args.framework)
         event = str(payload.get("hook_event_name") or "")
         runtime = _load_runtime(root)
         result = runtime.evaluate(payload, framework=framework, runtime_root=root / "behavior")
-        output = runtime.render_hook_output(result, framework, event)
-        sys.stdout.write(json.dumps(output, ensure_ascii=False))
+        sys.stdout.write(json.dumps(runtime.render_hook_output(result, framework, event), ensure_ascii=False))
         return 0
     except Exception as exc:
         message = f"ROPS guardrail failed before evaluating this tool call: {type(exc).__name__}: {exc}"
@@ -94,8 +89,6 @@ def main() -> int:
         if event.lower() in {"pretooluse", "beforetool", "permissionrequest"} and _configured_enforce(payload):
             sys.stdout.write(json.dumps(_deny_on_failure(framework, event, message), ensure_ascii=False))
         else:
-            # In guide/observe mode, host permissions remain authoritative and a runtime
-            # failure is surfaced without pretending that the command was checked.
             sys.stdout.write("{}")
         return 0
 

@@ -1,14 +1,16 @@
 {
   "name": "researchops-toolkit",
-  "version": "1.7.0",
-  "description": "Evidence-driven research workflows with 12 progressive Skills and a task-aware behavior runtime for scope, evidence, minimal engineering, safety, and delegation.",
+  "version": "2.1.0",
+  "description": "Project-scoped research and development workflows with model intelligence, verified routing, lifecycle behavior, and one local state root.",
   "homepage": "https://github.com/hungryDodo/researchops-toolkit",
   "repository": "https://github.com/hungryDodo/researchops-toolkit",
   "license": "MIT",
   "keywords": [
     "research",
+    "development",
     "researchops",
     "agent-skills",
+    "model-routing",
     "hooks",
     "reproducibility"
   ],
@@ -16,19 +18,20 @@
   "hooks": "./hooks/claude-codex-hooks.json",
   "interface": {
     "displayName": "ResearchOps Toolkit",
-    "shortDescription": "Evidence-driven research workflow and behavior runtime",
-    "longDescription": "Progressively loaded research Skills plus lifecycle behavior policies for scope, evidence, minimal coding, safety, hygiene, and delegated work.",
+    "shortDescription": "Verified R&D workflows and adaptive model routing",
+    "longDescription": "Progressively loaded Research and Development Skills plus SQLite-backed model intelligence, task-aware behavior policies, auditable evidence, and project dashboards.",
     "developerName": "ResearchOps Toolkit contributors",
     "category": "Productivity",
     "capabilities": [
       "Instructions",
-      "Lifecycle hooks"
+      "Lifecycle hooks",
+      "Local runtime"
     ],
     "websiteURL": "https://github.com/hungryDodo/researchops-toolkit",
     "defaultPrompt": [
-      "Initialize an evidence-driven research project.",
-      "Evaluate the next research route and minimum decisive experiment.",
-      "Review this task under the ResearchOps behavior policy."
+      "Initialize an evidence-driven research or development project.",
+      "Select and evaluate the next work unit and suitable model.",
+      "Review this task under the ResearchOps behavior and evidence policy."
     ]
   }
 }

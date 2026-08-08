@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "skill": "software-development",
+  "evals": [
+    {
+      "skill": "software-development",
+      "should_trigger": true,
+      "prompt": "Investigate two feasible cache designs, choose the maintainable one, implement it, and prepare a safe release.",
+      "expected": "Treat research as decision support, freeze delivery acceptance, implement minimally, test, and document rollback."
+    },
+    {
+      "skill": "software-development",
+      "should_trigger": false,
+      "prompt": "Change the metric implementation that determines the paper's headline result.",
+      "expected": "Use research-engineering because experimental meaning and claims are primary."
+    }
+  ]
+}

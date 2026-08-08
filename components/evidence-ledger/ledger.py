@@ -47,7 +47,7 @@ def validate(data):
     return errors
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument("--file", default=".research/evidence/ledger.json")
+    ap=argparse.ArgumentParser(); ap.add_argument("--file", default=".researchops/state/evidence/ledger.json")
     sp=ap.add_subparsers(dest="cmd", required=True)
     sp.add_parser("init")
     add=sp.add_parser("add"); add.add_argument("kind", choices=["claim","evidence","decision","limitation"]); add.add_argument("--id", required=True); add.add_argument("--json", required=True)

@@ -1,23 +1,16 @@
 # ResearchOps Toolkit
 
-ResearchOps Toolkit is an **evidence-driven research workflow and agent-behavior toolkit** for Codex, Claude Code, Gemini CLI, and optional third-party model workers. It organizes discovery, route selection, experiments, independent validation, writing, communication, delegated work, and project hygiene into an auditable and recoverable loop.
+ResearchOps Toolkit is a modular **Research and Development workflow plugin** for Codex, Claude Code, Gemini CLI, and optional third-party model workers. It combines progressively loaded Skills, deterministic runtime services, task-aware behavior policies, evidence/state management, and project-scoped model evaluation and routing.
 
-It contains two complementary systems:
+> It does not try to make one Agent “write a paper automatically.” It gives questions, work units, artifacts, evidence, model assignments, failures, costs, decisions, risks, and human approvals explicit owners and durable records.
 
-- **Skills System** — progressively loaded capabilities that own procedures, artifacts, and acceptance contracts.
-- **Behavior Runtime** — lifecycle-hook policies that constrain how applicable tasks are executed, suggest specialist workflows, and evaluate exposed tool use through structured inspection, non-executing shell normalization, declarative risk policy, and optional semantic escalation.
+Version 2.1 contains 13 top-level Skills, eight Behavior Packs, seven internal components, one SQLite-backed Model Intelligence core, native hook adapters, and filtered release Presets.
 
-> The goal is not to have an agent automatically “write a paper.” The goal is to give every question, hypothesis, result, failure, decision, risk, permission, and human approval an explicit owner and durable record.
+## Send this to your Agent
 
-The release includes **12 top-level Skills, seven task Behavior Packs, one universal behavior kernel, three internal components, three Harness adapters, sub-agent/model routing, capability proposals, safe cleanup, and a research dashboard**.
+> Clone `git@github.com:hungryDodo/researchops-toolkit.git`, enter the repository, run `python3 -m rops inspect /path/to/project`, then `python3 -m rops bootstrap /path/to/project --title "My Project" --mode auto --upgrade`, install the `research-routed` Preset for your Harness, and use `python3 -m rops up --root /path/to/project --open` to review the adopted project state and Dashboard.
 
-## 🚀 One-liner quick start
-
-> **Skip the docs?** Send this to your Agent and it will clone, install, and bootstrap everything automatically:
-
-**🤖 Send to your Agent:**
-
-> Clone git@github.com:hungryDodo/researchops-toolkit.git, cd in, then run `python3 -m rops install --target codex --scope project --project . --mode link --bundle research-core --with-agents --with-behavior`, then `python3 -m rops bootstrap . --title "My Research Project"`, then `python3 -m rops doctor --target codex --project .`.
+Replace `codex` with `claude`, `gemini`, `portable`, or `all` where appropriate.
 
 ## Quick start
 
@@ -25,8 +18,11 @@ The release includes **12 top-level Skills, seven task Behavior Packs, one unive
 git clone git@github.com:hungryDodo/researchops-toolkit.git
 cd researchops-toolkit
 
+python3 -m rops inspect /path/to/project
+
 python3 -m rops bootstrap /path/to/project \
-  --title "My Research Project" \
+  --title "My Project" \
+  --mode auto \
   --upgrade
 
 python3 -m rops install \
@@ -34,191 +30,243 @@ python3 -m rops install \
   --scope project \
   --project /path/to/project \
   --mode link \
-  --bundle research-core \
+  --preset research-routed \
   --with-agents \
   --with-behavior \
   --behavior-mode guide
 
 python3 -m rops doctor --target codex --project /path/to/project
+python3 -m rops up --root /path/to/project --open
 ```
 
-Inspect the runtime and start the dashboard:
-
-```bash
-python3 -m rops behavior --root /path/to/project status
-python3 -m rops dashboard serve --root /path/to/project --port 8765
-```
-
-See [Getting started](docs/getting-started.md) for installation, trust prompts, modes, and cross-framework notes.
-
-## Third-party models and the Model Control Plane
-
-Provider setup is a low-frequency mode of `adaptive-agent-orchestration`, backed by the non-Skill `model-control-plane` component. Given a provider and intended model/capability, an Agent can verify current official documentation, create a non-secret onboarding plan, prepare probes, and tell the operator where to install the key. The operator enters the secret locally, then ROPS performs doctor/probe/enrollment and bounded smoke tests.
-
-```bash
-python3 -m rops models recipes
-python3 -m rops models --root /path/to/project onboard \
-  --provider anthropic --model <verified-model-id> \
-  --capability review --risk-ceiling low \
-  --agent independent_reviewer
-python3 -m rops models secret-template --provider anthropic --write
-```
-
-Keys never belong in chat, Git, Skills, `.research/`, or command-line arguments. Connectivity tests do not teach the router. Only independently evaluated real tasks update the model dossier; model-specific prompt overlays remain proposals until a human approves them. See [Agents and model routing](docs/agents-and-model-routing.md).
-
-## Two control planes, four layers
+The project receives one hidden root:
 
 ```text
-Plugin / Extension                         distribution envelope
-          ↓
-Behavior Runtime + Harness Hooks           lifecycle interception and layered risk evaluation
-          ├── Universal Kernel             cross-task scope, evidence, state, privilege, approvals
-          └── Task Behavior Packs          coding, research, writing, hardware, hygiene, delegation
-          ↓
-Progressive Skills                         procedures, scripts, references, artifacts, acceptance
-          ↓
-Platform permissions / sandbox             final authority over tool execution
+.researchops/
+├── state/          project designs, runs, evidence, decisions, dashboard state
+├── governance/     project policies, registries, routing configuration
+├── intelligence/   authoritative SQLite database and generated projections
+├── runtime/        replaceable hooks, Behavior Runtime, and local runtime copy
+├── artifacts/      large or generated local artifacts
+├── cache/
+└── logs/
 ```
 
-MCP remains useful for external tools and shared state, but it is not the mandatory policy plane because a model can elect not to call an MCP tool.
+There is no second `.research/` state directory in v2. Legacy projects are migrated into this single root.
 
-### Runtime modes
+ResearchOps does not assume that installing the plugin means starting from zero. `rops inspect` runs before writes. A non-empty repository is adopted without overwriting its files or adding root policy files by default; the deterministic inventory is then interpreted by the Research Program Orchestrator at a light, standard, or deep adoption depth. The inferred phase is visible immediately but remains explicitly reviewable.
 
-| Mode | Effect |
-|---|---|
-| `off` | No injection, records, or decisions |
-| `observe` | Metadata-only classification and audit |
-| `guide` | Default; compact task guidance and proposals without blocking ordinary work |
-| `enforce` | Guide plus fail-closed blocking of high/critical static or semantic findings without a matching content-bound one-use approval |
+## The important architectural distinction
 
-Hooks do not replace the platform sandbox or permission system. Enforcement only covers lifecycle and tool paths exposed by the active Harness.
+Research, Development, and Routing are **not three equivalent workflow domains**:
 
-## Behavior Packs
-
-| Pack | Purpose |
-|---|---|
-| `coding-minimal-change` | Ponytail-inspired minimum sufficient change, reuse-first design, and dependency restraint |
-| `coding-evidence` | old-coder-inspired contract, RED/GREEN, risk-calibrated checks, and fresh evidence |
-| `research-integrity` | Protocol, evidence-source, negative-result, and claim separation |
-| `writing-claim-discipline` | Match scientific language to verified evidence strength |
-| `hardware-safety` | Topology, power, calibration, leases, recovery, and physical confirmation |
-| `hygiene-archive-first` | Inventory and reversible archive before separately approved purge |
-| `delegation-quality` | Bounded delegation, resource isolation, independent acceptance, and model profiles |
-
-Behavior Packs are not user-routed top-level Skills. Hooks select them from the task and active Skill, so they do not compete in the Skill catalog.
-
-## Repository layout
+- **Research-led R&D** and **Development-led R&D** are user-facing workflow orientations with different objective functions and acceptance rules.
+- **Model Intelligence and Routing** are cross-cutting services that can support either workflow, Visual Communication, Hardware work, or a custom external task family.
+- Communication/Visual, Hardware, Hygiene, and Skill-system maintenance remain separate domains where their artifacts, permissions, or risk boundaries differ materially.
 
 ```text
-researchops-toolkit/
-├── behavior/               universal kernel, packs, runtime, and evals
-├── hooks/                  Codex, Claude Code, and Gemini CLI adapters
-├── .codex-plugin/          Codex distribution metadata
-├── .claude-plugin/         Claude Code distribution metadata
-├── gemini-extension.json   Gemini CLI extension metadata
-├── skills/                 12 progressively loaded top-level Skills
-├── components/             evidence ledger and dashboard; not semantically routed
-├── rops/                    unified CLI and internal modules
-├── config/                 frameworks, bundles, triggers, proposals, contracts
-├── catalog/                generated Skill catalog
-├── tests/                  trigger, behavior, and end-to-end tests
-├── templates/              rendered project policy
-├── release/                validation and internal hashes
-└── docs/                   stable user and maintainer documentation
+                         Installation Preset / native plugin
+                                      │
+                 ┌────────────────────┴────────────────────┐
+                 │                                         │
+        User-facing workflow Skills                 Behavior Runtime
+ Research-led R&D · Development-led R&D       scope · evidence · risk · approval
+ Communication · Hardware · Hygiene                         │
+                 │                                         │
+                 └────────────────────┬────────────────────┘
+                                      │
+                         Deterministic ROPS runtime
+       Model Gateway · Model Intelligence · Engineering Assurance · Evidence
+                                      │
+                         canonical `.researchops/` state
+                                      │
+        routing · dossier · dashboard · benchmark · audit projections
+                                      │
+                      optional local/external recall adapters
 ```
 
-`.research/` is authoritative project state. `.researchops/` is a replaceable installed runtime copy and hook entry point.
+## Why SQLite from the first event
+
+Model evaluation records are relational, time-dependent, frequently updated, and queried by project, work-unit operation, model execution configuration, endpoint, Judge, failure pattern, and mitigation. ResearchOps therefore uses:
+
+```text
+.researchops/intelligence/state.sqlite
+```
+
+as the authoritative source from the first Evaluation Event. JSONL is supported only for import, export, audit, and reproducible research exchange:
+
+```bash
+python3 -m rops intelligence --root /path/to/project export-jsonl \
+  --out /tmp/evaluation-events.jsonl
+
+python3 -m rops intelligence --root /path/to/project import-jsonl \
+  /tmp/evaluation-events.jsonl
+```
+
+One deterministic profile engine reads canonical events and regenerates all projections. Routing profiles and model dossiers no longer maintain separate aggregation logic.
+
+## Model Intelligence at a glance
+
+The independently installable Model Intelligence module provides:
+
+- canonical live, shadow, and anchor Evaluation Events;
+- finite task-conditioned profile slices rather than a high-dimensional Cartesian product;
+- posterior success estimates, verified progress, quality, cost, latency, human correction, and uncertainty;
+- separate endpoint-health, pricing, and declared/observed model-identity signals;
+- project warmup, soft transfer, zero-start comparison, and negative-transfer rejection;
+- aggregated failure patterns and scoped mitigation revisions;
+- blind/pairwise Judge observations with task-family-conditioned calibration;
+- black-box behavior-drift alerts and deployment epochs;
+- read-only routing, dossier, dashboard, benchmark, and audit views;
+- lifecycle-aware four-layer local Memory with scoped deduplication, temporal validity, supersession, provenance, project synchronization, and optional external adapters that never replace authoritative facts.
+
+Connectivity probes and smoke tests update endpoint/identity telemetry only. They never teach the router that a model is competent.
+
+## Project dashboard
+
+`python3 -m rops up --root /path/to/project --open` is the one-command adoption/status/Dashboard path. The project-progress dashboard includes compact Intake, Memory, Routing, and Model Intelligence panels. It shows only information useful to a human operator:
+
+- the current model preference and concise reason;
+- recent model assignments and completed work;
+- verified observations, success trend, cost, and service health;
+- project adaptation/warmup progress;
+- active behavior-drift warnings;
+- selected failure patterns and mitigations when actionable.
+
+Low-level score factors, posterior parameters, policy internals, and complete audit evidence remain available in generated projections rather than crowding the main view.
+
+## Installation Presets
+
+A Preset is an installation and packaging recipe. It is not a Git bundle, Git submodule, or code-ownership boundary.
+
+```bash
+python3 -m rops presets
+python3 -m rops presets routing-core --format json
+```
+
+| Preset | Purpose |
+|---|---|
+| `routing-core` | Model gateway, evaluation, routing, drift, Judge calibration, warmup, and dashboard support |
+| `development-core` | Development-led technical investigation, implementation, debugging, review, and release assurance |
+| `research-base` | Research-led workflow without requiring dynamic multi-model routing |
+| `research-routed` | `research-base` plus `routing-core`; default source-tree preset |
+| `communication-visual` | Academic communication and optional visual-reference intake |
+| `hardware` | Physical experiment workflow and hardware safety |
+| `hygiene` | Archive-first repository/data lifecycle |
+| `platform-dev` | Maintaining Skills, hooks, manifests, and the plugin system itself |
+| `full` | All supported capabilities |
+
+`rops bundles` and `--bundle` remain compatibility aliases.
+
+## User-facing Skills and internal task codes
+
+Users describe the goal in ordinary language or invoke a stable top-level Skill. Internal codes such as `discover`, `design`, `implement`, `debug`, `validate`, and `communicate` are machine-facing work-unit descriptors used by routing, evaluation, and Benchmark Packs. Users do not need to memorize them.
+
+| Skill | Primary owner |
+|---|---|
+| `research-program-orchestrator` | lifecycle, gates, next owner, project progress |
+| `research-discovery` | traceable survey, closest work, Related Work synthesis |
+| `research-route-evaluator` | fatal-flaw checks and a bounded set of falsifiable routes |
+| `experimental-research` | experiment contract, execution, analysis, evidence |
+| `research-engineering` | research-led code whose behavior can affect claims or measurements |
+| `software-development` | development-led investigation, implementation, debugging, review, release |
+| `adaptive-agent-orchestration` | bounded delegation, model routing, independent acceptance |
+| `research-validation` | reproduction, artifact audit, manuscript red-team review |
+| `research-writing` | evidence-gated drafting and LaTeX revision |
+| `research-communication` | publication figures, result plots, research presentations |
+| `hardware-experiment-loop` | physical topology, calibration, leases, restoration |
+| `project-hygiene` | archive, restore, quarantine, approved purge, worktrees |
+| `skill-system-engineering` | Skill/Pack boundaries, triggers, hooks, provenance, release |
+
+## Research-led and Development-led R&D
+
+Both orientations share the same engineering skeleton:
+
+```text
+Frame → Investigate → Decide → Implement → Verify → Learn
+```
+
+Research-led work optimizes for valid knowledge and claim-to-evidence linkage; novel, expensive, or negative-result routes can remain useful. Development-led work optimizes for a reliable, maintainable, deployable deliverable and rejects complexity whose system-level value does not justify its cost. The shared `engineering-assurance` component provides task contracts, RED/baseline evidence, diff analysis, and risk-scaled verification; each Skill adds its own acceptance rules.
+
+## Visual reference intake is optional
+
+A user may send a reference image to any capable external vision model and ask it to produce the schema in `components/visual-contracts/visual-reference.schema.json` using `templates/visual-reference-analysis.md`. ResearchOps consumes the resulting design brief; it does not require the main Harness to have vision capability and does not copy brand-specific assets.
+
+## Model and provider identity
+
+An execution arm records model family/revision, endpoint, quantization or reasoning configuration, adapter/tool schema, Harness/prompt revision, mitigation bundle, and a local deployment epoch. When a closed provider exposes no immutable revision, ResearchOps cannot prove that hidden weights changed. It can detect sustained changes in observable behavior, format/tool compliance, latency, token use, anchor outcomes, and returned identity metadata, then isolate future evidence in a new deployment epoch.
+
+## Memory boundary
+
+ROPS owns authoritative state. Built-in Memory v2.1 adds episodic, semantic, procedural, and preference layers; candidate/active/superseded/retired lifecycle; source-aware deduplication; temporal validity; relations; project synchronization; and bounded provenance-bearing context bundles. Harness memory, vector stores, or temporal graph systems remain optional Recall Adapters. Retrieved memory cannot directly change a routing profile, approve a mitigation, replace current prices, or authorize a high-risk operation.
+
+## Product evaluation and baselines
+
+ResearchOps now evaluates the tool as well as the models it routes:
+
+```bash
+python3 -m rops evaluate \
+  --baseline-root /path/to/older/researchops \
+  --out /tmp/researchops-product-benchmark
+```
+
+The bundled deterministic suite measures non-destructive adoption, actual HTTP Dashboard startup, SQLite authority, and Memory lifecycle behavior. External products can be ingested through the standardized report contract, but a feature matrix is not treated as proof of superior performance. Paired Skill/Workflow studies and longitudinal project outcomes remain necessary for broader claims.
+
+## Packaging and releases
+
+Generate a filtered native artifact from the monorepo:
+
+```bash
+python3 -m rops package \
+  --out /tmp/researchops-release \
+  --preset routing-core \
+  --target codex
+
+python3 -m rops package \
+  --out /tmp/researchops-release \
+  --preset full \
+  --target portable
+```
+
+Each archive contains only the selected Skills, components, and Behavior Packs; its own default Preset, catalog, native manifest, validation report, and SHA-256 manifest are regenerated inside the package.
 
 ## Documentation
 
-- [Documentation index](docs/README.md)
-- [Getting started](docs/getting-started.md)
-- [Architecture and state](docs/architecture.md)
-- [Behavior Runtime](docs/behavior-runtime.md)
-- [Research workflows](docs/workflows.md)
-- [Skills and bundles](docs/skills-and-bundles.md)
-- [Agents and model routing](docs/agents-and-model-routing.md)
-- [Safety and hygiene](docs/safety-and-hygiene.md)
-- [Development and release](docs/development.md)
+| Document | Purpose |
+|---|---|
+| [Documentation index](docs/README.md) | Recommended reading paths |
+| [Getting started](docs/getting-started.md) | Inspect/adopt, install, quick-start Dashboard, upgrade |
+| [Architecture and state](docs/architecture.md) | Horizontal layers, vertical capability slices, authority |
+| [Model Intelligence](docs/model-intelligence.md) | events, aggregation, projections, routing, drift, warmup, Judge |
+| [Research agenda](docs/research-agenda.md) | research questions, baselines, metrics, ablations, and empirical boundaries |
+| [Research and Development](docs/research-and-development.md) | research-led vs development-led objective functions |
+| [Presets and distribution](docs/presets-and-distribution.md) | monorepo composition and filtered native artifacts |
+| [Product landscape](docs/product-landscape.md) | Adjacent observability, research-agent, coding-agent, and memory systems |
+| [Evaluation and baselines](docs/evaluation-and-baselines.md) | Tool regression, external adapters, paired Skill tests, routing and user studies |
+| [State and memory](docs/state-and-memory.md) | `.researchops/`, SQLite authority, lifecycle-aware Memory and optional adapters |
+| [Skills and progressive loading](docs/skills-and-bundles.md) | top-level ownership, internal modes, triggers |
+| [Agents and model routing](docs/agents-and-model-routing.md) | provider setup, execution arms, dispatch and evaluation |
+| [Safety and hygiene](docs/safety-and-hygiene.md) | lifecycle hooks, approvals, archive-first operations |
+| [Migration to v2](docs/migration-v2.md) | legacy state and JSONL migration |
+| [Development and release](docs/development.md) | tests, provenance, packaging, contribution |
 
 Agents modifying this repository should read [`AGENTS.md`](AGENTS.md).
-
-## The 12 top-level Skills
-
-| Skill | Owner |
-|---|---|
-| `research-program-orchestrator` | Lifecycle, gates, next action, evidence/dashboard coordination, capability proposals |
-| `research-discovery` | Survey, closest work, related-work synthesis, source status |
-| `research-route-evaluator` | Fatal flaws, feasibility, Top 1–3 routes, minimum decisive tests |
-| `experimental-research` | Software experiment design, execution, and analysis |
-| `hardware-experiment-loop` | Physical topology, safety, calibration, leases, recovery |
-| `research-engineering` | Research-critical code: SPEC → RED → GREEN → Gauntlet |
-| `adaptive-agent-orchestration` | Subtasks, model routing, independent acceptance, profiles |
-| `research-validation` | Reproduction, artifact audit, paper red-team review |
-| `research-writing` | Evidence-gated drafting and LaTeX revision |
-| `research-communication` | Academic figures, result plots, and presentations |
-| `project-hygiene` | Archive-first cleanup, data/log lifecycle, worktrees, purge |
-| `skill-system-engineering` | Skill/Pack boundaries, triggers, safety, provenance, Harness adapters |
-
-## Layered risk guardrail
-
-The Behavior Runtime does not treat regular expressions as the primary security mechanism. Exposed tool use passes through four layers:
-
-1. structured tool-input inspection;
-2. non-executing shell parsing and canonicalization, including common wrappers, executable paths, split/long options, nested `sh -c`, `xargs`, and `find -exec`;
-3. declarative risk categories covering deletion, overwrite/device writes, recursive permissions, Git force/history operations, privileged containers, filesystem administration, persistence, egress/tunnels, remote execution, resource exhaustion, power control, hardware writes, and policy bypass;
-4. an optional strict-JSON semantic reviewer for dynamic code or unfamiliar tools. It may only add or escalate risk and can never clear a static finding.
-
-Inspect a command without executing it:
-
-```bash
-python3 -m rops behavior --root . analyze \
-  --command 'sudo /bin/rm --recursive --force /data'
-```
-
-Enable an approved local or external reviewer explicitly; raw tool input is sent only after opt-in:
-
-```bash
-python3 -m rops behavior --root . semantic \
-  --mode advisory \
-  --scope uncertain \
-  --command 'python3 /path/to/reviewer.py'
-```
-
-Discovery and execution approval remain separate:
-
-```text
-lightweight discovery → proposal → approve specialist loading → specialist operational approval
-```
-
-In `enforce` mode, approvable findings require a short-lived, one-use approval bound to the risk category, raw command hash, canonical command hash, and exact matched rule set:
-
-```bash
-python3 -m rops behavior --root . approve \
-  --kind hardware-write \
-  --command 'nrfjprog --program app.hex --reset' \
-  --reason 'topology and recovery plan reviewed' \
-  --ttl 15
-```
-
-The runtime is a guardrail, not a complete command sandbox. Platform permissions, container/OS isolation, repository protection, hardware interlocks, and human review remain the final boundary.
-
-## References and acknowledgements
-
-We studied open-source projects and platform documentation for workflow, Skill/Harness organization, middleware, lifecycle control, and validation boundaries. **This distribution does not copy, modify, or vendor their Skills, prompts, scripts, hooks, templates, handbooks, or assets.** See [`PROVENANCE.json`](PROVENANCE.json).
-
-Key influences include Orchestra Research, OpenJudge, ARS-Codex, phd-skills, CCFA-Skills, old-coder, Ponytail, revise-paper, ResearchStudio-Idea, Supervisor-Skills, Anthropic Skills, Google Skills, the Agent Skills specification, Codex/Claude Code/Gemini CLI hook documentation, LangChain agent middleware, LiteLLM, and OpenAI Agents SDK. Upstream projects remain governed by their own licenses.
 
 ## Validation
 
 ```bash
 python3 -m rops validate
-python3 -m rops validate --smoke
-python3 -m rops package --out /tmp/researchops-toolkit-release
+python3 tests/smoke.py
+python3 tests/intelligence_smoke.py
+python3 tests/behavior_smoke.py
+python3 tests/model_control_plane_smoke.py
+python3 tests/adoption_memory_smoke.py
+python3 -m rops evaluate --out /tmp/researchops-product-benchmark
+python3 -m rops package --out /tmp/researchops-release --preset full --target portable
 ```
 
-The checks cover Skill structure, trigger fixtures, Behavior Pack evals, hook installation, 134 adversarial/benign risk cases, parsed and canonical content-bound approvals, optional semantic escalation, metadata-only logging, framework installation, model routing, archive/restore/purge, worktree safety, and internal hashes. They do not prove empirical routing accuracy for every Harness/model release or guarantee publication outcomes.
+The tests validate deterministic structure and behavior. They do not prove that every future model/provider/Harness will route perfectly, that a closed provider did or did not change hidden weights, or that a research project will reach a particular venue.
 
-## License
+## Provenance and license
 
-ResearchOps Toolkit is released under the [MIT License](LICENSE).
+ResearchOps Toolkit is released under the [MIT License](LICENSE). External projects and platform documentation informed design analysis, but no third-party Skill, prompt, script, template, handbook, or visual asset is vendored by default. See [`PROVENANCE.json`](PROVENANCE.json) for the machine-readable declaration.

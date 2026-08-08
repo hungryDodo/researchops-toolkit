@@ -33,4 +33,4 @@ Parallelize independent search perspectives when clean-context workers are avail
 
 ## Output contract
 
-Produce `.research/survey/brief.md`, query log, screened corpus, provenance tags, closest-work matrix, taxonomy, tensions, gaps, and explicit answers to the frozen questions.
+Produce `.researchops/state/survey/brief.md`, query log, screened corpus, provenance tags, closest-work matrix, taxonomy, tensions, gaps, and explicit answers to the frozen questions.

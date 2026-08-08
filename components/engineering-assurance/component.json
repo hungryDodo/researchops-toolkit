@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "engineering-assurance",
+  "kind": "deterministic-feature",
+  "description": "Shared task contracts, RED/baseline evidence, diff analysis, risk-scaled verification, and acceptance coverage for both development-led and research-led engineering.",
+  "owners": ["software-development", "research-engineering"],
+  "routing_owner": null
+}

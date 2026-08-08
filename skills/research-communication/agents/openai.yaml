@@ -1,6 +1,6 @@
 interface:
   display_name: "Research Communication"
   short_description: "Use when turning verified research content into publication figures, diagrams, result plots, or research presentations. Do not use to imitate an existing websit"
-  default_prompt: "Use $research-communication for this task and write authoritative artifacts under .research/."
+  default_prompt: "Use $research-communication for this task and write authoritative artifacts under .researchops/state/."
 policy:
   allow_implicit_invocation: true

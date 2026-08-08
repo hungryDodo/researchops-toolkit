@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "development-benchmark-v1",
+  "operations": [
+    "discover",
+    "implement",
+    "debug",
+    "validate",
+    "operate"
+  ],
+  "orientation": "development-led",
+  "evaluators": [
+    "tests",
+    "regression",
+    "acceptance-coverage",
+    "maintainability"
+  ]
+}

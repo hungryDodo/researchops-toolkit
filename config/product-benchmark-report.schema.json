@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://researchops.local/schemas/product-benchmark-report-v1.json",
+  "title": "ResearchOps Product Benchmark Tool Report",
+  "type": "object",
+  "required": ["benchmark_version", "tool", "version", "adoption", "dashboard", "memory"],
+  "properties": {
+    "benchmark_version": {"const": "researchops-product-benchmark-v1"},
+    "tool": {"type": "string", "minLength": 1},
+    "version": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "adapter": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "environment": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "coverage": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "adoption": {"type": "object"},
+    "dashboard": {"type": "object"},
+    "state": {"type": "object"},
+    "memory": {"type": "object"}
+  },
+  "additionalProperties": true
+}

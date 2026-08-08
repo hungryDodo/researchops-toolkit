@@ -1,92 +1,22 @@
 {
-  "schema_version": 1,
-  "providers": {
-    "openai": {
-      "display_name": "OpenAI API",
-      "protocol": "openai-chat",
-      "base_url": "https://api.openai.com/v1",
-      "credential_env": ["OPENAI_API_KEY"],
-      "model_list_path": "/models",
-      "docs": [
-        "https://platform.openai.com/docs/quickstart",
-        "https://platform.openai.com/docs/api-reference/models"
-      ],
-      "default_trust_zone": "external-approved"
+  "schema_version": 2,
+  "purpose": "Non-secret adapter templates. Verify each provider's current official documentation before enabling a model.",
+  "recipes": [
+    {
+      "id": "openai-compatible",
+      "protocol": "openai-chat-compatible",
+      "required_fields": ["provider", "model", "base_url", "credential_env"],
+      "optional_fields": ["endpoint_id", "headers", "chat_path", "model_revision", "deployment_epoch"],
+      "secret_policy": "credential_env only; never store the value in project state",
+      "competence_policy": "probe/smoke updates endpoint and identity telemetry only"
     },
-    "anthropic": {
-      "display_name": "Anthropic API",
-      "protocol": "anthropic-messages",
-      "base_url": "https://api.anthropic.com",
-      "credential_env": ["ANTHROPIC_API_KEY"],
-      "api_version": "2023-06-01",
-      "model_list_path": "/v1/models",
-      "docs": [
-        "https://docs.anthropic.com/en/api/messages",
-        "https://docs.anthropic.com/en/api/models-list"
-      ],
-      "default_trust_zone": "external-approved"
-    },
-    "google-gemini": {
-      "display_name": "Google Gemini API",
-      "protocol": "google-generate-content",
-      "base_url": "https://generativelanguage.googleapis.com/v1beta",
-      "credential_env": ["GOOGLE_API_KEY", "GEMINI_API_KEY"],
-      "model_list_path": "/models",
-      "docs": [
-        "https://ai.google.dev/gemini-api/docs/api-key",
-        "https://ai.google.dev/api/models",
-        "https://ai.google.dev/api/generate-content"
-      ],
-      "default_trust_zone": "external-approved"
-    },
-    "deepseek": {
-      "display_name": "DeepSeek API",
-      "protocol": "openai-chat",
-      "base_url": "https://api.deepseek.com",
-      "credential_env": ["DEEPSEEK_API_KEY"],
-      "model_list_path": "/models",
-      "docs": [
-        "https://api-docs.deepseek.com/",
-        "https://api-docs.deepseek.com/api/list-models"
-      ],
-      "default_trust_zone": "external-approved"
-    },
-    "openrouter": {
-      "display_name": "OpenRouter",
-      "protocol": "openai-chat",
-      "base_url": "https://openrouter.ai/api/v1",
-      "credential_env": ["OPENROUTER_API_KEY"],
-      "model_list_path": "/models",
-      "default_headers_env": {
-        "HTTP-Referer": "OPENROUTER_HTTP_REFERER",
-        "X-OpenRouter-Title": "OPENROUTER_APP_TITLE"
-      },
-      "docs": [
-        "https://openrouter.ai/docs/quickstart",
-        "https://openrouter.ai/docs/api/reference/models/get-models"
-      ],
-      "default_trust_zone": "external-approved"
-    },
-    "litellm": {
-      "display_name": "LiteLLM Gateway",
-      "protocol": "openai-chat",
-      "base_url": "http://127.0.0.1:4000/v1",
-      "credential_env": ["LITELLM_API_KEY"],
-      "model_list_path": "/models",
-      "docs": [
-        "https://docs.litellm.ai/"
-      ],
-      "default_trust_zone": "gateway-approved"
-    },
-    "local-openai-compatible": {
-      "display_name": "Local OpenAI-compatible server",
-      "protocol": "openai-chat",
-      "base_url": "http://127.0.0.1:8000/v1",
-      "credential_env": ["LOCAL_MODEL_API_KEY"],
-      "credential_optional": true,
-      "model_list_path": "/models",
-      "docs": [],
-      "default_trust_zone": "local-approved"
+    {
+      "id": "local-openai-compatible",
+      "protocol": "openai-chat-compatible",
+      "required_fields": ["provider", "model", "base_url"],
+      "optional_fields": ["checkpoint_hash", "quantization", "tensor_parallel", "tool_schema_revision"],
+      "secret_policy": "local endpoints may omit credentials; do not assume local implies trusted data handling",
+      "competence_policy": "record each materially different inference configuration as a separate execution arm"
     }
-  }
+  ]
 }

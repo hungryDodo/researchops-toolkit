@@ -2,80 +2,158 @@
 
 ## First principles
 
-ResearchOps Toolkit separates **capability discovery** from **execution behavior**:
+1. A stable user intent owns a top-level Skill; every internal step does not become a Skill.
+2. A canonical fact is written once and can feed many generated views.
+3. Research-led and Development-led R&D share an engineering skeleton but optimize different outcomes.
+4. Model routing is a cross-cutting service, not a third domain workflow equivalent to Research and Development.
+5. Project state must remain usable without a closed Harness memory service.
+6. Store rich evidence, but aggregate only dimensions that change eligibility, verification, risk, or predictive value.
+7. Human-readable summaries are projections, not editable sources of truth.
 
-- A Skill is a user-meaningful workflow owner. It answers what procedure to follow, what artifacts to create, and how acceptance is determined.
-- A Behavior Pack is a compact cross-cutting policy. It answers how an applicable task should be performed before a full Skill is selected or while a Skill is executing.
-- A Hook or middleware adapter exposes lifecycle events. It is transport, not policy content.
-- The Model Control Plane is a non-routed component for secret-safe provider mechanics, bounded dispatch, and model dossiers; the orchestration Skill owns decisions.
-- Platform permissions and sandboxing remain the final authority over tool execution.
-
-This avoids two failure modes: turning every policy into a competing top-level Skill, and burying all workflows inside an always-on prompt.
-
-## Four layers
+## Horizontal responsibility layers
 
 ```text
-1. Distribution
-   .codex-plugin/, .claude-plugin/, gemini-extension.json
-   Packages Skills, hooks, and metadata.
-
-2. Behavior control plane
-   behavior/ + hooks/
-   Runs a universal kernel, selects task packs, propagates compact parent policy to Sub-Agents, records metadata, and applies structured inspection, parsed command policy, and optional semantic escalation.
-
-3. Workflow capability plane
-   skills/
-   Progressively loaded procedures, references, scripts, assets, artifacts, and acceptance contracts.
-
-4. Execution authority
-   Harness permission prompts, sandbox, tool ACLs, hardware interlocks, and human approvals.
+Distribution
+  native Codex / Claude Code / Gemini plugin artifacts
+        ↓
+Project Intake / Adoption
+  inspect-before-write facts plus agent/human semantic confirmation
+        ↓
+Workflow Skills
+  stable user intents and acceptance contracts
+        ↓
+Behavior Runtime
+  task classification, compact guidance, risk and approval checks
+        ↓
+Deterministic Runtime Components
+  model gateway, model intelligence, engineering assurance, evidence, dashboard
+        ↓
+Canonical Project State
+  SQLite plus registered project artifacts
+        ↓
+Read-only Projections
+  routing, dossier, dashboard, benchmark, audit
+        ↓
+Optional Recall
+  FTS, vector or external Harness memory adapters
 ```
 
-MCP may provide external tools or shared state, but a mandatory policy cannot rely solely on an optional model-selected tool call.
+Dependencies point downward. A domain Skill can register task/evaluator metadata with Model Intelligence, but Model Intelligence does not import Research- or Development-specific workflow code.
 
-## Repository layout
+## Vertical capability slices
+
+A user-visible product variant is assembled across the horizontal layers:
+
+| Capability slice | Workflow owner | Cross-cutting support |
+|---|---|---|
+| Research-led R&D | research Skills | evidence, engineering assurance, optional routing |
+| Development-led R&D | `software-development` | engineering assurance, optional routing |
+| Communication / Visual | `research-communication` | visual contracts, optional visual model routing |
+| Hardware | `hardware-experiment-loop` | evidence, leases, safety approval |
+| Hygiene | `project-hygiene` | archive-first policy and audit |
+| Platform development | `skill-system-engineering` | trigger, manifest, provenance, release validation |
+| Model evaluation/routing | `adaptive-agent-orchestration` | model gateway + model intelligence; reusable by all slices |
+
+A Preset is a tested selection across these layers. Code ownership remains horizontal and is not duplicated per Preset.
+
+## Existing-project adoption
+
+Plugin installation is not equivalent to project creation. Before writing state, `rops inspect` inventories the repository and selects a conservative mode: `new`, `adopt`, `migrate`, or `resume`. The deterministic scanner reports facts and uncertainty; `research-program-orchestrator` samples representative artifacts, confirms/corrects the phase, chooses an adoption depth, registers useful existing work, and names the smallest next work unit. It never recreates artifacts merely to force the project into the default pipeline.
+
+Adoption is non-destructive by default: one `.researchops/` directory is added, root project files and `.gitignore` are not modified, and inferred completion is never treated as verified evidence.
+
+## Source repository layout
 
 ```text
 researchops-toolkit/
-├── behavior/             policy registry, task packs, runtime, schema, evals
-├── hooks/                lifecycle adapter executable and manifests
-├── skills/               12 top-level routed capabilities
-├── components/           dashboard, evidence ledger, and model control plane
-├── rops/                  unified CLI
-├── config/               shared registries and contracts
-├── catalog/              generated Skill discovery catalog
-├── tests/                structural and end-to-end checks
-├── templates/            compact project policy
-├── release/              release validation and hash manifest
-└── docs/                 stable documentation
+├── skills/                 progressively loaded user-facing workflow owners
+├── behavior/               cross-cutting packs and portable lifecycle runtime
+├── hooks/                  Harness lifecycle adapters
+├── components/             deterministic shared services and schemas
+├── rops/                   thin deterministic CLI/runtime layer
+├── config/                 Presets, framework paths, triggers, contracts
+├── catalog/                generated Skill catalog
+├── templates/              project and optional visual-reference templates
+├── tests/                  structural, behavior, intelligence, end-to-end tests
+├── release/                validation evidence and integrity manifest
+└── docs/                   stable user and maintainer documentation
 ```
 
-## Installed project layout
+`rops/` contains deterministic Python because schemas, migrations, aggregation, policy decisions, package resolution, atomic writes, and release validation must be reproducible. Open-ended research reasoning, novelty judgment, writing, and visual creativity stay in Skills or external models.
+
+## One hidden project root
 
 ```text
-project/
-├── .research/            authoritative research state
-│   ├── designs/          frozen hypotheses, variables, metrics, protocols
-│   ├── runs/             immutable run manifests and results
-│   ├── evidence/         claim/evidence ledger and artifacts
-│   ├── agents/           providers/models, onboarding, dispatches, acceptance, routing profiles, model dossiers
-│   ├── proposals/        capability recommendations and decisions
-│   ├── runtime/          behavior mode, approvals, metadata-only events
-│   ├── hygiene/          inventories, plans, registries
-│   ├── archive/          reversible retired content
-│   ├── trash/            quarantine before permanent purge
-│   └── dashboard/        semantic project state
-├── .researchops/         installed replaceable behavior runtime and hook entry point
-├── .codex/.claude/.gemini framework-native Skills, agents, and hook settings
-└── AGENTS.md etc.        compact always-on project policy
+.researchops/
+├── suite.lock.json
+├── state/
+│   ├── PROJECT.md
+│   ├── decisions.md
+│   ├── human_actions.md
+│   ├── designs/
+│   ├── survey/
+│   ├── runs/
+│   ├── evidence/
+│   ├── agents/
+│   ├── proposals/
+│   ├── hygiene/
+│   ├── archive/
+│   ├── trash/
+│   └── dashboard/
+├── governance/
+├── intelligence/
+│   ├── state.sqlite
+│   └── exports/
+├── runtime/
+├── artifacts/
+├── cache/
+└── logs/
 ```
+
+The project root receives no sibling `.research/` directory in v2. `state/` contains project-owned human/audit artifacts; `intelligence/state.sqlite` is authoritative for model-intelligence facts; `runtime/` is replaceable.
+
+## Canonical facts and projections
+
+There is not one universal table for everything. Each semantic fact has one authority:
+
+| Fact domain | Authority |
+|---|---|
+| Work-unit evaluation | `evaluation_events` in SQLite |
+| Endpoint observations | `endpoint_observations` |
+| Effective-dated prices | `pricing_rules` |
+| Identity/drift observations | identity and deployment-epoch tables |
+| Failure observations/patterns | failure tables |
+| Mitigations and approvals | governance tables |
+| Experiment designs and evidence artifacts | `.researchops/state/` artifacts and ledger |
+
+The profile engine is a deterministic pure aggregation path:
+
+```text
+validated event
+  → append to SQLite
+  → finite profile aggregation
+  → canonical profile snapshot
+  → routing / dossier / dashboard / benchmark / audit projections
+```
+
+Projections include `generated`, `do_not_edit`, aggregator version, event count, and input digest. UI actions write new facts or governance events; they never patch a generated profile.
+
+## Deliberately finite task conditioning
+
+Evaluation Events can retain rich metadata, but v2 aggregates only:
+
+1. arm global;
+2. arm × primary operation;
+3. arm × project × primary operation;
+4. arm × orientation × primary operation.
+
+A new dimension enters routing only after it demonstrates predictive or eligibility value and avoids sparse-bucket explosion. `unknown` is a valid value when a project has not yet discovered its stack or method.
 
 ## Authority rules
 
-- Experiment design files are authoritative for hypotheses, baselines, metrics, and stopping rules.
-- Run manifests and immutable run IDs are authoritative for execution.
-- The evidence ledger links claims to artifacts; registration alone does not make an interpretation scientifically valid.
-- LaTeX source is editable manuscript authority; rendered PDF is visual authority.
-- Dashboard cards summarize state but do not replace underlying evidence.
-- Chat history and terminal output are transient unless captured into an artifact.
-- `.researchops/` may be reinstalled; `.research/` must be preserved across upgrades.
+- Chat history and terminal scrollback are not authoritative unless captured.
+- A model dossier summarizes facts; it is not edited directly.
+- Prompt-mitigation approval never authorizes a destructive or high-risk operation.
+- Provider probes update service/identity telemetry, not competence.
+- External memory can suggest relevant history but cannot alter profiles or approvals.
+- Dashboard cards summarize state and never replace evidence or audit records.

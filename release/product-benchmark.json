@@ -1,0 +1,332 @@
+{
+  "benchmark_version": "researchops-product-benchmark-v1",
+  "generated_at": "2026-08-06T05:29:20+00:00",
+  "candidate": {
+    "benchmark_version": "researchops-product-benchmark-v1",
+    "generated_at": "2026-08-06T05:29:11+00:00",
+    "tool": "ResearchOps 2.1.0",
+    "toolkit_root": "/mnt/data/work_researchops_v21",
+    "version": "2.1.0",
+    "bootstrap": {
+      "returncode": 0,
+      "latency_ms": 4248.9,
+      "stderr": ""
+    },
+    "adoption": {
+      "existing_file_preservation_rate": 1.0,
+      "preserved": {
+        "README.md": true,
+        "pyproject.toml": true,
+        "src/pipeline.py": true,
+        "tests/test_pipeline.py": true,
+        "experiments/run_latency.py": true,
+        "results/latency.json": true,
+        "paper/main.tex": true,
+        "docs/decision.md": true
+      },
+      "host_root_files_added": [],
+      "single_hidden_root": true,
+      "assessment_present": true,
+      "adoption_mode": "adopt",
+      "phase_inferred": "communication",
+      "requires_review": true,
+      "dashboard_initial_phase": "communication"
+    },
+    "dashboard": {
+      "initialized": true,
+      "view_ready": true,
+      "sync_latency_ms": 1146.054,
+      "start_command_supported": true,
+      "quick_start": {
+        "supported": true,
+        "ready": true,
+        "startup_latency_ms": 1108.938,
+        "view_loaded": true,
+        "ephemeral_port": true,
+        "process_group_cleaned": true,
+        "error": ""
+      },
+      "status_command_supported": true,
+      "intake_visible": true,
+      "memory_visible": true,
+      "routing_visible": true
+    },
+    "state": {
+      "sqlite_authority": true,
+      "tables": [
+        "approvals",
+        "deployment_epochs",
+        "drift_events",
+        "endpoint_observations",
+        "evaluation_events",
+        "execution_arms",
+        "failure_observations",
+        "failure_patterns",
+        "identity_observations",
+        "judge_observations",
+        "judge_pairwise_observations",
+        "memory_fts",
+        "memory_fts_config",
+        "memory_fts_content",
+        "memory_fts_data",
+        "memory_fts_docsize",
+        "memory_fts_idx",
+        "memory_items",
+        "memory_relations",
+        "memory_sync_runs",
+        "mitigation_pattern_links",
+        "mitigation_trials",
+        "mitigations",
+        "pricing_rules",
+        "profile_slices",
+        "project_snapshots",
+        "projects",
+        "route_decisions",
+        "schema_migrations",
+        "warmup_states"
+      ],
+      "memory_items": 1,
+      "memory_relations": 0
+    },
+    "memory": {
+      "enhanced_cli": true,
+      "deduplication": true,
+      "supersession": true,
+      "scope_isolation": true,
+      "provenance_coverage": 1.0,
+      "context_bundle": true,
+      "sync_idempotent": true,
+      "temporal_validity": true,
+      "superseded_excluded": true,
+      "layer_coverage": 4,
+      "search_latency_ms": 582.029
+    },
+    "coverage": {
+      "dashboard_process_cleanup": true
+    },
+    "score": {
+      "passed": 19,
+      "covered": 19,
+      "total": 19,
+      "rate": 1.0,
+      "coverage_rate": 1.0,
+      "checks": {
+        "preserves_existing_files": true,
+        "avoids_host_root_pollution": true,
+        "records_adoption_mode": true,
+        "infers_non_charter_phase": true,
+        "single_hidden_root": true,
+        "dashboard_ready": true,
+        "dashboard_quick_start": true,
+        "dashboard_process_cleanup": true,
+        "dashboard_shows_intake": true,
+        "dashboard_shows_memory": true,
+        "memory_deduplicates": true,
+        "memory_supersedes": true,
+        "memory_scope_isolation": true,
+        "memory_has_provenance": true,
+        "memory_context_bundle": true,
+        "memory_sync_idempotent": true,
+        "memory_temporal_validity": true,
+        "memory_superseded_excluded": true,
+        "memory_four_layer_coverage": true
+      },
+      "coverage": {
+        "preserves_existing_files": true,
+        "avoids_host_root_pollution": true,
+        "records_adoption_mode": true,
+        "infers_non_charter_phase": true,
+        "single_hidden_root": true,
+        "dashboard_ready": true,
+        "dashboard_quick_start": true,
+        "dashboard_process_cleanup": true,
+        "dashboard_shows_intake": true,
+        "dashboard_shows_memory": true,
+        "memory_deduplicates": true,
+        "memory_supersedes": true,
+        "memory_scope_isolation": true,
+        "memory_has_provenance": true,
+        "memory_context_bundle": true,
+        "memory_sync_idempotent": true,
+        "memory_temporal_validity": true,
+        "memory_superseded_excluded": true,
+        "memory_four_layer_coverage": true
+      }
+    }
+  },
+  "baselines": [
+    {
+      "benchmark_version": "researchops-product-benchmark-v1",
+      "generated_at": "2026-08-06T05:29:20+00:00",
+      "tool": "ResearchOps 2.0.0",
+      "toolkit_root": "/mnt/data/work_researchops_v2/researchops-toolkit",
+      "version": "2.0.0",
+      "bootstrap": {
+        "returncode": 0,
+        "latency_ms": 3399.923,
+        "stderr": ""
+      },
+      "adoption": {
+        "existing_file_preservation_rate": 1.0,
+        "preserved": {
+          "README.md": true,
+          "pyproject.toml": true,
+          "src/pipeline.py": true,
+          "tests/test_pipeline.py": true,
+          "experiments/run_latency.py": true,
+          "results/latency.json": true,
+          "paper/main.tex": true,
+          "docs/decision.md": true
+        },
+        "host_root_files_added": [
+          ".gitignore",
+          "AGENTS.md",
+          "CLAUDE.md",
+          "GEMINI.md",
+          "findings.md",
+          "progress.md",
+          "task_plan.md"
+        ],
+        "single_hidden_root": true,
+        "assessment_present": false,
+        "adoption_mode": null,
+        "phase_inferred": null,
+        "requires_review": null,
+        "dashboard_initial_phase": "charter"
+      },
+      "dashboard": {
+        "initialized": true,
+        "view_ready": true,
+        "sync_latency_ms": 1083.762,
+        "start_command_supported": false,
+        "quick_start": {
+          "supported": false,
+          "ready": false,
+          "startup_latency_ms": null,
+          "view_loaded": false,
+          "process_group_cleaned": null
+        },
+        "status_command_supported": false,
+        "intake_visible": false,
+        "memory_visible": false,
+        "routing_visible": true
+      },
+      "state": {
+        "sqlite_authority": true,
+        "tables": [
+          "approvals",
+          "deployment_epochs",
+          "drift_events",
+          "endpoint_observations",
+          "evaluation_events",
+          "execution_arms",
+          "failure_observations",
+          "failure_patterns",
+          "identity_observations",
+          "judge_observations",
+          "judge_pairwise_observations",
+          "memory_fts",
+          "memory_fts_config",
+          "memory_fts_content",
+          "memory_fts_data",
+          "memory_fts_docsize",
+          "memory_fts_idx",
+          "memory_items",
+          "memory_relations",
+          "mitigation_pattern_links",
+          "mitigation_trials",
+          "mitigations",
+          "pricing_rules",
+          "profile_slices",
+          "projects",
+          "route_decisions",
+          "schema_migrations",
+          "warmup_states"
+        ],
+        "memory_items": 0,
+        "memory_relations": 0
+      },
+      "memory": {
+        "enhanced_cli": false,
+        "deduplication": false,
+        "supersession": false,
+        "scope_isolation": false,
+        "provenance_coverage": 0.0,
+        "context_bundle": false,
+        "sync_idempotent": false,
+        "temporal_validity": false,
+        "superseded_excluded": false,
+        "layer_coverage": 0,
+        "search_latency_ms": null,
+        "basic_search": true
+      },
+      "coverage": {
+        "dashboard_process_cleanup": false
+      },
+      "score": {
+        "passed": 3,
+        "covered": 18,
+        "total": 19,
+        "rate": 0.166667,
+        "coverage_rate": 0.947368,
+        "checks": {
+          "preserves_existing_files": true,
+          "avoids_host_root_pollution": false,
+          "records_adoption_mode": false,
+          "infers_non_charter_phase": false,
+          "single_hidden_root": true,
+          "dashboard_ready": true,
+          "dashboard_quick_start": false,
+          "dashboard_process_cleanup": false,
+          "dashboard_shows_intake": false,
+          "dashboard_shows_memory": false,
+          "memory_deduplicates": false,
+          "memory_supersedes": false,
+          "memory_scope_isolation": false,
+          "memory_has_provenance": false,
+          "memory_context_bundle": false,
+          "memory_sync_idempotent": false,
+          "memory_temporal_validity": false,
+          "memory_superseded_excluded": false,
+          "memory_four_layer_coverage": false
+        },
+        "coverage": {
+          "preserves_existing_files": true,
+          "avoids_host_root_pollution": true,
+          "records_adoption_mode": true,
+          "infers_non_charter_phase": true,
+          "single_hidden_root": true,
+          "dashboard_ready": true,
+          "dashboard_quick_start": true,
+          "dashboard_process_cleanup": false,
+          "dashboard_shows_intake": true,
+          "dashboard_shows_memory": true,
+          "memory_deduplicates": true,
+          "memory_supersedes": true,
+          "memory_scope_isolation": true,
+          "memory_has_provenance": true,
+          "memory_context_bundle": true,
+          "memory_sync_idempotent": true,
+          "memory_temporal_validity": true,
+          "memory_superseded_excluded": true,
+          "memory_four_layer_coverage": true
+        }
+      }
+    }
+  ],
+  "interpretation": {
+    "scope": "deterministic local product behavior; not a general scientific-agent quality claim",
+    "higher_is_better": [
+      "score.rate",
+      "adoption.existing_file_preservation_rate",
+      "memory.provenance_coverage"
+    ],
+    "lower_is_better": [
+      "adoption.host_root_files_added",
+      "dashboard.sync_latency_ms",
+      "dashboard.quick_start.startup_latency_ms",
+      "memory.search_latency_ms"
+    ],
+    "third_party_note": "External products require explicit adapters and equivalent fixtures before comparative performance claims are valid."
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "writing-claim-discipline",
+  "description": "Do not strengthen claims beyond available evidence; trace numbers and comparisons to authoritative artifacts.",
+  "domains": [
+    "research-led",
+    "communication"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

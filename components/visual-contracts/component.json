@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "id": "visual-contracts",
+  "kind": "optional-feature",
+  "description": "Deterministic layout, hierarchy, accessibility, and export contracts plus an optional external visual-reference specification."
+}

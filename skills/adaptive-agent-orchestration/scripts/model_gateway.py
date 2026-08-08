@@ -51,7 +51,7 @@ def request_json(url: str, headers: dict[str, str], payload: dict[str, Any], tim
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--registry", type=Path, default=Path(".research/agents/models.json"))
+    ap.add_argument("--registry", type=Path, default=Path(".researchops/governance/models.json"))
     ap.add_argument("--model-id", required=True)
     ap.add_argument("--prompt-file", type=Path, required=True)
     ap.add_argument("--system-file", type=Path)

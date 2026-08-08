@@ -23,13 +23,13 @@ TEXT_EXTS = {
 }
 DEFAULT_POLICY = {
     "schema_version": 1,
-    "exclude_globs": [".git/**", ".venv/**", "node_modules/**", ".research/trash/**", ".research/archive/**"],
+    "exclude_globs": [".git/**", ".venv/**", "node_modules/**", ".researchops/state/trash/**", ".researchops/state/archive/**"],
     "candidate_name_patterns": [
         "*~", "*.bak", "*.backup", "*.orig", "*.rej", "*.old", "*_old.*", "*_copy.*",
         "*final_v*.?*", "*scratch*", "*debug*", "*temporary*", "*deprecated*",
     ],
     "test_globs": ["tests/**", "test/**", "**/test_*.py", "**/*_test.py", "**/*smoke*"],
-    "public_surface_globs": ["README*.md", "docs/**", "paper/**", "figures/**", ".research/dashboard/**"],
+    "public_surface_globs": ["README*.md", "docs/**", "paper/**", "figures/**", ".researchops/state/dashboard/**"],
     "internal_id_patterns": {
         "baseline": "\\bB[-_ ]?\\d{1,4}\\b",
         "experiment": "\\bE[-_ ]?\\d{1,4}\\b",
@@ -233,7 +233,7 @@ def id_occurrences(root: Path, policy: dict[str, Any], registry: dict[str, Any])
 
 
 def init_project(root: Path, force: bool) -> None:
-    h = root / ".research/hygiene"; h.mkdir(parents=True, exist_ok=True)
+    h = root / ".researchops/state/hygiene"; h.mkdir(parents=True, exist_ok=True)
     items = {
         h / "repository-policy.json": DEFAULT_POLICY,
         h / "naming-registry.json": {"schema_version": 1, "identifiers": [], "public_surface_globs": DEFAULT_POLICY["public_surface_globs"]},
@@ -241,18 +241,18 @@ def init_project(root: Path, force: bool) -> None:
     }
     for p, data in items.items():
         if force or not p.exists(): atomic_json(p, data)
-    (root / ".research/archive/repository-hygiene").mkdir(parents=True, exist_ok=True)
+    (root / ".researchops/state/archive/repository-hygiene").mkdir(parents=True, exist_ok=True)
     print(h)
 
 
 def scan(root: Path, out: Path | None = None) -> dict[str, Any]:
-    policy = load_json(root / ".research/hygiene/repository-policy.json", DEFAULT_POLICY)
-    registry = load_json(root / ".research/hygiene/naming-registry.json", {"identifiers": []})
+    policy = load_json(root / ".researchops/state/hygiene/repository-policy.json", DEFAULT_POLICY)
+    registry = load_json(root / ".researchops/state/hygiene/naming-registry.json", {"identifiers": []})
     candidates, tests = all_file_inventory(root, policy)
     texts = text_files(root, policy)
     refs = reference_counts(root, texts, [x["path"] for x in candidates + tests])
     for x in candidates: x["text_reference_count"] = refs.get(x["path"], 0)
-    test_manifest = load_json(root / ".research/hygiene/test-inventory.json", {"tests": []})
+    test_manifest = load_json(root / ".researchops/state/hygiene/test-inventory.json", {"tests": []})
     manifest_map = {x.get("path"): x for x in test_manifest.get("tests", [])}
     for x in tests:
         x["text_reference_count"] = refs.get(x["path"], 0)
@@ -275,13 +275,13 @@ def scan(root: Path, out: Path | None = None) -> dict[str, Any]:
             "unmapped_ids": len({x["normalized_id"] for x in ids if not x.get("mapped")}),
         },
     }
-    out = out or root / ".research/hygiene/repository-inventory.json"
+    out = out or root / ".researchops/state/hygiene/repository-inventory.json"
     atomic_json(out, data)
     return data
 
 
 def plan(root: Path, inventory: dict[str, Any], out: Path | None = None) -> dict[str, Any]:
-    policy = load_json(root / ".research/hygiene/repository-policy.json", DEFAULT_POLICY)
+    policy = load_json(root / ".researchops/state/hygiene/repository-policy.json", DEFAULT_POLICY)
     age_min = float(policy.get("minimum_unused_age_days", 30))
     actions: list[dict[str, Any]] = []
     for x in inventory.get("candidate_files", []):
@@ -321,7 +321,7 @@ def plan(root: Path, inventory: dict[str, Any], out: Path | None = None) -> dict
         "bare_public_ids": len(bare),
         "unmapped_ids": len(unmapped),
     }}
-    out = out or root / ".research/hygiene/repository-cleanup-plan.json"
+    out = out or root / ".researchops/state/hygiene/repository-cleanup-plan.json"
     atomic_json(out, result)
     return result
 
@@ -331,8 +331,8 @@ def registry_mapping(registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def normalize_public_ids(root: Path, check_only: bool, token: str | None, out: Path | None) -> dict[str, Any]:
-    policy = load_json(root / ".research/hygiene/repository-policy.json", DEFAULT_POLICY)
-    registry_path = root / ".research/hygiene/naming-registry.json"
+    policy = load_json(root / ".researchops/state/hygiene/repository-policy.json", DEFAULT_POLICY)
+    registry_path = root / ".researchops/state/hygiene/naming-registry.json"
     registry = load_json(registry_path, {"identifiers": []})
     mapping = registry_mapping(registry)
     planned: list[dict[str, Any]] = []
@@ -374,7 +374,7 @@ def normalize_public_ids(root: Path, check_only: bool, token: str | None, out: P
             p.write_text(x["content"], encoding="utf-8")
         result["applied"] = True
     for x in planned: x.pop("content", None)
-    out = out or root / ".research/hygiene/naming-normalization-plan.json"
+    out = out or root / ".researchops/state/hygiene/naming-normalization-plan.json"
     atomic_json(out, result)
     return result
 
@@ -384,7 +384,7 @@ def archive_candidates(root: Path, plan_path: Path, token: str) -> dict[str, Any
     if not plan_data or token != plan_data.get("approval_token"): raise SystemExit("approval token mismatch")
     if Path(plan_data.get("root", "")).resolve() != root.resolve(): raise SystemExit("plan root mismatch")
     stamp = now().strftime("%Y%m%dT%H%M%SZ")
-    qroot = root / ".research/archive/repository-hygiene" / stamp
+    qroot = root / ".researchops/state/archive/repository-hygiene" / stamp
     events = []
     for action in plan_data.get("actions", []):
         if not action.get("safe_to_apply") or action.get("kind") != "file" or action.get("action") != "archive": continue
@@ -399,7 +399,7 @@ def archive_candidates(root: Path, plan_path: Path, token: str) -> dict[str, Any
     result = {"schema_version": 1, "operation": "archive", "applied_at": iso(), "archive_root": qroot.resolve().relative_to(root.resolve()).as_posix(), "plan_token": token, "events": events}
     if events:
         atomic_json(qroot / "manifest.json", result)
-    atomic_json(root / ".research/hygiene/repository-last-apply.json", result)
+    atomic_json(root / ".researchops/state/hygiene/repository-last-apply.json", result)
     return result
 
 
@@ -417,14 +417,14 @@ def main() -> int:
     if a.cmd == "scan":
         data = scan(root, Path(a.out) if a.out else None); print(json.dumps(data["summary"], indent=2)); return 0
     if a.cmd == "plan":
-        ip = Path(a.inventory) if a.inventory else root / ".research/hygiene/repository-inventory.json"
+        ip = Path(a.inventory) if a.inventory else root / ".researchops/state/hygiene/repository-inventory.json"
         inv = load_json(ip, None) or scan(root, ip)
         data = plan(root, inv, Path(a.out) if a.out else None); print(json.dumps({"summary": data["summary"], "approval_token": data["approval_token"]}, indent=2)); return 0
     if a.cmd == "normalize-ids":
         data = normalize_public_ids(root, not a.apply, a.approve_token, Path(a.out) if a.out else None)
         print(json.dumps({"file_count": len(data["files"]), "approval_token": data["approval_token"], "applied": data["applied"]}, indent=2)); return 0
     if a.cmd == "apply":
-        pp = Path(a.plan) if a.plan else root / ".research/hygiene/repository-cleanup-plan.json"
+        pp = Path(a.plan) if a.plan else root / ".researchops/state/hygiene/repository-cleanup-plan.json"
         print(json.dumps(archive_candidates(root, pp, a.approve_token), indent=2)); return 0
     return 2
 

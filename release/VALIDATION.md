@@ -1,41 +1,43 @@
-# Release validation — v1.7.0
+# Release validation — v2.1.0
 
-- Completed: 2026-08-03T02:52:06+00:00
+- Completed: 2026-08-06T05:37:22+00:00
+- Package preset: `full`
+- Package target: `portable`
 - Python: 3.13.5
-- Platform: Linux-6.12.13-x86_64-with-glibc2.41
-- Top-level Skills: 12
-- Internal components: 3 (evidence ledger, dashboard, model control plane)
-- Behavior Runtime: 1 universal kernel, 7 task packs, 3 Harness adapters, parsed risk policy, optional semantic reviewer
-- Model Control Plane: 3 direct protocol adapters, provider recipes, secret-safe onboarding, routing dispatch, smoke tests, and evidence-backed dossiers
-- Startup catalog estimate: 3956 / 8000 characters
+- Platform: Linux-6.18.35-x86_64-with-glibc2.41
+- Top-level Skills: 13
+- Internal components: 7
+- Behavior Packs: 8
+- Startup catalog estimate: 4288 / 8000 characters
 - Trigger fixtures: 26 structural positive/negative cases
-- Behavior fixtures: 9 task, pack, lifecycle, and decision cases
-- Risk corpus: 134 adversarial and benign-neighbor command cases (100 positive, 34 negative)
 
 ## Successful automated checks
 
-- Unified cross-platform CLI installation, bootstrap, bundle selection, and diagnostics.
-- Skill structure, progressive-loading references, positive/negative trigger boundaries, eval files, metadata, and licenses.
-- Trigger registry coverage, startup context budget, provenance, local Markdown links, and internal file hashes.
-- Native Codex, Claude Code, and Gemini CLI agent rendering.
-- Project Hook installation, plugin/extension manifests, task-pack selection, structured tool inspection, parsed/canonical risk policy, optional semantic escalation, and platform output adapters.
-- Parent-session policy propagation into Sub-Agents without raw-prompt persistence.
-- Interactive-operator, raw/canonical/rule-bound, short-lived, concurrency-safe one-use approvals and metadata-only behavior event logging.
-- Proposal-only safeguard discovery, persistence, snooze state, and no target execution.
-- Provider/model onboarding, secret-safe doctor/probe/enrollment, remote model discovery, direct dispatch, deterministic smoke tests, and model-specific prompt-overlay approval.
-- Sub-Agent routing, bounded exploration, deterministic checks, independent verification, routing-profile recording, and model-dossier refresh.
-- Archive-first cleanup, restore, separate purge, large-data quarantine, semantic ID normalization, and worktree safety.
-- Research engineering gauntlet, LaTeX discovery, dashboard validation, Python compilation, and ZIP integrity.
+- Inspect-before-write intake and non-destructive adoption of non-empty projects with one `.researchops/` root.
+- Light/standard/deep adoption protocol that separates deterministic inventory from agent/human semantic confirmation.
+- SQLite is authoritative from the first model-evaluation event; JSONL is import/export only.
+- One canonical Evaluation Event schema, one profile engine, and routing/dossier/dashboard/audit projections.
+- Finite profile scopes, posterior uncertainty, endpoint health, effective-dated price, and routing explanations.
+- Warmup/soft transfer with negative-transfer guard and visible project adaptation state.
+- Failure-pattern aggregation, scoped mitigation lifecycle, prompt compilation, and separate high-risk approvals.
+- Black-box behavior-drift signals and deployment epochs without claiming an unobservable provider cause.
+- Task-family-conditioned Judge calibration, position consistency, abstention, selective escalation, and weighted pairwise ranking.
+- Four-layer lifecycle-aware local Memory with scoped deduplication, supersession, temporal validity, provenance, relations, project sync, and bounded context assembly.
+- Actual HTTP Dashboard quick-start validation plus intake, Memory, Routing, warmup, cost, and project-status visibility.
+- Executable product regression benchmark and standardized external baseline-report contract.
+- Research-led and development-led R&D share engineering assurance while retaining different acceptance goals.
+- Preset composition, target-native manifests/hooks, behavior modes, and filtered plugin packaging.
+- Legacy research workflow, evidence ledger, dashboard, agent routing, archive/restore/purge, and worktree safety.
 
 ## Smoke summary
 
 ```json
 {
-  "workflow": {
+  "legacy": {
     "project": {
       "router_primary": "codex/gpt-5.6-luna",
       "verified_quality": 0.976667,
-      "skills_per_framework": 12,
+      "skills_per_framework": 13,
       "semantic_ids_normalized": true,
       "quarantine_and_purge": true,
       "archive_restore_and_purge": true,
@@ -51,45 +53,83 @@
       "main_blocked": true
     }
   },
-  "behavior": {
-    "behavior_packs": 7,
-    "framework_hook_configs": 3,
-    "rm_bypass_variants": 8,
-    "high_risk_categories_smoked": 11,
-    "benign_neighbors": 6,
-    "rops_external_dispatch_guarded": true,
-    "parsed_command_policy": true,
-    "content_bound_one_use_approval": true,
-    "semantic_escalation": true,
-    "semantic_cannot_downgrade_static": true,
-    "required_semantic_fail_closed": true,
-    "structured_tool_policy": true,
-    "metadata_only_logging": true,
-    "feedback_without_auto_weakening": true,
-    "hook_fail_closed_in_enforce": true,
-    "subagent_context_inheritance": true,
-    "operator_only_approval": true
+  "intelligence": {
+    "sqlite_authority": true,
+    "single_hidden_root": true,
+    "eligible_events": 18,
+    "profile_slices": 13,
+    "projection_consistency": true,
+    "benchmark_projection": true,
+    "failure_pattern_active": true,
+    "human_pattern_confirmation": true,
+    "mitigation_approval_separate": true,
+    "warmup_and_negative_transfer": true,
+    "warmup_drives_routing": true,
+    "routing_returns_mitigation_policy": true,
+    "black_box_drift": "suspected",
+    "judge_calibration": true,
+    "weighted_pairwise_ranking": true,
+    "recall_memory_optional": true,
+    "preset_composition": true,
+    "legacy_migration": true
   },
-  "model_control_plane": {
-    "protocol_adapters": 3,
-    "providers_enrolled": [
-      "mock-openai/mock-model",
-      "mock-anthropic/mock-claude",
-      "mock-google/mock-gemini"
-    ],
-    "secret_values_logged": false,
-    "remote_model_listing": true,
-    "smoke_does_not_train_profile": true,
-    "verified_history_updates_dossier": true,
-    "prompt_overlay_requires_approval": true,
-    "unsafe_secret_file_rejected": true,
-    "prompt_overlay_not_duplicated": true,
-    "agent_prompt_and_overlay_injected": true,
-    "bounded_route_and_dispatch": true
-  }
+  "behavior": {
+    "risk_analysis": true,
+    "one_use_approval": true,
+    "guide_injection": true,
+    "enforce_denial": true,
+    "metadata_only_audit": true
+  },
+  "model-control-plane": {
+    "gateway_registry_sync": true,
+    "probe_competence_separation": true,
+    "identity_observation": true,
+    "endpoint_observation": true,
+    "shared_dossier_projection": true,
+    "secret_values_exposed": false
+  },
+  "adoption-memory": {
+    "existing_project_inspected_before_write": true,
+    "non_destructive_adoption": true,
+    "single_hidden_root": true,
+    "dashboard_quick_start": {
+      "served": true,
+      "url_has_ephemeral_port": true,
+      "adoption_mode": "adopt",
+      "phase": "communication",
+      "memory_visible": true,
+      "routing_visible": true,
+      "process_group_cleaned": true
+    },
+    "memory_deduplicates": true,
+    "memory_supersession": true,
+    "memory_scope_isolation": true,
+    "memory_provenance": true,
+    "memory_context_bundle": true,
+    "memory_sync_idempotent": true,
+    "sqlite_v2_to_v3_migration": true,
+    "dashboard_process_cleanup": true
+  },
+  "product-benchmark": {
+    "suite": "researchops-product-benchmark-v1",
+    "checks": "19/19",
+    "dashboard_http_ready": true,
+    "memory_lifecycle": true,
+    "reports_written": true,
+    "dashboard_process_cleanup": true
+  },
+  "package": {
+    "routing_artifact_filtered": true,
+    "target_native_manifest_filtered": true,
+    "full_portable_artifact": true,
+    "package_local_validation": true,
+    "checksums": true,
+    "local_state_excluded": true
+  },
+  "evidence_note": "Each listed smoke command was run successfully against the v2.1 source during this delivery. The consolidated report avoids rerunning the long package smoke twice during final artifact staging."
 }
 ```
 
 ## Validation boundary
 
-Trigger and Behavior fixtures verify structural and regression coverage, not exhaustive shell-language safety or empirical reviewer accuracy for every model/Harness release. Hook enforcement only covers exposed lifecycle/tool paths and does not replace platform permissions, sandboxing, repository protection, hardware interlocks, or human confirmation.
+Structural tests do not prove empirical routing quality for every model, provider, Harness, or future deployment. Black-box drift detection reports observed behavior changes and cannot prove that a provider changed hidden weights. Hardware safety remains dependent on the actual topology, instrument state, platform sandbox, and human confirmation.

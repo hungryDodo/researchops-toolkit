@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "model-intelligence",
+  "kind": "optional-cross-cutting-feature",
+  "authority": ".researchops/intelligence/state.sqlite",
+  "provides": [
+    "evaluation-events",
+    "profile-engine",
+    "routing",
+    "warmup",
+    "failure-patterns",
+    "mitigations",
+    "drift",
+    "judge-calibration",
+    "read-only-projections",
+    "project-adoption-signals",
+    "lifecycle-memory",
+    "product-benchmark"
+  ],
+  "requires_research_workflow": false,
+  "requires_development_workflow": false
+}

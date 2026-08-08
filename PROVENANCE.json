@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "suite": "researchops-toolkit",
-  "version": "1.7.0",
-  "statement": "All implementation files in this distribution were newly written for ResearchOps Toolkit. External projects and platform documentation were decomposed for design patterns; no upstream Skill, prompt, script, template, handbook, hook, or asset is vendored by default.",
+  "version": "2.1.0",
+  "statement": "All implementation files in this distribution were newly written for ResearchOps Toolkit. External projects were decomposed for design patterns; no upstream Skill, prompt, script, template, handbook, or asset is vendored by default.",
   "audit_limitations": [
     "Repository provenance declaration, not legal advice.",
     "No claim of forensic similarity proof against every upstream revision."
@@ -128,52 +128,76 @@
       "vendored": false
     },
     {
-      "name": "LangChain agent middleware",
-      "relationship": "conceptual reference for before/after agent/model middleware, tool wrapping, guardrails, and execution-state interception",
+      "name": "AgentOps",
+      "relationship": "product-landscape reference for agent tracing, latency/cost observability, session inspection, and evaluation workflows; no code vendored",
       "vendored": false,
-      "url": "https://docs.langchain.com/oss/python/langchain/middleware"
+      "url": "https://docs.agentops.ai/"
     },
     {
-      "name": "Codex, Claude Code, and Gemini CLI hook documentation",
-      "relationship": "platform contract reference for lifecycle events, context injection, pre-tool decisions, subagent propagation, trust, and permissions",
+      "name": "Langfuse",
+      "relationship": "product-landscape reference for open-source LLM observability, datasets, experiments, scores, and trace-based evaluation; no code vendored",
       "vendored": false,
-      "url": "https://developers.openai.com/codex/hooks"
+      "url": "https://langfuse.com/docs"
     },
     {
-      "name": "Open Policy Agent documentation",
-      "relationship": "conceptual reference for policy-as-code, separating policy decision from enforcement, and testable declarative rules",
+      "name": "Arize Phoenix",
+      "relationship": "product-landscape reference for traces, experiments, deterministic/LLM evaluators, and human annotations; no code vendored",
       "vendored": false,
-      "url": "https://www.openpolicyagent.org/docs/"
+      "url": "https://arize.com/docs/phoenix"
     },
     {
-      "name": "OpenAI API documentation",
-      "url": "https://platform.openai.com/docs/",
-      "relationship": "official protocol, API-key environment-variable, and model-list contract reference for the Model Control Plane",
-      "vendored": false
+      "name": "Braintrust",
+      "relationship": "product-landscape reference for dataset-based evaluation, scorers, experiment comparison, and production logging; no code vendored",
+      "vendored": false,
+      "url": "https://www.braintrust.dev/docs"
     },
     {
-      "name": "Anthropic API documentation",
-      "url": "https://platform.claude.com/docs/",
-      "relationship": "official Messages API, authentication-header, and model-list contract reference for the Model Control Plane",
-      "vendored": false
+      "name": "PaperQA2",
+      "relationship": "conceptual specialist reference for literature-grounded scientific retrieval, synthesis, and traceable research-agent evaluation; no code vendored",
+      "vendored": false,
+      "url": "https://github.com/Future-House/paper-qa"
     },
     {
-      "name": "Google Gemini API documentation",
-      "url": "https://ai.google.dev/gemini-api/docs",
-      "relationship": "official API-key, Generate Content, and model-list contract reference for the Model Control Plane",
-      "vendored": false
+      "name": "OpenHands",
+      "relationship": "product-landscape reference for software-development agent execution environments and SDK-style integration; no code vendored",
+      "vendored": false,
+      "url": "https://github.com/OpenHands/OpenHands"
     },
     {
-      "name": "DeepSeek API documentation",
-      "url": "https://api-docs.deepseek.com/",
-      "relationship": "official OpenAI-compatible endpoint and model discovery reference for a provider recipe",
-      "vendored": false
+      "name": "SWE-bench",
+      "relationship": "benchmark reference for real-repository software tasks with execution-based patch verification; no benchmark data vendored",
+      "vendored": false,
+      "url": "https://github.com/SWE-bench/SWE-bench"
     },
     {
-      "name": "OpenRouter documentation",
-      "url": "https://openrouter.ai/docs",
-      "relationship": "official OpenAI-compatible gateway and model-list reference for a provider recipe",
-      "vendored": false
+      "name": "SWE-Skills-Bench",
+      "relationship": "research reference for paired evaluation of the marginal effect of procedural Skill packages in software-engineering agents; no code or data vendored",
+      "vendored": false,
+      "url": "https://arxiv.org/abs/2603.15401"
+    },
+    {
+      "name": "Mem0",
+      "relationship": "memory-system reference for extraction, consolidation, graph relationships, and persistent agent recall; ResearchOps keeps authoritative state separate",
+      "vendored": false,
+      "url": "https://docs.mem0.ai/"
+    },
+    {
+      "name": "Graphiti / Zep",
+      "relationship": "memory-system reference for temporally aware knowledge-graph retrieval and evolving facts; no code vendored",
+      "vendored": false,
+      "url": "https://github.com/getzep/graphiti"
+    },
+    {
+      "name": "TencentDB Agent Memory",
+      "relationship": "memory-system reference for layered memory, consolidation, local/remote storage, and hybrid retrieval; supported only as a future optional adapter",
+      "vendored": false,
+      "url": "https://github.com/TencentCloud/TencentDB-Agent-Memory"
+    },
+    {
+      "name": "Black-box LLM modification and behavioral-shift auditing research",
+      "relationship": "research reference for canary-based and longitudinal detection of observable behavior drift without claiming access to hidden provider changes",
+      "vendored": false,
+      "url": "https://arxiv.org/search/?query=black-box+LLM+modification+detection&searchtype=all"
     }
   ],
   "components": {
@@ -185,32 +209,30 @@
       "implementation_origin": "original_clean_room",
       "owner": "research-program-orchestrator"
     },
-    "behavior-runtime": {
+    "model-gateway": {
       "implementation_origin": "original_clean_room",
-      "owner": "skill-system-engineering",
-      "conceptual_influences": [
-        "Ponytail cross-cutting behavior delivery and sub-agent propagation",
-        "old-coder evidence discipline",
-        "platform lifecycle hook contracts",
-        "policy-as-code separation of decision and enforcement",
-        "defense-in-depth with deterministic analysis, semantic escalation, and platform permissions"
-      ],
-      "copied_files": [],
-      "modified_upstream_files": [],
-      "external_runtime_dependencies": []
+      "owner": "adaptive-agent-orchestration",
+      "purpose": "provider normalization, secret-safe dispatch, endpoint health, and effective-dated pricing"
     },
     "model-control-plane": {
       "implementation_origin": "original_clean_room",
       "owner": "adaptive-agent-orchestration",
-      "conceptual_influences": [
-        "provider-standard secret environment variables",
-        "direct official API protocol contracts",
-        "LiteLLM-style optional gateway normalization",
-        "evidence-backed routing and independent evaluation"
-      ],
-      "copied_files": [],
-      "modified_upstream_files": [],
-      "external_runtime_dependencies": []
+      "purpose": "v1.7-compatible provider onboarding and dossier schema facade"
+    },
+    "model-intelligence": {
+      "implementation_origin": "original_clean_room",
+      "owner": "adaptive-agent-orchestration",
+      "purpose": "canonical evaluation facts, aggregation, routing, warmup, patterns, mitigations, drift, judges, and recall"
+    },
+    "engineering-assurance": {
+      "implementation_origin": "original_clean_room",
+      "owner": "software-development and research-engineering",
+      "purpose": "shared deterministic task contracts, RED/GREEN evidence, diff analysis, and risk-scaled verification"
+    },
+    "visual-contracts": {
+      "implementation_origin": "original_clean_room",
+      "owner": "research-communication",
+      "purpose": "optional structured visual-reference intake without requiring the main Harness to provide vision"
     }
   },
   "skills": {
@@ -341,43 +363,30 @@
         "CCFA-style positive/negative trigger and owner contracts",
         "Anthropic/Google selective loading and evaluation patterns"
       ]
+    },
+    "software-development": {
+      "implementation_origin": "original_clean_room",
+      "copied_files": [],
+      "influences": [
+        "Existing ResearchOps engineering constraints and the user-specified distinction between research-led and development-led R&D."
+      ],
+      "notes": "Original implementation; shared assurance concepts are re-expressed through repository-native contracts."
     }
   },
   "design_decisions": {
-    "top_level_skills": 12,
+    "top_level_skills": 13,
     "v1_2_top_level_skills": 23,
     "proposal_runtime_owner": "research-program-orchestrator",
     "proposal_policy_owner": "skill-system-engineering",
     "distill_design": "URL/brand extraction excluded; static academic visual policy retained",
-    "control_planes": "Skills for on-demand workflows; Behavior Runtime for cross-cutting execution policy",
-    "behavior_modes": [
-      "off",
-      "observe",
-      "guide",
-      "enforce"
-    ],
-    "behavior_default": "guide",
-    "mcp_role": "External tools and shared state only; not a mandatory policy enforcement boundary.",
-    "model_control_plane": "Low-frequency provider onboarding remains a mode of adaptive-agent-orchestration; secret-safe protocol and profile mechanics are a non-routed component."
+    "v2_1_internal_components": 7,
+    "authoritative_state": "SQLite under one project-local .researchops/ root; JSONL is import/export only",
+    "memory_boundary": "Recall memory may suggest context but cannot mutate evaluation, approval, pricing, or routing authority"
   },
   "documentation_policy": {
     "acknowledgements": "README.md and README_zh.md",
     "stable_docs": "docs/",
     "design_session_notes_in_release": false,
     "third_party_code_vendored": false
-  },
-  "behavior_runtime": {
-    "implementation_origin": "original_clean_room",
-    "copied_files": [],
-    "modified_upstream_files": [],
-    "external_runtime_dependencies": [],
-    "conceptual_influences": [
-      "Ponytail cross-cutting minimum-change behavior distribution and subagent propagation",
-      "old-coder evidence-gated coding discipline",
-      "agent middleware lifecycle interception",
-      "Codex, Claude Code, and Gemini CLI native hook contracts",
-      "capability proposal before consequential specialist execution"
-    ],
-    "scope": "Universal kernel plus task-specific packs; Skills retain workflow and artifact ownership."
   }
 }

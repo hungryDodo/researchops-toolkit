@@ -1,6 +1,6 @@
 interface:
   display_name: "Research Route Evaluator"
   short_description: "Use when generating and ranking at most three falsifiable research routes or judging whether a proposed idea merits major implementation. Do not use for unconst"
-  default_prompt: "Use $research-route-evaluator for this task and write authoritative artifacts under .research/."
+  default_prompt: "Use $research-route-evaluator for this task and write authoritative artifacts under .researchops/state/."
 policy:
   allow_implicit_invocation: true

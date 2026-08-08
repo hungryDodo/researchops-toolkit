@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "delegation-quality",
+  "description": "Delegate bounded work with explicit inputs, outputs, write scope, budget, stop conditions, and independent verification.",
+  "domains": [
+    "routing"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

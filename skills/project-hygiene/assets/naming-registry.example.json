@@ -25,6 +25,6 @@
     "docs/**",
     "paper/**",
     "figures/**",
-    ".research/dashboard/**"
+    ".researchops/state/dashboard/**"
   ]
 }

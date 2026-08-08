@@ -1,124 +1,93 @@
-# Sub-Agents, providers, and model routing
+# Agents, providers, evaluation, and routing
 
-## Architecture
+## Separation of responsibilities
 
-Model use is split between two layers:
+### Model Gateway
 
-- `adaptive-agent-orchestration` is the progressively loaded workflow owner. It verifies current official provider documentation, prepares onboarding, defines task contracts, selects workers/verifiers, and interprets evidence.
-- the Model Control Plane (`components/model-control-plane/`, `python3 -m rops models ...`) is the persistent runtime. It resolves secrets, calls provider protocols, stores non-secret registries, runs probes/smoke tests, dispatches bounded requests, and maintains model dossiers.
+- provider/endpoint adapters;
+- secret indirection;
+- request/response normalization;
+- connectivity probes;
+- current endpoint health;
+- effective-dated pricing;
+- returned identity metadata;
+- dispatch and error classification.
 
-Provider onboarding is intentionally a low-frequency mode of the existing Skill rather than another top-level Skill. Normal dispatch does not reload the full onboarding procedure.
+### Model Intelligence
 
-## Secret boundary
+- canonical Evaluation Events;
+- profile aggregation and uncertainty;
+- warmup/soft transfer;
+- failure patterns and mitigations;
+- Judge calibration;
+- behavior drift/deployment epochs;
+- semantic routing and projections.
 
-Never paste an API key into an Agent conversation. ROPS resolves credentials in this order:
+`rops models` is a compatibility facade over gateway/projection operations. `rops intelligence` exposes the new control plane directly.
 
-1. provider-standard process environment variable;
-2. `~/.config/rops/secrets.env` or `$ROPS_SECRETS_FILE`;
-3. an organization secret manager that exposes an environment variable.
+## Secrets
 
-The repository stores only provider ID, protocol, base URL, credential variable names, trust zone, model IDs, and routing policy. Secret values are prohibited in Git, Skills, `.research/`, prompt files, command-line arguments, output artifacts, and model dossiers.
+Provider keys must not appear in chat, Git, command-line arguments, project state, prompts, or generated dossiers. Local secret templates belong under the user's configuration directory, such as `~/.config/rops/`.
 
-Create a local template without values:
+## Execution arms
 
-```bash
-python3 -m rops models secret-template --provider openai --write
-chmod 600 ~/.config/rops/secrets.env
+The registry should identify behaviorally meaningful configurations, not only marketing model names:
+
+```json
+{
+  "arm_id": "provider/model/revision/endpoint/epoch/config",
+  "provider": "provider",
+  "model_family": "model",
+  "model_revision": "declared-or-local-hash",
+  "endpoint_id": "region-or-deployment",
+  "deployment_epoch": "epoch-1",
+  "reasoning_effort": "high",
+  "quantization": "none",
+  "tool_schema_revision": 4,
+  "adapter_revision": 2,
+  "base_prompt_hash": "sha256:...",
+  "mitigation_bundle_hash": "sha256:..."
+}
 ```
 
-Then edit that file locally outside the Agent conversation. Environment variables remain preferable in managed deployments.
+Unknown provider-side revisions are handled through observed deployment epochs rather than false certainty.
 
-## Onboarding a provider/model
+## Work-unit contract
 
-Tell the Agent the provider and intended model or capability. The Agent should search current official documentation for authentication, endpoint, protocol, exact model identifier, model-list endpoint, quota/project/region requirements, and data-use constraints. API keys and model names are often sufficient for simple hosted APIs, but cloud deployments may also require a project, region, deployment, organization, service account, or custom endpoint.
+Delegation is appropriate when a task can be bounded with:
 
-Built-in recipes currently cover OpenAI, Anthropic, Google Gemini, DeepSeek, OpenRouter, LiteLLM, and local OpenAI-compatible servers. Recipes are starting points, not permanent truth; verify official docs because model IDs and API requirements change.
+- objective and frozen acceptance contract;
+- allowed read/write/tool scope;
+- budget and stop conditions;
+- required artifacts and verifier;
+- orientation, primary operation, artifact, risk and privacy;
+- an independent acceptance path where risk warrants it.
 
-```bash
-python3 -m rops models --root <project> recipes
+One long request should be split when discovery, design, implementation and validation require different evidence or model capabilities.
 
-python3 -m rops models --root <project> onboard \
-  --provider anthropic \
-  --model <verified-model-id> \
-  --capability reasoning \
-  --capability review \
-  --risk-ceiling low \
-  --agent independent_reviewer
-```
+## Route selection
 
-After the user installs the key locally:
+1. hard-filter ineligible arms;
+2. query the most specific sufficiently supported profile;
+3. quote current endpoint health and current price;
+4. apply project utility/risk policy;
+5. preserve uncertainty and bounded exploration;
+6. record route decision and selection probability;
+7. evaluate the completed work unit from artifacts/state, not prose impression alone.
 
-```bash
-python3 -m rops models doctor --provider anthropic
-python3 -m rops models --root <project> remote-list --provider anthropic
-python3 -m rops models --root <project> probe --plan <plan.json> --enroll
-python3 -m rops models --root <project> smoke --model-id anthropic/<model-id>
-```
+The Router returns a selected arm plus applicable mitigation and verifier policy. It does not expose every internal score factor in the main UI.
 
-`doctor` never displays secret values. `probe` checks connectivity and exact output compliance. `smoke` checks a few deterministic API behaviors. Neither is evidence that a model is good at research or coding.
+## Probe, Anchor, Shadow, Live
 
-Unknown providers can be added using an official OpenAI-compatible, Anthropic Messages, or Google Generate Content contract:
+| Source | Purpose | Competence update |
+|---|---|---|
+| Probe/smoke | connectivity, schema, endpoint identity/health | no |
+| Anchor | small reproducible project/task calibration | yes, labeled anchor |
+| Shadow | challenger processes a real task without controlling production | yes, after evaluation |
+| Live | selected arm performs a real accepted work unit | primary evidence |
 
-```bash
-python3 -m rops models --root <project> onboard \
-  --provider my-provider \
-  --model my-model \
-  --protocol openai-chat \
-  --base-url https://provider.example/v1 \
-  --credential-env MY_PROVIDER_API_KEY
-```
+## Independent evaluation
 
-## Task contracts and routing
+Deterministic tests and state/artifact verification have priority. LLM Judges receive the task contract, before/after state, artifacts, tests and rubric—not only the final answer. Worker identity should be hidden for pairwise evaluation. High-risk or disputed outcomes escalate to a stronger/different Judge or human.
 
-Each dispatch should record objective, task type, frozen inputs, allowed tools/writes/network/hardware, privacy, risk, mutability, acceptance tests, verifier requirement, budget, timeout, and expected handoff.
-
-Routing first applies hard constraints:
-
-1. privacy and provider trust;
-2. required capabilities and tools;
-3. write/hardware permissions;
-4. risk ceiling and verifier requirements;
-5. cost, latency, availability, and agent candidate lists.
-
-Eligible models are ranked using task-specific verified history. While evidence is sparse, bounded exploration may try cheaper or unfamiliar models only on low/medium-risk work with deterministic acceptance. Core paper claims, confidential data, destructive actions, and hardware writes require a strong verifier or explicit human control.
-
-Route and dispatch a bounded task:
-
-```bash
-python3 -m rops models --root <project> delegate \
-  --task-file task-contract.json \
-  --prompt-file worker-prompt.txt \
-  --agent research_scout \
-  --output-dir .research/agents/dispatches
-```
-
-This creates a routing decision, result, and handoff. It deliberately does **not** accept the result or update the profile. Run deterministic checks and an independent verifier when required, then record `event_for_registry` through `agent_registry.py record`.
-
-## Model dossiers
-
-Each exact model identity has a structured dossier under:
-
-```text
-.research/agents/model-profiles/<provider-model>.json
-```
-
-It summarizes observations, task-specific acceptance/quality, human correction, verifier disagreement, recurring failure modes, strengths, weaknesses, manual notes, and prompt-overlay revisions.
-
-Only independently evaluated real tasks update the dossier. Model self-description, onboarding probe, and smoke tests do not. This prevents a model from teaching the router that it is capable merely because it returned a valid response.
-
-Repeated weaknesses can generate a proposed model-specific prompt overlay, for example an instruction to run an edge-case checklist or return explicit uncertainty. Proposed overlays remain inactive until a human approves them:
-
-```bash
-python3 -m rops models --root <project> profile --model-id <provider/model>
-python3 -m rops models --root <project> profile --model-id <provider/model> --approve-prompt
-```
-
-The active overlay is injected after the base Agent role and before task-specific instructions for direct ROPS dispatch and generated native Agent definitions. Human-authored prompt notes can be added with `profile-note --kind prompt`; they remain proposed until the same explicit `--approve-prompt` gate is completed, and are stored separately from the automatically generated overlay to prevent duplicate injection.
-
-## Gateways
-
-Direct adapters support OpenAI-compatible Chat Completions, Anthropic Messages, and Google Generate Content. A LiteLLM or organization gateway is useful when many providers require centralized authentication, retries, quotas, budgets, or usage accounting. The gateway normalizes transport; ROPS still owns semantic routing, privacy/risk constraints, independent acceptance, and model profiles.
-
-## Safety and privacy
-
-`rops models dispatch` and `delegate` are external-data events in the Behavior Runtime. In enforcement mode, non-dry-run dispatch requires the applicable approval. Use the minimum prompt context and never send unpublished papers, credentials, participant data, or restricted artifacts to a provider not approved for that classification.
+See [`model-intelligence.md`](model-intelligence.md) for profile and Judge details.

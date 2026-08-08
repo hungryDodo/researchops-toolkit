@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "skill_count": 12,
-  "startup_catalog_chars_estimate": 3956,
+  "skill_count": 13,
+  "startup_catalog_chars_estimate": 4288,
   "skills": [
     {
       "name": "adaptive-agent-orchestration",
-      "description": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, when a provider/model must be onboarded, or when worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, secret collection in chat, or worker self-approval.",
+      "description": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, or when returned worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, or worker self-approval.",
       "path": "skills/adaptive-agent-orchestration/SKILL.md",
-      "description_chars": 328
+      "description_chars": 269
     },
     {
       "name": "experimental-research",
@@ -74,6 +74,12 @@
       "description": "Use when creating, merging, splitting, packaging, auditing, or evaluating Agent Skills, trigger policies, proposal policies, provenance, permissions, and cross-harness compatibility. Do not use to execute the research domain task that a Skill describes.",
       "path": "skills/skill-system-engineering/SKILL.md",
       "description_chars": 253
+    },
+    {
+      "name": "software-development",
+      "description": "Use for development-led R&D where the primary outcome is a correct, maintainable, deployable software change and technical investigation supports delivery. Do not use when code is mainly an experimental instrument whose validity, metrics, baselines, or research claims are the primary concern; use research-engineering instead.",
+      "path": "skills/software-development/SKILL.md",
+      "description_chars": 327
     }
   ]
 }

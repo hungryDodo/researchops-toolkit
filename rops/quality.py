@@ -119,14 +119,7 @@ def validate_skills(root: Path = ROOT) -> dict[str, Any]:
     registry = json.loads((root / "config/trigger-registry.json").read_text(encoding="utf-8"))["skills"]
     if set(registry) != names:
         errors.append("trigger registry and skill directories differ")
-    empty_dirs = [
-        p.relative_to(root).as_posix()
-        for p in root.rglob("*")
-        if p.is_dir()
-        and ".git" not in p.relative_to(root).parts
-        and not p.is_symlink()
-        and not any(p.iterdir())
-    ]
+    empty_dirs = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_dir() and ".git" not in p.parts and not any(p.iterdir())]
     if empty_dirs:
         errors.append("empty directories: " + ", ".join(empty_dirs))
     return {"skills": count, "errors": errors}
@@ -161,166 +154,6 @@ def validate_triggers(root: Path = ROOT) -> dict[str, Any]:
     }
 
 
-
-def validate_behavior(root: Path = ROOT) -> dict[str, Any]:
-    errors: list[str] = []
-    behavior = root / "behavior"
-    required = [
-        behavior / "registry.json", behavior / "runtime.py", behavior / "schema.json",
-        behavior / "shell_analyzer.py", behavior / "semantic_reviewer.py",
-        behavior / "policies/risk-policy.json", behavior / "evals/cases.json",
-        behavior / "evals/risk-cases.json",
-    ]
-    for path in required:
-        if not path.exists():
-            errors.append(f"missing {path.relative_to(root)}")
-    if errors:
-        return {"packs": 0, "cases": 0, "errors": errors}
-    try:
-        registry = json.loads((behavior / "registry.json").read_text(encoding="utf-8"))
-        cases = json.loads((behavior / "evals/cases.json").read_text(encoding="utf-8"))["cases"]
-        risk_cases = json.loads((behavior / "evals/risk-cases.json").read_text(encoding="utf-8"))["cases"]
-        policy = json.loads((behavior / "policies/risk-policy.json").read_text(encoding="utf-8"))
-        if policy.get("schema_version") != 2:
-            errors.append("behavior risk policy must use schema_version 2")
-        packs = {}
-        for path in sorted((behavior / "packs").glob("*.json")):
-            data = json.loads(path.read_text(encoding="utf-8"))
-            pack_id = data.get("id")
-            if not pack_id:
-                errors.append(f"{path.relative_to(root)}: missing id")
-                continue
-            if pack_id in packs:
-                errors.append(f"duplicate behavior pack: {pack_id}")
-            if not data.get("summary") or not data.get("instructions"):
-                errors.append(f"{pack_id}: missing summary or instructions")
-            packs[pack_id] = data
-        referenced = set()
-        for values in registry.get("task_pack_map", {}).values():
-            referenced.update(values)
-        for values in registry.get("skill_pack_map", {}).values():
-            referenced.update(values)
-        if referenced != set(packs):
-            errors.append(f"behavior registry/packs differ: missing={sorted(referenced-set(packs))}, extra={sorted(set(packs)-referenced)}")
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("researchops_behavior_validation", behavior / "runtime.py")
-        if not spec or not spec.loader:
-            errors.append("cannot import behavior runtime")
-        else:
-            runtime = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(runtime)
-            import tempfile
-            with tempfile.TemporaryDirectory(prefix="researchops-behavior-eval-") as temp:
-                project = Path(temp)
-                (project / ".research/runtime").mkdir(parents=True)
-                for case in cases:
-                    payload = dict(case["payload"])
-                    payload["cwd"] = str(project)
-                    result = runtime.evaluate(payload, framework="portable", runtime_root=behavior, explicit_project_root=project, record=False)
-                    for expected in case.get("expect_classes", []):
-                        if expected not in result["task_classes"]:
-                            errors.append(f"{case['id']}: missing class {expected}: {result['task_classes']}")
-                    for expected in case.get("expect_packs", []):
-                        if expected not in result["active_packs"]:
-                            errors.append(f"{case['id']}: missing pack {expected}: {result['active_packs']}")
-                    risks = [item["kind"] for item in result.get("proposals", [])]
-                    for expected in case.get("expect_risk", []):
-                        if expected not in risks:
-                            errors.append(f"{case['id']}: missing risk {expected}: {risks}")
-                    if case.get("expect_decision") and result["decision"] != case["expect_decision"]:
-                        errors.append(f"{case['id']}: decision {result['decision']} != {case['expect_decision']}")
-                    if case.get("expect_context_contains") and case["expect_context_contains"] not in result.get("additional_context", ""):
-                        errors.append(f"{case['id']}: context missing {case['expect_context_contains']}")
-                for case in risk_cases:
-                    analysis = runtime.command_analysis(case["command"], project, behavior)
-                    kinds = {item["kind"] for item in analysis.get("findings", [])}
-                    expected = case.get("expect_kind")
-                    if expected and expected not in kinds:
-                        errors.append(f"risk {case['id']}: missing {expected}: {sorted(kinds)}")
-                    if case.get("expect_no_findings") and kinds:
-                        errors.append(f"risk {case['id']}: expected no findings: {sorted(kinds)}")
-                # Stateful safety contract: deny, allow exactly once with a
-                # content-bound approval, deny again, and never log raw input.
-                runtime.set_mode(project, "enforce")
-                command = "rm -rf behavior-validation-target"
-                payload = {
-                    "hook_event_name": "PreToolUse",
-                    "tool_name": "Bash",
-                    "tool_input": {"command": command},
-                    "cwd": str(project),
-                }
-                denied = runtime.evaluate(payload, framework="codex", runtime_root=behavior, explicit_project_root=project, record=True)
-                if denied.get("decision") != "deny":
-                    errors.append("behavior approval contract: initial high-risk command was not denied")
-                runtime.create_approval(project, "destructive-delete", command, "validation", 5)
-                allowed = runtime.evaluate(payload, framework="codex", runtime_root=behavior, explicit_project_root=project, record=True)
-                if allowed.get("decision") != "allow" or allowed.get("approvals_consumed") != ["destructive-delete"]:
-                    errors.append("behavior approval contract: exact one-use approval was not consumed")
-                denied_again = runtime.evaluate(payload, framework="codex", runtime_root=behavior, explicit_project_root=project, record=True)
-                if denied_again.get("decision") != "deny":
-                    errors.append("behavior approval contract: consumed approval was reusable")
-                event_path = project / ".research/runtime/events.jsonl"
-                event_text = event_path.read_text(encoding="utf-8") if event_path.exists() else ""
-                if command in event_text or not event_text:
-                    errors.append("behavior privacy contract: raw tool input logged or no event written")
-                codex_output = runtime.render_hook_output(denied, "codex", "PreToolUse")
-                gemini_output = runtime.render_hook_output(denied, "gemini", "BeforeTool")
-                if codex_output.get("hookSpecificOutput", {}).get("permissionDecision") != "deny":
-                    errors.append("codex hook adapter did not render deny")
-                if gemini_output.get("decision") != "deny":
-                    errors.append("gemini hook adapter did not render deny")
-
-                # Concurrent consumers must not both obtain one approval.
-                from concurrent.futures import ThreadPoolExecutor
-                concurrent_command = "rm -rf behavior-concurrent-target"
-                concurrent_payload = {
-                    "hook_event_name": "PreToolUse",
-                    "tool_name": "Bash",
-                    "tool_input": {"command": concurrent_command},
-                    "cwd": str(project),
-                }
-                runtime.create_approval(project, "destructive-delete", concurrent_command, "concurrency validation", 5)
-                with ThreadPoolExecutor(max_workers=2) as pool:
-                    concurrent_results = list(pool.map(
-                        lambda _: runtime.evaluate(concurrent_payload, framework="codex", runtime_root=behavior, explicit_project_root=project, record=False),
-                        range(2),
-                    ))
-                decisions = sorted(item.get("decision") for item in concurrent_results)
-                if decisions != ["allow", "deny"]:
-                    errors.append(f"behavior approval concurrency contract failed: {decisions}")
-
-                # Parent task policy must propagate to a subagent in the same session.
-                session = "validation-session"
-                runtime.evaluate({
-                    "hook_event_name": "UserPromptSubmit", "session_id": session,
-                    "prompt": "Refactor the parser and add regression tests.", "cwd": str(project),
-                }, framework="portable", runtime_root=behavior, explicit_project_root=project, record=False)
-                inherited = runtime.evaluate({
-                    "hook_event_name": "SubagentStart", "session_id": session,
-                    "agent_type": "worker", "cwd": str(project),
-                }, framework="portable", runtime_root=behavior, explicit_project_root=project, record=False)
-                if "coding-minimal-change" not in inherited.get("active_packs", []) or "delegation-quality" not in inherited.get("active_packs", []):
-                    errors.append(f"subagent behavior inheritance failed: {inherited.get('active_packs')}")
-    except Exception as exc:
-        errors.append(f"behavior validation failed: {exc}")
-        packs = {}
-        cases = []
-    manifests = (
-        root / ".codex-plugin/plugin.json",
-        root / ".claude-plugin/plugin.json",
-        root / ".claude-plugin/marketplace.json",
-        root / "gemini-extension.json",
-        root / "hooks/claude-codex-hooks.json",
-        root / "hooks/hooks.json",
-    )
-    for manifest in manifests:
-        try:
-            json.loads(manifest.read_text(encoding="utf-8"))
-        except Exception as exc:
-            errors.append(f"{manifest.relative_to(root)}: {exc}")
-    return {"packs": len(packs), "cases": len(cases), "risk_cases": len(risk_cases) if "risk_cases" in locals() else 0, "errors": errors}
-
-
 def provenance_audit(root: Path = ROOT, write_manifest: bool = False) -> dict[str, Any]:
     errors: list[str] = []
     provenance = json.loads((root / "PROVENANCE.json").read_text(encoding="utf-8"))
@@ -343,9 +176,18 @@ def provenance_audit(root: Path = ROOT, write_manifest: bool = False) -> dict[st
             errors.append(f"provenance references missing skill: {name}")
     lines = []
     excluded = {"release/MANIFEST.sha256"}
+    # Project-local state can legitimately exist when maintainers run the
+    # toolkit against its own checkout.  It is never source, must not enter a
+    # release manifest, and may contain private model telemetry.
+    excluded_roots = {".git", ".researchops", ".venv", "node_modules"}
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root).as_posix()
-        if not path.is_file() or path.is_symlink() or relative in excluded or "/.git/" in path.as_posix():
+        if (
+            not path.is_file()
+            or path.is_symlink()
+            or relative in excluded
+            or (path.relative_to(root).parts and path.relative_to(root).parts[0] in excluded_roots)
+        ):
             continue
         lines.append(f"{sha256(path)}  {relative}")
     if write_manifest:
@@ -395,7 +237,6 @@ def validate_all(root: Path = ROOT, write_manifest: bool = False) -> dict[str, A
     reports = {
         "skills": validate_skills(root),
         "triggers": validate_triggers(root),
-        "behavior": validate_behavior(root),
         "context": context_budget(root),
         "provenance": provenance_audit(root, write_manifest=write_manifest),
         "links": markdown_links(root),

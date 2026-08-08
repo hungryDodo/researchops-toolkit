@@ -41,7 +41,7 @@ def main() -> None:
     parser.add_argument("--no-record-proposals", action="store_true")
     args = parser.parse_args()
     root = Path(args.root).resolve()
-    state = json.loads((root / ".research/dashboard/project.json").read_text(encoding="utf-8"))
+    state = json.loads((root / ".researchops/state/dashboard/project.json").read_text(encoding="utf-8"))
     status = state.get("status", {})
     phase = status.get("phase", "charter")
     open_actions = sorted(

@@ -1,75 +1,79 @@
-# Skills, progressive loading, and bundles
+# Skills, progressive loading, and Presets
 
 ## Discovery model
 
-The harness initially sees a compact catalog containing each Skill's name, description, and path. It should load the full `SKILL.md` only after semantic matching. The Skill then conditionally points to the references, scripts, and assets required by the current mode.
+A Harness initially sees a compact catalog containing each top-level Skill's name, description, and path. It loads the full `SKILL.md` only after semantic matching or explicit invocation. The Skill then loads only references, scripts and assets required for the current mode.
 
-`SKILL.md` is therefore a routing and execution page, not a handbook. Long checklists and domain guidance belong in `references/`; deterministic operations belong in `scripts/`.
+`SKILL.md` is a routing/execution page, not a complete handbook.
 
-## Trigger design
+## Top-level granularity
 
-Descriptions state both positive and negative boundaries:
+Create a new top-level Skill only when most conditions hold:
 
-```yaml
-description: >
-  Use when ...
-  Do not use when ...
-```
-
-Keywords are useful for regression fixtures and diagnostics, but they are not the sole runtime trigger. The system combines semantic descriptions, owner boundaries, positive/negative fixtures, explicit invocation for consequential capabilities, and orchestrator-directed handoffs.
-
-## Granularity rule
-
-Create a new top-level Skill only when most of these are true:
-
-1. users recognize it as a distinct intent;
-2. it owns a clear authoritative artifact family;
-3. it has different tools, permissions, or risk boundaries;
+1. users recognize a distinct intent;
+2. it owns a clear artifact/acceptance family;
+3. its tools, permissions or risk boundary differ materially;
 4. positive and negative trigger fixtures can isolate it;
-5. delayed loading meaningfully reduces context;
-6. it is not almost always invoked with another Skill.
+5. delayed loading saves meaningful context;
+6. it is not almost always invoked together with another Skill.
 
-Closely related operations become modes within one Skill. Always-on internal capabilities become components. Hardware remains separate because its physical permissions and recovery requirements are fundamentally different.
+Closely related actions become modes. Deterministic cross-workflow services become components. Cross-cutting execution constraints become Behavior Packs.
 
-## Skill ownership
+## Current owners
 
-| Skill | Typical modes / outputs |
+| Skill | Modes / outputs |
 |---|---|
-| `research-program-orchestrator` | phase owner, Gate, next action, proposal, dashboard patch |
-| `research-discovery` | survey, closest work, related-work synthesis, source ledger |
-| `research-route-evaluator` | fatal-flaw check, Top 1–3, minimum decisive experiment |
-| `experimental-research` | design contract, run manifest, analysis, evidence registration |
-| `hardware-experiment-loop` | topology, preflight, calibration, lease, safe restore |
-| `research-engineering` | SPEC, observed failure, implementation, gauntlet evidence |
-| `adaptive-agent-orchestration` | task contract, dispatch, verifier, model profile |
-| `research-validation` | reproduction, artifact audit, venue-style red-team review |
-| `research-writing` | evidence-gated draft, LaTeX revision, feedback ledger |
-| `research-communication` | figure source, diagram, result plot, research deck |
-| `project-hygiene` | inventory, archive, restore, quarantine, purge, worktree plan |
-| `skill-system-engineering` | Skill design, trigger policy, evals, provenance, adapters |
+| `research-program-orchestrator` | lifecycle, Gate, next owner, progress, proposal |
+| `research-discovery` | survey, closest work, source ledger, synthesis |
+| `research-route-evaluator` | fatal flaw, bounded routes, decisive test |
+| `experimental-research` | design contract, run, analysis, evidence |
+| `research-engineering` | research-led code and result validity |
+| `software-development` | development-led investigation, implementation, debug, refactor, review, release |
+| `adaptive-agent-orchestration` | work-unit contract, route, dispatch, independent acceptance |
+| `research-validation` | reproduction, artifact audit, red-team review |
+| `research-writing` | evidence-gated draft, LaTeX and feedback ledger |
+| `research-communication` | paper figure, result plot, research deck |
+| `hardware-experiment-loop` | topology, preflight, calibration, lease, restore |
+| `project-hygiene` | inventory, archive, restore, quarantine, purge |
+| `skill-system-engineering` | Skill/Pack design, triggers, hooks, provenance, release |
 
-The generated [`../catalog/README.md`](../catalog/README.md) is the authoritative catalog of current descriptions.
+## Internal operation codes
 
-## Bundles
+Research discovery, problem formulation, route design, experiment analysis, failure diagnosis, validation, writing and figure design do not each become a user-facing plugin name. Internal operation codes are attached to work units for routing/evaluation. The Harness or orchestrator infers them, and the Dashboard may display them for explanation.
 
-Bundles limit startup catalog context and installation surface. List them with:
+Users can still explicitly choose a Skill when they want control, but normal natural-language requests should not require taxonomy memorization.
+
+## Behavior Packs
+
+Behavior Packs apply across Skills and are selected by task signals and the installed Preset:
+
+- coding minimal change;
+- coding evidence;
+- research integrity;
+- writing claim discipline;
+- hardware safety;
+- archive-first hygiene;
+- delegation quality;
+- visual consistency.
+
+They do not compete in the top-level Skill catalog.
+
+## Presets
+
+Presets limit installation surface and produce tested product combinations:
 
 ```bash
-python3 -m rops bundles
+python3 -m rops presets
 ```
 
-The installer defaults to `research-core`. Install `hardware`, `hygiene`, or `platform-dev` only when the project reaches those stages. Full installation is useful for maintainers and audits, not as a universal default.
+`Bundle` remains a compatibility alias because v1 used that term. See [`presets-and-distribution.md`](presets-and-distribution.md) for the difference between a Preset, Git bundle, submodule, and release artifact.
 
-## Explicit versus implicit invocation
+## Trigger evaluation
 
-Low-risk, narrow Skills may be invoked through semantic matching. High-risk or meta-level Skills prefer explicit invocation or a capability proposal. This is a discovery/execution trade-off, not a reason to hide functionality: the orchestrator surfaces relevant dormant capabilities at meaningful hinges without loading or executing them.
-
-## Evaluation
-
-Run structural trigger evaluation after changing names, descriptions, owner boundaries, bundles, or modes:
+Descriptions include positive and negative boundaries. Structural fixtures check ownership coverage:
 
 ```bash
 python3 -m rops validate
 ```
 
-Fixtures verify coverage and overlap in the repository. Real routing accuracy must still be evaluated for each harness/model version used in production.
+These fixtures do not prove empirical routing accuracy for every Harness/model release. Production traces should be evaluated separately through Model Intelligence.

@@ -1,20 +1,41 @@
 from __future__ import annotations
 
+import argparse
+import datetime as dt
+import hashlib
 import importlib.util
 import json
-import os
-import shutil
+import re
+import shlex
 import sys
+import uuid
 from pathlib import Path
 from typing import Any
 
 from . import ROOT
-from .common import load_json, write_json
+from .common import now
+from .intelligence.store import IntelligenceStore
+
+# Deterministic, non-executing first-pass rules.  The runtime never treats this
+# list as a complete OS sandbox; Harness/platform permissions remain final.
+PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
+    ("credential-exposure", "block", re.compile(r"(?:cat|print|echo|env|set).*?(?:secret|token|api[_-]?key|password)", re.I)),
+    ("destructive-filesystem", "approval", re.compile(r"\brm\s+(?:-[^\s]*r[^\s]*f|-[^\s]*f[^\s]*r)\b|\bmkfs(?:\.[a-z0-9]+)?\b|\bshred\b|\bdd\s+.*\bof=/dev/", re.I)),
+    ("history-rewrite", "approval", re.compile(r"\bgit\s+(?:push\s+.*(?:--force|-f)\b|reset\s+--hard\b|clean\s+-[a-z]*f)", re.I)),
+    ("hardware-power-write", "approval", re.compile(r"\b(?:nrfjprog|openocd|west\s+flash|esptool|dfu-util|ppk2).*(?:program|flash|erase|recover|write|output|power)?\b|/sys/class/(?:gpio|power_supply)", re.I)),
+    ("external-disclosure", "approval", re.compile(r"\b(?:curl|wget|scp|rsync)\b.*(?:--data|--upload-file|@|\bscp\b|\brsync\b)", re.I)),
+    ("privileged-container", "approval", re.compile(r"\b(?:docker|podman)\s+run\b.*(?:--privileged|--pid=host|--network=host|-v\s+/:)", re.I)),
+    ("recursive-permissions", "approval", re.compile(r"\bchmod\s+-R\s+(?:777|a\+rwx)\b|\bchown\s+-R\b", re.I)),
+    ("policy-bypass", "block", re.compile(r"(?:\.researchops/(?:runtime|governance)|ROPS_HOOK_FAIL_CLOSED|behavior-events\.jsonl).*(?:delete|remove|truncate|overwrite)|\b(?:rm|truncate)\b.*\.researchops/(?:runtime|governance)", re.I)),
+]
 
 
-def _runtime_module(runtime_root: Path | None = None):
-    behavior_root = (runtime_root or (ROOT / "behavior")).resolve()
-    path = behavior_root / "runtime.py"
+def _emit(data: Any) -> None:
+    print(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+def _load_runtime():
+    path = ROOT / "behavior" / "runtime.py"
     spec = importlib.util.spec_from_file_location("researchops_behavior_runtime_cli", path)
     if not spec or not spec.loader:
         raise RuntimeError(f"cannot load behavior runtime: {path}")
@@ -24,169 +45,144 @@ def _runtime_module(runtime_root: Path | None = None):
     return module
 
 
-def _merge_hook_groups(existing: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
-    output = dict(existing)
-    hooks = output.setdefault("hooks", {})
-    for event, groups in incoming.get("hooks", {}).items():
-        target = hooks.setdefault(event, [])
-        known = {
-            json.dumps(group, sort_keys=True, ensure_ascii=False)
-            for group in target
-        }
-        for group in groups:
-            marker = json.dumps(group, sort_keys=True, ensure_ascii=False)
-            if marker not in known:
-                target.append(group)
-                known.add(marker)
-    return output
+def command_hash(command: str, category: str) -> str:
+    try:
+        normalized = " ".join(shlex.split(command))
+    except ValueError:
+        normalized = " ".join(command.split())
+    return hashlib.sha256(f"{category}\n{normalized}".encode()).hexdigest()
 
 
-def _project_hook_config(framework: str, project: Path) -> dict[str, Any]:
-    posix = f'python3 "{project.as_posix()}/.researchops/hooks/researchops_hook.py" --framework {framework}'
-    windows = f'py -3 "{str(project)}\\.researchops\\hooks\\researchops_hook.py" --framework {framework}'
-    if framework == "gemini":
-        return {
-            "hooks": {
-                "SessionStart": [{"hooks": [{"name": "researchops-session", "type": "command", "command": posix, "timeout": 10000}]}],
-                "BeforeAgent": [{"hooks": [{"name": "researchops-task-behavior", "type": "command", "command": posix, "timeout": 10000}]}],
-                "BeforeTool": [{"matcher": "run_shell_command|write_file|replace|mcp_.*", "hooks": [{"name": "researchops-tool-policy", "type": "command", "command": posix, "timeout": 10000}]}],
-            }
-        }
-    common = {"type": "command", "command": posix, "commandWindows": windows, "timeout": 10}
+def analyze(command: str) -> dict[str, Any]:
+    findings = []
+    for category, action, pattern in PATTERNS:
+        if pattern.search(command):
+            findings.append({"category": category, "action": action})
+    disposition = "block" if any(item["action"] == "block" for item in findings) else "approval-required" if findings else "allow"
     return {
-        "description": "ROPS task behavior, parsed command policy, and optional semantic risk review.",
-        "hooks": {
-            "SessionStart": [{"hooks": [{**common, "additionalContextLimit": 1800}]}],
-            "UserPromptSubmit": [{"hooks": [{**common, "additionalContextLimit": 1800}]}],
-            "PreToolUse": [{"matcher": "Bash|apply_patch|Edit|Write|Agent|mcp__.*", "hooks": [{**common, "additionalContextLimit": 1200}]}],
-            "SubagentStart": [{"hooks": [{**common, "additionalContextLimit": 1800}]}],
-        },
+        "command": command,
+        "disposition": disposition,
+        "findings": findings,
+        "metadata_only_logging": True,
+        "executed": False,
+        "boundary": "guardrail-not-complete-sandbox",
     }
 
 
-def install(project: str | Path, target: str = "all", mode: str = "guide") -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops"
-    if runtime_root.exists():
-        shutil.rmtree(runtime_root)
-    (runtime_root / "hooks").mkdir(parents=True, exist_ok=True)
-    shutil.copytree(ROOT / "behavior", runtime_root / "behavior")
-    shutil.copy2(ROOT / "hooks/researchops_hook.py", runtime_root / "hooks/researchops_hook.py")
-    runtime = _runtime_module(runtime_root / "behavior")
-    runtime.set_mode(project_path, mode)
-    targets = ["codex", "claude", "gemini"] if target in {"all", "portable"} else [target]
-    paths: dict[str, str] = {}
-    for framework in targets:
-        if framework == "codex":
-            path = project_path / ".codex/hooks.json"
-        elif framework == "claude":
-            path = project_path / ".claude/settings.json"
-        elif framework == "gemini":
-            path = project_path / ".gemini/settings.json"
-        else:
-            continue
-        existing = load_json(path, {}) or {}
-        write_json(path, _merge_hook_groups(existing, _project_hook_config(framework, project_path)))
-        paths[framework] = str(path)
-    return {
-        "schema_version": 2,
-        "project": str(project_path),
-        "mode": mode,
-        "runtime": str(runtime_root),
-        "hook_configs": paths,
-        "trust_required": [name for name in paths],
-    }
-
-
-def status(project: str | Path) -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops"
-    runtime = _runtime_module((runtime_root / "behavior") if runtime_root.exists() else None)
-    registry = runtime.load_registry((runtime_root / "behavior") if runtime_root.exists() else None)
-    state = load_json(project_path / ".research/runtime/config.json", {}) or {}
-    return {
-        "project": str(project_path),
-        "installed": runtime_root.exists(),
-        "mode": state.get("mode", registry.get("default_mode", "guide")),
-        "packs": sorted(runtime.load_packs((runtime_root / "behavior") if runtime_root.exists() else None)),
-        "hook_configs": {
-            "codex": (project_path / ".codex/hooks.json").exists(),
-            "claude": (project_path / ".claude/settings.json").exists(),
-            "gemini": (project_path / ".gemini/settings.json").exists(),
-        },
-        "events": str(project_path / ".research/runtime/events.jsonl"),
-        "feedback": str(project_path / ".research/runtime/feedback.jsonl"),
-        "semantic_review": state.get("semantic_review", {"mode": "off"}),
-        "policy_version": runtime.load_policy((runtime_root / "behavior") if runtime_root.exists() else None).get("schema_version"),
-    }
-
-
-def classify(text: str, event: str = "UserPromptSubmit", tool_name: str = "") -> dict[str, Any]:
-    runtime = _runtime_module()
-    payload = {"hook_event_name": event, "prompt": text, "tool_name": tool_name, "cwd": str(Path.cwd())}
-    classes = runtime.classify(payload)
-    registry = runtime.load_registry()
-    return {"task_classes": classes, "active_packs": runtime._active_packs(classes, payload, registry)}
-
-
-def evaluate(project: str | Path, payload: dict[str, Any], framework: str = "portable", record: bool = False) -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops/behavior"
-    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.evaluate(
-        payload,
-        framework=framework,
-        runtime_root=runtime_root if runtime_root.exists() else None,
-        explicit_project_root=project_path,
-        record=record,
-    )
-
-
-def set_mode(project: str | Path, mode: str) -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops/behavior"
-    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.set_mode(project_path, mode)
-
-
-def approve(project: str | Path, kind: str, command: str, reason: str, ttl: int = 30) -> dict[str, Any]:
-    # An Agent must not silently authorize itself. Normal approvals are created
-    # by an operator in an interactive terminal outside the Agent Harness. The
-    # environment escape hatch exists only for automated tests.
-    if not sys.stdin.isatty() and os.environ.get("ROPS_ALLOW_NONINTERACTIVE_APPROVAL") != "1":
-        raise RuntimeError(
-            "approval creation requires an interactive operator terminal outside the Agent Harness; "
-            "ROPS_ALLOW_NONINTERACTIVE_APPROVAL=1 is reserved for isolated automated tests"
+def approve(store: IntelligenceStore, command: str, category: str, approved_by: str, ttl_minutes: int = 15) -> dict[str, Any]:
+    analysis = analyze(command)
+    if category not in {item["category"] for item in analysis["findings"]}:
+        raise ValueError(f"command was not classified as {category}")
+    if any(item["category"] == category and item["action"] == "block" for item in analysis["findings"]):
+        raise ValueError("blocked categories cannot be approved")
+    approval_id = "approval-op-" + uuid.uuid4().hex[:16]
+    approved_at = dt.datetime.now(dt.timezone.utc)
+    expires = approved_at + dt.timedelta(minutes=ttl_minutes)
+    digest = command_hash(command, category)
+    with store.transaction() as connection:
+        connection.execute(
+            "INSERT INTO approvals(approval_id,approval_kind,subject_id,scope_json,approved_by,approved_at,expires_at,one_use,content_hash,metadata_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (
+                approval_id,
+                "high-risk-operation",
+                category,
+                json.dumps({"category": category}, sort_keys=True),
+                approved_by,
+                approved_at.replace(microsecond=0).isoformat(),
+                expires.replace(microsecond=0).isoformat(),
+                1,
+                digest,
+                json.dumps({"command_preview": command[:120]}, sort_keys=True),
+            ),
         )
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops/behavior"
-    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.create_approval(project_path, kind, command, reason, ttl, runtime_root if runtime_root.exists() else None)
+    return {
+        "approval_id": approval_id,
+        "category": category,
+        "expires_at": expires.replace(microsecond=0).isoformat(),
+        "one_use": True,
+        "prompt_mitigation_approval_granted": False,
+    }
 
 
-def set_semantic_review(project: str | Path, mode: str, command: str | None = None, timeout: int | None = None, scope: str | None = None) -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops/behavior"
-    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.set_semantic_review(project_path, mode, command, timeout, scope)
+def check(store: IntelligenceStore, command: str, *, consume: bool = False) -> dict[str, Any]:
+    result = analyze(command)
+    if result["disposition"] in {"allow", "block"}:
+        result["approved"] = result["disposition"] == "allow"
+        return result
+    matches = []
+    for finding in result["findings"]:
+        digest = command_hash(command, finding["category"])
+        row = store.one(
+            """
+            SELECT * FROM approvals WHERE approval_kind='high-risk-operation' AND subject_id=? AND content_hash=?
+              AND consumed_at IS NULL AND (expires_at IS NULL OR expires_at>?)
+            ORDER BY approved_at DESC LIMIT 1
+            """,
+            (finding["category"], digest, now()),
+        )
+        if row:
+            matches.append(row)
+    result["approved"] = len(matches) == len(result["findings"])
+    result["approval_ids"] = [row["approval_id"] for row in matches]
+    result["disposition"] = "allow-approved" if result["approved"] else "approval-required"
+    if consume and result["approved"]:
+        with store.transaction() as connection:
+            for row in matches:
+                if row["one_use"]:
+                    connection.execute("UPDATE approvals SET consumed_at=? WHERE approval_id=?", (now(), row["approval_id"]))
+        result["consumed"] = True
+    return result
 
 
-def feedback(project: str | Path, event_id: str, label: str, note: str = "") -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops/behavior"
-    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.record_feedback(project_path, event_id, label, note)
+def packs() -> list[dict[str, Any]]:
+    items = []
+    for path in sorted((ROOT / "behavior/packs").glob("*/pack.json")):
+        items.append(json.loads(path.read_text(encoding="utf-8")))
+    return items
 
 
-def feedback_report(project: str | Path) -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops/behavior"
-    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.feedback_report(project_path)
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="rops behavior")
+    parser.add_argument("--root", default=".")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("packs")
+    sub.add_parser("status")
+    mode = sub.add_parser("mode"); mode.add_argument("value", choices=["off", "observe", "guide", "enforce"])
+    classify = sub.add_parser("classify"); classify.add_argument("text"); classify.add_argument("--active-skill")
+    evaluate = sub.add_parser("evaluate"); evaluate.add_argument("--payload-json"); evaluate.add_argument("--payload-file"); evaluate.add_argument("--framework", default="portable")
+    analyze_parser = sub.add_parser("analyze"); analyze_parser.add_argument("command_line")
+    approve_parser = sub.add_parser("approve"); approve_parser.add_argument("command_line"); approve_parser.add_argument("--category", required=True); approve_parser.add_argument("--by", required=True); approve_parser.add_argument("--ttl-minutes", type=int, default=15)
+    check_parser = sub.add_parser("check"); check_parser.add_argument("command_line"); check_parser.add_argument("--consume", action="store_true")
+    return parser
 
 
-def analyze(project: str | Path, command: str) -> dict[str, Any]:
-    project_path = Path(project).resolve()
-    runtime_root = project_path / ".researchops/behavior"
-    runtime = _runtime_module(runtime_root if runtime_root.exists() else None)
-    return runtime.command_analysis(command, project_path, runtime_root if runtime_root.exists() else None)
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    root = Path(args.root).resolve()
+    runtime = _load_runtime()
+    if args.command == "packs":
+        _emit({"packs": packs()}); return 0
+    if args.command == "status":
+        store = IntelligenceStore(root)
+        _emit({"root": str(root), "mode": runtime.current_mode(root), "packs": [item["id"] for item in packs()], "database": str(store.path), "authority": "sqlite", "high_risk_approval": "separate-from-prompt-mitigation"}); return 0
+    if args.command == "mode":
+        _emit(runtime.set_mode(root, args.value)); return 0
+    if args.command == "classify":
+        _emit(runtime.classify(args.text, active_skill=args.active_skill, runtime_root=ROOT / "behavior")); return 0
+    if args.command == "evaluate":
+        if bool(args.payload_json) == bool(args.payload_file):
+            raise ValueError("provide exactly one of --payload-json or --payload-file")
+        payload = json.loads(args.payload_json) if args.payload_json else json.loads(Path(args.payload_file).read_text(encoding="utf-8"))
+        _emit(runtime.evaluate(payload, framework=args.framework, runtime_root=ROOT / "behavior", project_root=root)); return 0
+    store = IntelligenceStore(root)
+    if args.command == "analyze":
+        _emit(analyze(args.command_line))
+    elif args.command == "approve":
+        _emit(approve(store, args.command_line, args.category, args.by, args.ttl_minutes))
+    elif args.command == "check":
+        _emit(check(store, args.command_line, consume=args.consume))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

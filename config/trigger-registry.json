@@ -10,7 +10,7 @@
   "skills": {
     "adaptive-agent-orchestration": {
       "activation": "implicit",
-      "description_summary": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, when a provider/model must be onboarded, or when worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, secret collection in chat, or worker self-approval.",
+      "description_summary": "Use when research work can be split into independently verifiable subtasks, routed across models or providers, or when returned worker performance must be evaluated and learned from. Do not use for tiny edits, concurrent writes to shared state, or worker self-approval.",
       "owner": "adaptive-agent-orchestration",
       "keyword_policy": "examples_only_not_hard_match",
       "proposal_policy": "not applicable"
@@ -91,6 +91,18 @@
       "owner": "skill-system-engineering",
       "keyword_policy": "examples_only_not_hard_match",
       "proposal_policy": "runtime broker surfaces high-risk usage without executing it"
+    },
+    "software-development": {
+      "positive": [
+        "development-led software delivery",
+        "technical investigation for implementation",
+        "debugging/refactoring/release"
+      ],
+      "negative": [
+        "research-result-changing code; use research-engineering",
+        "trivial local edit"
+      ],
+      "owner": "development-led R&D"
     }
   }
 }

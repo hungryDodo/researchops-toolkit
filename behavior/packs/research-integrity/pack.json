@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "research-integrity",
+  "description": "Preserve claim-to-evidence links, frozen protocols, negative results, provenance, and explicit uncertainty.",
+  "domains": [
+    "research-led"
+  ],
+  "priority": "cross-cutting",
+  "may_weaken_safety": false
+}

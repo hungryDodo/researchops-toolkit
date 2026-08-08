@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["target_medium", "layout", "visual_hierarchy", "transferable_principles", "avoid"],
+  "properties": {
+    "target_medium": {"enum": ["dashboard", "product-interface", "academic-figure", "data-visualization", "presentation", "poster", "other"]},
+    "layout": {"type": "object"},
+    "visual_hierarchy": {"type": "object"},
+    "typography": {"type": "object"},
+    "color": {"type": "object"},
+    "transferable_principles": {"type": "array", "items": {"type": "string"}},
+    "avoid": {"type": "array", "items": {"type": "string"}},
+    "content_specific_elements_not_to_copy": {"type": "array"},
+    "uncertainties": {"type": "array"}
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Engineering task contract",
+  "type": "object",
+  "required": ["objective", "orientation", "operation", "risk", "acceptance"],
+  "properties": {
+    "objective": {"type": "string", "minLength": 1},
+    "orientation": {"enum": ["research-led", "development-led", "mixed", "unknown"]},
+    "operation": {"enum": ["discover", "design", "implement", "debug", "validate", "communicate", "operate", "unknown"]},
+    "risk": {"enum": ["low", "medium", "high", "critical"]},
+    "acceptance": {"type": "array", "minItems": 1},
+    "non_goals": {"type": "array"},
+    "rollback": {"type": ["string", "null"]}
+  }
+}

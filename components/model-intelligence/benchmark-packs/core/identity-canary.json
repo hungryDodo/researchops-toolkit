@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "identity-canary-v1",
+  "purpose": "Detect observable provider/deployment behavior changes without updating competence or claiming a hidden cause.",
+  "signals": [
+    "returned-model-and-provider-metadata",
+    "strict-json-compliance",
+    "tool-call-shape",
+    "context-and-output-length-behavior",
+    "refusal-and-format-behavior",
+    "latency-ttft-token-distribution",
+    "small-anchor-outcome-distribution"
+  ],
+  "minimum_independent_signals": 2,
+  "minimum_consecutive_confirmations": 3,
+  "competence_update": false,
+  "responses": ["clear", "suspected-drift", "run-anchor", "create-deployment-epoch"]
+}

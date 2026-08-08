@@ -1,0 +1,6 @@
+interface:
+  display_name: "Software Development"
+  short_description: "Development-led R&D for investigation, implementation, debugging, review, and release with minimal changes and fresh evidence."
+  default_prompt: "Use $software-development for this delivery task and write authoritative project artifacts under .researchops/state/."
+policy:
+  allow_implicit_invocation: true

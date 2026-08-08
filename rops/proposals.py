@@ -47,13 +47,13 @@ def normalize(value: Any) -> str:
 
 
 def registry(project_root: Path) -> dict[str, Any]:
-    local = project_root / ".research/governance/capability-proposals.json"
+    local = project_root / ".researchops/state/governance/capability-proposals.json"
     package = SUITE_ROOT / "config/capability-proposals.json"
     return load_json(local, load_json(package, {"capabilities": []}))
 
 
 def state_path(project_root: Path) -> Path:
-    return project_root / ".research/proposals/state.json"
+    return project_root / ".researchops/state/proposals/state.json"
 
 
 def load_state(project_root: Path) -> dict[str, Any]:
@@ -119,7 +119,7 @@ def suggest(project_root: Path, stage: str, action: str, signals: list[str] | No
 
 
 def _sync_dashboard(project_root: Path, proposals: list[dict[str, Any]]) -> None:
-    dashboard = project_root / ".research/dashboard/project.json"
+    dashboard = project_root / ".researchops/state/dashboard/project.json"
     if not dashboard.exists():
         return
     data = load_json(dashboard, {})

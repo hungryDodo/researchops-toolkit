@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = os.environ.get("PYTHON", "python3")
 
 
-def run(*args: str, cwd: Path | None = None, capture: bool = True, expect: int = 0) -> subprocess.CompletedProcess[str]:
+def run(*args: str, cwd: Path | None = None, capture: bool = False, expect: int = 0) -> subprocess.CompletedProcess[str]:
     completed = subprocess.run(list(args), cwd=cwd or ROOT, text=True, capture_output=capture)
     if completed.returncode != expect:
         raise RuntimeError(
@@ -45,10 +45,10 @@ def project_test(base: Path) -> dict[str, Any]:
     run("git", "config", "user.name", "Release Test", cwd=project)
     run(PYTHON, "-m", "rops", "bootstrap", str(project), "--title", "Release Validation", "--upgrade")
 
-    (project / ".gitignore").write_text("logs/\n.research/runs/*/raw/\n", encoding="utf-8")
-    for directory in (project / ".research/runs/E01/raw", project / "logs", project / "tests", project / "docs"):
+    (project / ".gitignore").write_text("logs/\n.researchops/state/runs/*/raw/\n", encoding="utf-8")
+    for directory in (project / ".researchops/state/runs/E01/raw", project / "logs", project / "tests", project / "docs"):
         directory.mkdir(parents=True, exist_ok=True)
-    raw = project / ".research/runs/E01/raw/samples.bin"
+    raw = project / ".researchops/state/runs/E01/raw/samples.bin"
     log = project / "logs/old.log"
     raw.write_text("raw samples\n", encoding="utf-8")
     log.write_text("temporary log\n", encoding="utf-8")
@@ -56,7 +56,7 @@ def project_test(base: Path) -> dict[str, Any]:
     (project / "docs/results.md").write_text("We compare B1 with E01 and A2.\n", encoding="utf-8")
     (project / "main.py").write_text('print("ok")\n', encoding="utf-8")
 
-    hygiene = project / ".research/hygiene"
+    hygiene = project / ".researchops/state/hygiene"
     write_json(hygiene / "naming-registry.json", {
         "schema_version": 1,
         "identifiers": [
@@ -78,7 +78,7 @@ def project_test(base: Path) -> dict[str, Any]:
     write_json(hygiene / "asset-registry.json", {
         "schema_version": 1,
         "assets": [{
-            "path": ".research/runs/E01/raw/samples.bin",
+            "path": ".researchops/state/runs/E01/raw/samples.bin",
             "class": "raw-reproducible",
             "run_status": "complete",
             "derived_status": "verified",
@@ -186,7 +186,7 @@ def project_test(base: Path) -> dict[str, Any]:
     run(PYTHON, tool("project-hygiene", "repo_hygiene.py"), "--root", str(project), "apply", "--plan", str(repo_plan), "--approve-token", "wrong", expect=1, capture=True)
     run(PYTHON, tool("project-hygiene", "repo_hygiene.py"), "--root", str(project), "apply", "--plan", str(repo_plan), "--approve-token", repo_data["approval_token"])
     assert not obsolete_candidate.exists()
-    assert list((project / ".research/archive/repository-hygiene").glob("*/scratch/obsolete_old.bak"))
+    assert list((project / ".researchops/state/archive/repository-hygiene").glob("*/scratch/obsolete_old.bak"))
 
     archive_plan = base / "archive-plan.json"
     run(PYTHON, tool("project-hygiene", "archive_manager.py"), "--root", str(project), "plan", "--path", "scratch/archive_me.txt", "--reason", "release archive smoke", "--out", str(archive_plan))
@@ -212,7 +212,7 @@ def project_test(base: Path) -> dict[str, Any]:
     run(PYTHON, tool("project-hygiene", "asset_lifecycle.py"), "--root", str(project), "plan", "--inventory", str(asset_inventory), "--out", str(asset_plan))
     planned = read_json(asset_plan)
     safe_paths = {item.get("path") for item in planned["actions"] if item.get("safe_to_apply")}
-    assert {"logs/old.log", ".research/runs/E01/raw/samples.bin"}.issubset(safe_paths)
+    assert {"logs/old.log", ".researchops/state/runs/E01/raw/samples.bin"}.issubset(safe_paths)
     run(PYTHON, tool("project-hygiene", "asset_lifecycle.py"), "--root", str(project), "apply", "--plan", str(asset_plan), "--approve-token", "wrong", expect=1, capture=True)
     run(PYTHON, tool("project-hygiene", "asset_lifecycle.py"), "--root", str(project), "apply", "--plan", str(asset_plan), "--approve-token", planned["approval_token"])
     assert not raw.exists() and not log.exists()
@@ -233,7 +233,7 @@ def project_test(base: Path) -> dict[str, Any]:
     latex = read_json_from_stdout(run(PYTHON, tool("research-writing", "latex_audit.py"), "--root", str(latex_root), capture=True).stdout)
     assert latex["main_candidates"] == ["main.tex"]
 
-    run(PYTHON, str(project / ".research/dashboard/dashboard.py"), "validate", "--root", str(project))
+    run(PYTHON, str(project / ".researchops/state/dashboard/dashboard.py"), "validate", "--root", str(project))
     doctor = read_json_from_stdout(run(PYTHON, "-m", "rops", "doctor", "--target", "all", "--project", str(project), capture=True).stdout)
     assert all(not value["missing"] for value in doctor["targets"].values())
     run("git", "fsck", "--no-progress", cwd=project)
@@ -272,7 +272,7 @@ def worktree_test(base: Path) -> dict[str, Any]:
     run("git", "commit", "-qm", "base", cwd=main)
     run("git", "worktree", "add", "-q", "-b", "completed-route", str(child), "main", cwd=main)
     run(PYTHON, tool("project-hygiene", "asset_lifecycle.py"), "--root", str(main), "init")
-    write_json(main / ".research/hygiene/worktree-registry.json", {
+    write_json(main / ".researchops/state/hygiene/worktree-registry.json", {
         "schema_version": 1,
         "worktrees": [{"path": str(child.resolve()), "task_id": "route-01", "status": "merged", "lease_expires_at": "2020-01-01T00:00:00Z"}],
     })

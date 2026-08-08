@@ -1,6 +1,6 @@
 interface:
   display_name: "Skill System Engineering"
   short_description: "Use when creating, merging, splitting, packaging, auditing, or evaluating Agent Skills, trigger policies, proposal policies, provenance, permissions, and cross-"
-  default_prompt: "Use $skill-system-engineering for this task and write authoritative artifacts under .research/."
+  default_prompt: "Use $skill-system-engineering for this task and write authoritative artifacts under .researchops/state/."
 policy:
   allow_implicit_invocation: false
