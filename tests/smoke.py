@@ -103,9 +103,9 @@ def project_test(base: Path) -> dict[str, Any]:
 
     run(PYTHON, "-m", "rops", "install", "--target", "all", "--scope", "project", "--project", str(project), "--mode", "link", "--skills", "all", "--with-agents")
     native_files = [
-        project / ".codex/agents/research_scout.toml",
-        project / ".claude/agents/research_scout.md",
-        project / ".gemini/agents/research_scout.md",
+        project / ".codex/agents/bounded_read_worker.toml",
+        project / ".claude/agents/bounded_read_worker.md",
+        project / ".gemini/agents/bounded_read_worker.md",
     ]
     assert all(path.is_file() for path in native_files)
     bundle_project = base / "bundle-project"
@@ -135,7 +135,7 @@ def project_test(base: Path) -> dict[str, Any]:
         "--task-json", json.dumps({
             "stage": "survey", "type": "extraction", "risk": "low", "privacy": "internal",
             "mutability": "read-only", "required_capabilities": ["extraction"], "deterministic_tests": True,
-        }), "--agent", "research_scout", "--no-write", capture=True,
+        }), "--agent", "bounded_read_worker", "--no-write", capture=True,
     ).stdout)
     assert routed["primary"]["model_id"]
 
@@ -155,7 +155,7 @@ def project_test(base: Path) -> dict[str, Any]:
             {"name": "artifact exists", "type": "file_exists", "path": "docs/results.md", "required": True, "weight": 1.0},
         ],
     })
-    write_json(result, {"model_id": routed["primary"]["model_id"], "agent_revision": "research_scout@1", "status": "complete", "latency_seconds": 3.2, "cost": 0.01, "artifacts": ["docs/results.md"]})
+    write_json(result, {"model_id": routed["primary"]["model_id"], "agent_revision": "bounded_read_worker@1", "status": "complete", "latency_seconds": 3.2, "cost": 0.01, "artifacts": ["docs/results.md"]})
     write_json(verifier, {"verifier_id": "independent-reviewer@1", "model_id": "strong-verifier", "independent": True, "confidence": 0.9, "disposition": "accepted", "dimensions": {"correctness": 0.9, "evidence_quality": 0.9, "scope_discipline": 1.0}, "failure_modes": [], "verifier_disagreement": 0.0})
     run(PYTHON, tool("adaptive-agent-orchestration", "evaluate_dispatch.py"), "--root", str(project), "--contract", str(contract), "--result", str(result), "--output", str(evaluation_missing))
     assert not read_json(evaluation_missing)["accepted"]

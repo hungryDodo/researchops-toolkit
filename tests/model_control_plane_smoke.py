@@ -28,14 +28,14 @@ def main() -> None:
         endpoint = record_endpoint_observation(
             store,
             endpoint_id="mock-endpoint",
-            arm_id="codex/gpt-5.6",
+            arm_id="codex/gpt-5.6-sol@medium",
             success=True,
             latency_seconds=0.25,
             metadata={"kind": "probe"},
         )
         identity = record_identity_observation(
             store,
-            arm_id="codex/gpt-5.6",
+            arm_id="codex/gpt-5.6-sol@medium",
             endpoint_id="mock-endpoint",
             declared_identity={"requested_model": "gpt-5.6", "returned_model": "gpt-5.6"},
             fingerprint={"response_shape": ["choices", "usage"]},
@@ -51,7 +51,7 @@ def main() -> None:
                 "task_id": "task-1",
                 "work_unit_id": "wu-1",
                 "source": "live",
-                "execution_arm_id": "codex/gpt-5.6",
+                "execution_arm_id": "codex/gpt-5.6-sol@medium",
                 "task": {
                     "objective": "Validate the compatibility facade",
                     "orientation": "development-led",
@@ -90,7 +90,7 @@ def main() -> None:
             },
         )
         projection = rebuild_projections(store)
-        model_dossier = dossier(root, "codex/gpt-5.6")
+        model_dossier = dossier(root, "codex/gpt-5.6-sol@medium")
         secrets = secret_status(root)
         assert event["event_id"]
         assert projection["event_count"] == 1

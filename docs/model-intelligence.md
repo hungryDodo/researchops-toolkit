@@ -82,6 +82,8 @@ same project + operation
 
 Current price and endpoint health are queried at decision time; they are not folded permanently into model competence. The current UCB-style policy remains a transparent baseline while the data layer stabilizes. The decision stores its policy version and selection probability.
 
+Read-only recommendations use an immutable, checkpointed SQLite snapshot and skip profile rebuilds, registry sync, warmup persistence, and route-decision writes. This makes `recommend --no-write --compact` suitable for an installed Codex skill running under a read-only sandbox; normal recorded routes continue to use transactional WAL mode.
+
 ## Execution-arm identity
 
 A model name is not sufficient. An execution arm can include:
@@ -96,6 +98,8 @@ A model name is not sufficient. An execution arm can include:
 - mitigation-bundle hash.
 
 A materially changed configuration becomes a new arm or epoch rather than silently sharing all evidence.
+
+Reasoning effort is always material for routing. Arms use stable effort-bearing IDs such as `provider/model@high`; the Router may compare them through `model_family`, but the Profile Engine never collapses their observations. Task contracts can request `reasoning_demand` or hard exact/min/max effort bounds. The default effort-fit prior penalizes under-provision more strongly than over-provision while still charging the measured cost and latency of excess effort.
 
 ## Black-box degradation and model replacement
 

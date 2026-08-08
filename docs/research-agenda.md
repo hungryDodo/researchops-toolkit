@@ -93,6 +93,22 @@ Compare exact state only, SQLite FTS recall and optional vector/external-memory 
 
 Validate `routing-core`, `development-core`, `research-base`, `research-routed` and `full` independently. Measure installation surface, startup catalog size, package size, missing-dependency failures and behavior equivalence for shared components.
 
+### RQ9 — Does joint model × effort routing outperform model-only routing?
+
+Treat every model-budget pair as a separate arm and compare:
+
+- one fixed model and one fixed effort;
+- model routing with provider-default effort;
+- effort routing within one fixed model family;
+- joint model × effort routing;
+- an offline model-budget oracle.
+
+Stratify by reasoning demand, decomposability, dependency structure, tool intensity, and deterministic-verification availability. Measure verified progress, cost, latency, human correction, severe failure, calibration, and regret. Include adjacent effort comparisons and test whether `max` produces a measurable gain over `xhigh` rather than assuming monotonic quality.
+
+### RQ10 — Does task-conditioned topology beat fixed company-style roles?
+
+Compare one general agent, a fixed occupational-role team, dynamic task-space partitioning, centralized fan-out, and fresh-context independent verification under matched model/token budgets. Separate gains from extra tokens and tool calls from gains attributable to topology. The main hypothesis is conditional: parallel task partitions should help decomposable work, while sequential/shared-state work should prefer one context.
+
 ## Evaluation corpus
 
 Use three layers:
@@ -138,15 +154,15 @@ Not included in the initial empirical claim:
 
 Representative starting points include contextual/cost-aware LLM routing (FrugalGPT and RouteLLM), longitudinal model-behavior evaluation, non-stationary bandits, fine-grained Agent progress evaluation, task-state verification, LLM-as-a-Judge bias and non-transitivity, and judge-aware Bradley–Terry aggregation. Black-box model-modification detection (<https://arxiv.org/abs/2504.12335>) supports frozen canaries and distributional monitoring, while Memora (<https://arxiv.org/abs/2604.20006>) and MemoryArena motivate evaluation of memory mutation and downstream multi-session utility. SWE-Skills-Bench (<https://arxiv.org/abs/2603.15401>) reinforces that procedural Skills need paired, deterministic marginal-utility tests and may hurt when mismatched.
 
-## RQ9 — Does inspect-before-write adoption improve time-to-useful-state?
+## RQ11 — Does inspect-before-write adoption improve time-to-useful-state?
 
 Compare empty-project initialization, blind workflow reset, and ResearchOps adoption on repositories sampled at different lifecycle stages. Measure preservation, phase/active-workstream agreement with the owner, time to identify the next valid work unit, redundant work, and correction burden. Ablate deterministic scan, agent semantic review, and adoption depth.
 
-## RQ10 — Does lifecycle-aware Memory improve longitudinal work?
+## RQ12 — Does lifecycle-aware Memory improve longitudinal work?
 
 Compare no recall, raw conversation/history retrieval, flat FTS/vector recall, ResearchOps Memory v2.1, and optional graph/external adapters. Evaluate retrieval precision/recall, stale/conflicting recall, context tokens, repeated user explanations, recovery after interruption, task success, and latency. Memory is useful only if downstream work improves; retrieval metrics alone are insufficient.
 
-## RQ11 — Does the ResearchOps plugin itself provide measurable marginal utility?
+## RQ13 — Does the ResearchOps plugin itself provide measurable marginal utility?
 
 Run paired, pinned-repository tasks with and without selected Presets/Skills using the same Harness/model/budget. Measure acceptance, verified progress, regressions, token and dollar overhead, wall time, human correction, and severe failures. Include negative results and compatibility failures. This follows the same first-principles concern as recent Skill-effect benchmarks: procedural packages must demonstrate marginal value rather than assume it.
 

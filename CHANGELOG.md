@@ -6,7 +6,11 @@ All notable user-visible changes are documented here. The project follows semant
 
 ### Changed
 
-- No unreleased changes.
+- Model selection now routes over explicit model × reasoning-effort execution arms, with effort-specific evidence, cost, latency, failure patterns, mitigations, and executable Codex parameters.
+- Added reasoning-demand/effort fit, exact/min/max effort constraints, `orchestrate` Lead routing, task-conditioned coordination topology, and model-family-diverse verifier preference.
+- Replaced occupational worker personas with session Lead, bounded read/write work-unit, and fresh-context verifier templates.
+- Added GPT-5.6 Sol/Terra/Luna cold-start arms and a deterministic model-effort/topology/Codex-rendering smoke test.
+- Made `--no-write` routing use a genuinely read-only SQLite connection so Codex read-only sandboxes can route without WAL writes.
 
 ## [2.1.0] - 2026-08-06
 

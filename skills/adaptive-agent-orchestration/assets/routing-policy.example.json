@@ -1,19 +1,42 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
   "weights": {
-    "quality": 0.55,
-    "success": 0.2,
-    "cost": 0.08,
-    "latency": 0.07,
-    "correction": 0.05,
-    "verifier_disagreement": 0.05
+    "verified_progress": 0.25,
+    "quality": 0.35,
+    "success": 0.18,
+    "reasoning_fit": 0.12,
+    "cost": 0.07,
+    "latency": 0.05,
+    "correction": 0.04,
+    "verifier_disagreement": 0.03,
+    "operational_risk": 0.12
+  },
+  "effort_routing": {
+    "order": ["none", "low", "medium", "high", "xhigh", "max", "ultra"],
+    "target_by_reasoning_demand": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high",
+      "extreme": "xhigh"
+    },
+    "underprovision_penalty_per_level": 0.22,
+    "overprovision_penalty_per_level": 0.1,
+    "principle": "Treat max as a measured quality-first option, not an automatic default. Treat Codex ultra as an orchestration mode rather than a normal worker effort."
+  },
+  "orchestration": {
+    "max_concurrent_workers": 3,
+    "max_delegation_depth": 2,
+    "default_topology": "single-agent",
+    "parallel_topology": "centralized-fanout"
   },
   "exploration": {
     "enabled": true,
     "max_risk": "medium",
     "ucb_coefficient": 0.08,
-    "max_bonus": 0.12
+    "max_bonus": 0.12,
+    "selection_probability": 0.1
   },
+  "latency_reference_seconds": 300,
   "minimum_observations_for_empirical_routing": 5,
   "privacy_provider_allowlist": {
     "public": ["*"],

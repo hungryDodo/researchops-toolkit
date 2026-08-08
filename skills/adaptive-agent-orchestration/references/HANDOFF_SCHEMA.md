@@ -12,6 +12,13 @@ A dispatch contract should contain:
   "constraints": ["Do not infer missing results", "Use primary sources only"],
   "write_scope": [".researchops/state/survey/agents/batch-01/"],
   "required_capabilities": ["long-context", "citation-extraction"],
+  "reasoning_demand": "medium",
+  "selected_execution_arm": {
+    "arm_id": "provider/model@medium",
+    "model": "model",
+    "reasoning_effort": "medium"
+  },
+  "delegation": {"may_spawn_descendants": false, "remaining_depth": 0},
   "risk": "medium",
   "privacy": "internal",
   "expected_output": "evidence-table-v1",
@@ -21,3 +28,5 @@ A dispatch contract should contain:
   "escalate_to": "research-program-orchestrator"
 }
 ```
+
+Partition by task or evidence lane, not by permanent occupational identity. A descendant handoff must reduce the remaining depth, preserve the frozen acceptance contract, and stay within the parent's scope and budget.

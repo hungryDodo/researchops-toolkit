@@ -9,14 +9,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
 
-# Support direct execution from an installed Skill checkout.
-ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# Support both a source checkout and a project installation whose replaceable
+# runtime contains the canonical ``rops`` package.
+SCRIPT = Path(__file__).resolve()
+IMPORT_ROOTS = (
+    SCRIPT.parents[3],
+    SCRIPT.parents[4] / ".researchops/runtime",
+    Path.cwd().resolve() / ".researchops/runtime",
+)
+for import_root in IMPORT_ROOTS:
+    if (import_root / "rops").is_dir() and str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
 from rops.intelligence.events import record_event
 from rops.intelligence.patterns import rebuild_patterns
@@ -24,7 +32,20 @@ from rops.intelligence.projections import rebuild_projections
 from rops.intelligence.routing import recommend as core_recommend
 from rops.intelligence.store import IntelligenceStore
 from rops.models import sync_registry
-from rops.project import _copy_governance_defaults
+
+
+def copy_governance_defaults(governance: Path) -> None:
+    governance.mkdir(parents=True, exist_ok=True)
+    assets = SCRIPT.parents[1] / "assets"
+    mapping = {
+        "models.example.json": "models.json",
+        "agents.example.json": "agents.json",
+        "routing-policy.example.json": "routing-policy.json",
+    }
+    for source, destination in mapping.items():
+        target = governance / destination
+        if not target.exists():
+            shutil.copy2(assets / source, target)
 
 
 def read_json_arg(raw: str | None, path: str | None) -> dict[str, Any]:
@@ -38,7 +59,7 @@ def read_json_arg(raw: str | None, path: str | None) -> dict[str, Any]:
 
 def init_project(root: Path, assets: Path | None = None, force: bool = False) -> dict[str, Any]:
     store = IntelligenceStore(root)
-    _copy_governance_defaults(store.layout.governance)
+    copy_governance_defaults(store.layout.governance)
     if force and assets:
         mapping = {"models.example.json": "models.json", "agents.example.json": "agents.json", "routing-policy.example.json": "routing-policy.json"}
         for source, destination in mapping.items():
@@ -51,11 +72,26 @@ def init_project(root: Path, assets: Path | None = None, force: bool = False) ->
 
 
 def recommend(root: Path, task: dict[str, Any], agent_name: str | None = None, write: bool = True) -> dict[str, Any]:
-    store = IntelligenceStore(root)
-    _copy_governance_defaults(store.layout.governance)
-    sync_registry(store)
+    store = IntelligenceStore(root, read_only=not write)
+    if write:
+        copy_governance_defaults(store.layout.governance)
+        sync_registry(store)
     task = {"project_id": root.name, **task}
     return core_recommend(store, task, agent_name=agent_name, write=write)
+
+
+def compact_decision(decision: dict[str, Any]) -> dict[str, Any]:
+    primary = decision["primary"]
+    verifier = decision.get("verifier") or {}
+    return {
+        "decision_id": decision["decision_id"],
+        "primary": primary["execution"],
+        "primary_arm": primary["model_id"],
+        "verifier": verifier.get("execution"),
+        "verifier_arm": verifier.get("model_id"),
+        "orchestration": decision["orchestration"],
+        "visible_reason": decision["visible_reason"],
+    }
 
 
 def record(root: Path, event: dict[str, Any]) -> dict[str, Any]:
@@ -90,13 +126,16 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=Path.cwd())
     sub = parser.add_subparsers(dest="cmd", required=True)
     init = sub.add_parser("init"); init.add_argument("--force", action="store_true"); init.add_argument("--assets", type=Path)
-    route = sub.add_parser("recommend"); route.add_argument("--task-json"); route.add_argument("--task-file"); route.add_argument("--agent"); route.add_argument("--no-write", action="store_true")
+    route = sub.add_parser("recommend"); route.add_argument("--task-json"); route.add_argument("--task-file"); route.add_argument("--agent"); route.add_argument("--no-write", action="store_true"); route.add_argument("--compact", action="store_true")
     rec = sub.add_parser("record"); rec.add_argument("--event-json"); rec.add_argument("--event-file")
     sub.add_parser("rebuild")
     sub.add_parser("summary")
     args = parser.parse_args(); root = args.root.resolve()
     if args.cmd == "init": result = init_project(root, args.assets, args.force)
-    elif args.cmd == "recommend": result = recommend(root, read_json_arg(args.task_json, args.task_file), args.agent, not args.no_write)
+    elif args.cmd == "recommend":
+        result = recommend(root, read_json_arg(args.task_json, args.task_file), args.agent, not args.no_write)
+        if args.compact:
+            result = compact_decision(result)
     elif args.cmd == "record": result = record(root, read_json_arg(args.event_json, args.event_file))
     elif args.cmd == "rebuild": result = rebuild(root)
     else: result = summary(root)

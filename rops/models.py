@@ -149,6 +149,8 @@ def probe(store: IntelligenceStore, arm_id: str, *, timeout: float = 60.0) -> di
         "temperature": 0,
         "max_tokens": 32,
     }
+    if model.get("reasoning_effort"):
+        payload["reasoning_effort"] = model["reasoning_effort"]
     try:
         response, latency, headers = _request(model, payload, timeout=timeout)
         declared = {"requested_model": model.get("model"), "returned_model": response.get("model"), "api_version": headers.get("openai-version")}
@@ -166,10 +168,12 @@ def dispatch(store: IntelligenceStore, arm_id: str, request_data: dict[str, Any]
     endpoint = str(model.get("endpoint_id") or model.get("base_url") or arm_id)
     payload = dict(request_data)
     payload.setdefault("model", model.get("model"))
+    if model.get("reasoning_effort"):
+        payload.setdefault("reasoning_effort", model["reasoning_effort"])
     try:
         response, latency, headers = _request(model, payload, timeout=timeout)
         record_endpoint_observation(store, endpoint_id=endpoint, arm_id=arm_id, success=True, latency_seconds=latency, metadata={"kind": "dispatch", "usage": response.get("usage")})
-        return {"dispatch_id": "dispatch-" + uuid.uuid4().hex[:16], "arm_id": arm_id, "latency_seconds": round(latency, 6), "response": response, "returned_model": response.get("model"), "evaluation_pending": True}
+        return {"dispatch_id": "dispatch-" + uuid.uuid4().hex[:16], "arm_id": arm_id, "model": model.get("model"), "reasoning_effort": model.get("reasoning_effort"), "latency_seconds": round(latency, 6), "response": response, "returned_model": response.get("model"), "evaluation_pending": True}
     except Exception as exc:
         record_endpoint_observation(store, endpoint_id=endpoint, arm_id=arm_id, success=False, latency_seconds=timeout, error_class=type(exc).__name__, metadata={"kind": "dispatch"})
         raise

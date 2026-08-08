@@ -1,6 +1,7 @@
 # Model profile protocol
 
 - Write accepted work-unit outcomes as canonical Evaluation Events in SQLite.
+- Give every model × reasoning-effort configuration its own stable execution-arm ID. Keep `model_family` for family-level comparison, but do not merge effort-specific evidence.
 - Do not maintain a Skill-local aggregation implementation.
 - Probe/smoke is endpoint/identity telemetry only.
 - Use finite profile scopes and preserve uncertainty/sample count.

@@ -52,6 +52,35 @@ The registry should identify behaviorally meaningful configurations, not only ma
 
 Unknown provider-side revisions are handled through observed deployment epochs rather than false certainty.
 
+`reasoning_effort` is a routed dimension. `gpt-5.6-sol@medium`, `gpt-5.6-sol@high`, and `gpt-5.6-sol@xhigh` are separate arms with separate observations, costs, latencies, failure patterns, and mitigations. `model_family` preserves their relationship for comparison without pooling their evidence.
+
+The default registry includes declared cold-start priors for GPT-5.6 Sol, Terra, and Luna across a bounded set of efforts. These priors follow current [official OpenAI model guidance](https://developers.openai.com/api/docs/guides/latest-model), but remain hypotheses until representative project tasks validate them. Effective-dated price records remain separate from capability priors.
+
+## Session Lead and task-space partitioning
+
+The Lead is a control-plane responsibility, not a permanent company executive persona. It owns the session objective, task graph, budgets, routing calls, dependency tracking, and synthesis. Route it as an ordinary `orchestrate` work unit so its model and effort can also change as evidence accumulates.
+
+Worker templates describe context, tools, mutability, and acceptance boundaries:
+
+- `bounded_read_worker`: one evidence lane, repository slice, hypothesis, or comparison arm;
+- `bounded_write_worker`: one isolated implementation unit with deterministic checks;
+- `independent_verifier`: a fresh-context acceptance path that does not inherit the worker's hidden reasoning.
+
+The decomposition axis is the task space. A general model may execute different work units over time. Context-isolated review/Judge work remains separate because independence and non-self-approval are experimental controls.
+
+Current controlled evidence does not support a universal “more agents” rule. Multi-agent coordination helps parallelizable tasks, while sequential tasks can regress because coordination consumes the same reasoning/tool budget. Therefore the router emits a topology recommendation:
+
+```text
+sequential or shared mutable state       → single-agent
+partially decomposable                   → lead-worker
+independent bounded workstreams          → centralized-fanout
+independent acceptance / disputed result → fresh-context verifier
+```
+
+Sources: [Towards a Science of Scaling Agent Systems](https://arxiv.org/abs/2512.08296), [Google Research summary](https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/), and [OpenAI Multi-agent](https://developers.openai.com/api/docs/guides/responses-multi-agent).
+
+OpenAI's Multi-agent API supports descendant trees rather than only one flat fan-out. ResearchOps still defaults to three concurrent workers and depth two because an available mechanism is not evidence that deeper delegation improves a given task. The handoff must explicitly grant descendant spawning.
+
 ## Work-unit contract
 
 Delegation is appropriate when a task can be bounded with:
@@ -68,14 +97,24 @@ One long request should be split when discovery, design, implementation and vali
 ## Route selection
 
 1. hard-filter ineligible arms;
-2. query the most specific sufficiently supported profile;
-3. quote current endpoint health and current price;
-4. apply project utility/risk policy;
-5. preserve uncertainty and bounded exploration;
-6. record route decision and selection probability;
-7. evaluate the completed work unit from artifacts/state, not prose impression alone.
+2. filter exact/minimum/maximum effort constraints and score reasoning-demand/effort fit;
+3. query the most specific sufficiently supported profile for that exact arm;
+4. quote current endpoint health and current price;
+5. apply project utility/risk policy without assuming maximum effort is optimal;
+6. preserve uncertainty and bounded exploration;
+7. record model, effort, topology, route decision, and selection probability;
+8. evaluate the completed work unit from artifacts/state, not prose impression alone.
 
-The Router returns a selected arm plus applicable mitigation and verifier policy. It does not expose every internal score factor in the main UI.
+The Router returns a selected arm plus executable `model`/`reasoning_effort` fields, applicable mitigation, topology, and verifier policy. It does not expose every internal score factor in the main UI.
+
+For a project-local Codex installation, agents can inspect a route without mutating the decision log or creating SQLite WAL/SHM files:
+
+```bash
+python3 .agents/skills/adaptive-agent-orchestration/scripts/agent_registry.py \
+  --root . recommend --no-write --compact --task-file task.json
+```
+
+`--compact` returns only the executable primary/verifier arms, orchestration contract, and visible rationale. `--no-write` opens the last checkpointed SQLite snapshot in immutable read-only mode, which is safe inside a read-only Harness sandbox.
 
 ## Probe, Anchor, Shadow, Live
 

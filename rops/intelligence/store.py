@@ -322,17 +322,31 @@ CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(
 
 
 class IntelligenceStore:
-    def __init__(self, root: str | Path):
-        self.layout: ProjectLayout = layout(root).ensure()
+    def __init__(self, root: str | Path, *, read_only: bool = False):
+        self.read_only = read_only
+        self.layout: ProjectLayout = layout(root) if read_only else layout(root).ensure()
         self.path = self.layout.database
-        self.initialize()
+        if read_only:
+            if not self.path.is_file():
+                raise FileNotFoundError(f"model-intelligence database does not exist: {self.path}")
+        else:
+            self.initialize()
 
     def connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path, timeout=30.0)
+        if self.read_only:
+            # Codex read-only sandboxes cannot create SQLite's WAL shared-memory
+            # sidecar. Immutable mode opens the last checkpointed snapshot
+            # without attempting any filesystem writes.
+            connection = sqlite3.connect(f"file:{self.path}?mode=ro&immutable=1", timeout=30.0, uri=True)
+        else:
+            connection = sqlite3.connect(self.path, timeout=30.0)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute("PRAGMA journal_mode = WAL")
-        connection.execute("PRAGMA synchronous = NORMAL")
+        if self.read_only:
+            connection.execute("PRAGMA query_only = ON")
+        else:
+            connection.execute("PRAGMA journal_mode = WAL")
+            connection.execute("PRAGMA synchronous = NORMAL")
         connection.execute("PRAGMA busy_timeout = 30000")
         return connection
 
@@ -344,6 +358,8 @@ class IntelligenceStore:
                 "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, datetime('now'))",
                 (SCHEMA_VERSION,),
             )
+            connection.commit()
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
     @staticmethod
     def _columns(connection: sqlite3.Connection, table: str) -> set[str]:
@@ -391,11 +407,16 @@ class IntelligenceStore:
 
     @contextlib.contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:
+        if self.read_only:
+            raise RuntimeError("read-only intelligence store does not allow transactions")
         connection = self.connect()
         try:
             connection.execute("BEGIN IMMEDIATE")
             yield connection
             connection.commit()
+            # Keep the main database file current so an immutable read-only
+            # sandbox can inspect it without creating WAL/SHM sidecars.
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         except Exception:
             connection.rollback()
             raise

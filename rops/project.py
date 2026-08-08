@@ -64,6 +64,7 @@ def _install_behavior_runtime(project_path: Path, selected_packs: tuple[str, ...
         shutil.copytree(available[pack], behavior_target / "packs" / pack)
     shutil.copytree(ROOT / "hooks", hooks_target)
     shutil.copytree(ROOT / "rops", rops_target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    shutil.copy2(ROOT / "VERSION", runtime_root / "VERSION")
     write_json(behavior_target / "config.json", {"schema_version": 1, "mode": mode, "updated_at": now()})
     return {
         "root": str(runtime_root),
@@ -188,7 +189,32 @@ def _write_local_gitignore(paths) -> None:
     )
 
 
-def _copy_governance_defaults(governance: Path) -> None:
+def _merge_missing(target: dict[str, Any], defaults: dict[str, Any]) -> None:
+    for key, value in defaults.items():
+        if key not in target:
+            target[key] = value
+        elif isinstance(target[key], dict) and isinstance(value, dict):
+            _merge_missing(target[key], value)
+
+
+def _merge_governance_upgrade(destination_name: str, existing: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:
+    """Add new routing defaults without overwriting operator-owned configuration."""
+
+    if destination_name == "models.json":
+        current = existing.setdefault("models", [])
+        known = {str(item.get("arm_id") or item.get("id")) for item in current}
+        current.extend(item for item in defaults.get("models", []) if str(item.get("arm_id") or item.get("id")) not in known)
+    elif destination_name == "agents.json":
+        current = existing.setdefault("agents", [])
+        known = {str(item.get("name")) for item in current}
+        current.extend(item for item in defaults.get("agents", []) if str(item.get("name")) not in known)
+    else:
+        _merge_missing(existing, defaults)
+    existing["schema_version"] = max(int(existing.get("schema_version", 1)), int(defaults.get("schema_version", 1)))
+    return existing
+
+
+def _copy_governance_defaults(governance: Path, *, upgrade: bool = False) -> None:
     governance.mkdir(parents=True, exist_ok=True)
     for name in ("trigger-registry.json", "artifact-contracts.json", "skill-bundles.json", "capability-proposals.json"):
         source = ROOT / "config" / name
@@ -219,13 +245,14 @@ def _copy_governance_defaults(governance: Path) -> None:
                     for key, value in aliases.items():
                         if value:
                             model.setdefault("task_affinity", {})[key] = value
-                data["schema_version"] = 2
+                data["schema_version"] = max(3, int(data.get("schema_version", 1)))
             if destination_name == "routing-policy.json":
-                data["schema_version"] = 2
+                data["schema_version"] = max(3, int(data.get("schema_version", 1)))
                 data["weights"] = {
                     "verified_progress": 0.25,
                     "quality": 0.35,
                     "success": 0.18,
+                    "reasoning_fit": 0.12,
                     "cost": 0.07,
                     "latency": 0.05,
                     "correction": 0.04,
@@ -234,7 +261,13 @@ def _copy_governance_defaults(governance: Path) -> None:
                 }
                 data.setdefault("latency_reference_seconds", 300)
                 data.setdefault("exploration", {})["selection_probability"] = 0.10
-            _write_missing(governance / destination_name, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+            destination = governance / destination_name
+            if upgrade and destination.exists():
+                existing = json.loads(destination.read_text(encoding="utf-8"))
+                data = _merge_governance_upgrade(destination_name, existing, data)
+                _write_missing(destination, json.dumps(data, ensure_ascii=False, indent=2) + "\n", overwrite=True)
+            else:
+                _write_missing(destination, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     _write_missing(governance / "providers.json", json.dumps({"schema_version": 1, "providers": []}, indent=2) + "\n")
 
 
@@ -360,7 +393,7 @@ def bootstrap(
 
     for script in ("asset_lifecycle.py", "archive_manager.py", "repo_hygiene.py"):
         run([sys.executable, str(ROOT / f"skills/project-hygiene/scripts/{script}"), "--root", str(project_path), "init"], capture=True)
-    _copy_governance_defaults(paths.governance)
+    _copy_governance_defaults(paths.governance, upgrade=upgrade)
     write_json(paths.runtime / "behavior" / "config.json", {"schema_version": 1, "mode": "guide", "updated_at": now()})
 
     from .intelligence.memory import sync_from_project

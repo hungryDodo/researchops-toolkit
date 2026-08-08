@@ -6,7 +6,13 @@
       "skill": "adaptive-agent-orchestration",
       "should_trigger": true,
       "prompt": "Delegate citation extraction to a cheaper approved model and independently validate it.",
-      "expected": "Define a bounded contract, hard-filter provider/privacy/tools, choose worker/verifier, and record outcome."
+      "expected": "Define a bounded task-space contract, choose a model-effort worker arm and independent verifier, and record outcome."
+    },
+    {
+      "skill": "adaptive-agent-orchestration",
+      "should_trigger": true,
+      "prompt": "Choose between GPT-5.6 Sol medium, high, and xhigh for this task, then route a Lead only if the work truly decomposes.",
+      "expected": "Characterize reasoning demand and dependency shape, route model × effort, and avoid company-style fan-out for sequential work."
     },
     {
       "skill": "adaptive-agent-orchestration",

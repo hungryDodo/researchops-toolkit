@@ -31,6 +31,7 @@ SMOKE_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("intelligence", ("tests/intelligence_smoke.py",)),
     ("behavior", ("tests/behavior_smoke.py",)),
     ("model-control-plane", ("tests/model_control_plane_smoke.py",)),
+    ("model-effort-routing", ("tests/model_effort_routing_smoke.py",)),
     ("adoption-memory", ("tests/adoption_memory_smoke.py",)),
     ("product-benchmark", ("tests/product_benchmark_smoke.py",)),
 )

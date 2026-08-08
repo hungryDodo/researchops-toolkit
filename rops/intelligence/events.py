@@ -11,12 +11,17 @@ from ..common import now
 from .store import IntelligenceStore
 
 ORIENTATIONS = {"research-led", "development-led", "mixed", "unknown"}
-OPERATIONS = {"discover", "design", "implement", "debug", "validate", "communicate", "operate", "unknown"}
+OPERATIONS = {"orchestrate", "discover", "design", "implement", "debug", "validate", "communicate", "operate", "unknown"}
 ARTIFACTS = {"code", "experiment", "analysis", "document", "visual", "system", "unknown"}
 SOURCES = {"live", "shadow", "anchor"}
 RISK = {"low", "medium", "high", "critical"}
 PRIVACY = {"public", "internal", "confidential", "restricted"}
 MUTABILITY = {"read-only", "workspace-write", "external-write", "hardware-write", "destructive"}
+REASONING_DEMAND = {"low", "medium", "high", "extreme"}
+DECOMPOSABILITY = {"low", "medium", "high"}
+DEPENDENCY_STRUCTURE = {"independent", "mixed", "sequential"}
+TOOL_INTENSITY = {"low", "medium", "high"}
+REASONING_EFFORTS = {"none", "low", "medium", "high", "xhigh", "max", "ultra"}
 
 OPERATION_MAP = {
     "search": "discover",
@@ -88,6 +93,7 @@ def normalize_task(task: dict[str, Any]) -> dict[str, Any]:
     primary_artifact = _choice(task.get("primary_artifact") or task.get("artifact"), ARTIFACTS, "unknown")
     if primary_artifact == "unknown":
         primary_artifact = {
+            "orchestrate": "system",
             "discover": "analysis",
             "design": "analysis",
             "implement": "code",
@@ -96,6 +102,17 @@ def normalize_task(task: dict[str, Any]) -> dict[str, Any]:
             "communicate": "document",
             "operate": "system",
         }.get(operation, "unknown")
+    exact_effort = str(task.get("reasoning_effort") or "").strip().lower() or None
+    min_effort = str(task.get("min_reasoning_effort") or "").strip().lower() or None
+    max_effort = str(task.get("max_reasoning_effort") or "").strip().lower() or None
+    for label, value in (("reasoning_effort", exact_effort), ("min_reasoning_effort", min_effort), ("max_reasoning_effort", max_effort)):
+        if value is not None and value not in REASONING_EFFORTS:
+            raise ValueError(f"unsupported {label}: {value}")
+    family_allowlist = task.get("model_family_allowlist", [])
+    if isinstance(family_allowlist, str):
+        family_allowlist = [family_allowlist]
+    if not isinstance(family_allowlist, (list, tuple, set)):
+        raise ValueError("model_family_allowlist must be a string or array")
     return {
         **task,
         "objective": str(task.get("objective") or task.get("description") or "").strip(),
@@ -105,6 +122,15 @@ def normalize_task(task: dict[str, Any]) -> dict[str, Any]:
         "risk": _choice(task.get("risk"), RISK, "low"),
         "privacy": _choice(task.get("privacy"), PRIVACY, "internal"),
         "mutability": _choice(task.get("mutability"), MUTABILITY, "read-only"),
+        "reasoning_demand": _choice(task.get("reasoning_demand") or task.get("difficulty"), REASONING_DEMAND, "medium"),
+        "decomposability": _choice(task.get("decomposability"), DECOMPOSABILITY, "low"),
+        "dependency_structure": _choice(task.get("dependency_structure"), DEPENDENCY_STRUCTURE, "sequential"),
+        "tool_intensity": _choice(task.get("tool_intensity"), TOOL_INTENSITY, "medium"),
+        "shared_mutable_state": bool(task.get("shared_mutable_state", False)),
+        "reasoning_effort": exact_effort,
+        "min_reasoning_effort": min_effort,
+        "max_reasoning_effort": max_effort,
+        "model_family_allowlist": sorted({str(x) for x in family_allowlist if str(x).strip()}),
         "required_capabilities": sorted({str(x) for x in task.get("required_capabilities", []) if str(x).strip()}),
         "uncertain_fields": sorted({str(x) for x in task.get("uncertain_fields", []) if str(x).strip()}),
     }

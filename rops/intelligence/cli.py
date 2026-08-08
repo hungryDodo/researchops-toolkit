@@ -255,7 +255,7 @@ def main(argv: list[str] | None = None) -> int:
             _emit(benchmarks.validate_all())
         return 0
 
-    store = IntelligenceStore(Path(args.root).resolve())
+    store = IntelligenceStore(Path(args.root).resolve(), read_only=command == "route" and args.no_write)
     if command == "init":
         _emit({"initialized": True, "layout": store.layout.describe(), "database": str(store.path), "authority": "sqlite"})
     elif command == "status":

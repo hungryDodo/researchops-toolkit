@@ -105,7 +105,7 @@ def initialize_transfer(
     return state
 
 
-def warmup_state(store: IntelligenceStore, project_id: str, arm_id: str, operation: str) -> dict[str, Any]:
+def warmup_state(store: IntelligenceStore, project_id: str, arm_id: str, operation: str, *, persist: bool = True) -> dict[str, Any]:
     prior = store.one(
         "SELECT * FROM warmup_states WHERE project_id=? AND arm_id=? AND operation=?",
         (project_id, arm_id, operation),
@@ -130,11 +130,12 @@ def warmup_state(store: IntelligenceStore, project_id: str, arm_id: str, operati
             inherited_n = 0.0
             transfer_status = "rejected-negative-transfer"
             negative_transfer = True
-            with store.transaction() as connection:
-                connection.execute(
-                    "UPDATE warmup_states SET inherited_equivalent_observations=0,transfer_status=?,updated_at=? WHERE project_id=? AND arm_id=? AND operation=?",
-                    (transfer_status, now(), project_id, arm_id, operation),
-                )
+            if persist:
+                with store.transaction() as connection:
+                    connection.execute(
+                        "UPDATE warmup_states SET inherited_equivalent_observations=0,transfer_status=?,updated_at=? WHERE project_id=? AND arm_id=? AND operation=?",
+                        (transfer_status, now(), project_id, arm_id, operation),
+                    )
     target_local = 5
     rootedness = local_n / (local_n + inherited_n) if (local_n + inherited_n) else 0.0
     calibration = min(1.0, (local_n + min(inherited_n, 2.0)) / target_local)

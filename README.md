@@ -111,6 +111,8 @@ The independently installable Model Intelligence module provides:
 
 - canonical live, shadow, and anchor Evaluation Events;
 - finite task-conditioned profile slices rather than a high-dimensional Cartesian product;
+- joint model × reasoning-effort arms, effort-demand fit, hard effort bounds, and executable Codex dispatch fields;
+- task-conditioned single/Lead-worker/centralized-fanout topology instead of fixed company-style model personas;
 - posterior success estimates, verified progress, quality, cost, latency, human correction, and uncertainty;
 - separate endpoint-health, pricing, and declared/observed model-identity signals;
 - project warmup, soft transfer, zero-start comparison, and negative-transfer rejection;
@@ -260,6 +262,7 @@ python3 tests/smoke.py
 python3 tests/intelligence_smoke.py
 python3 tests/behavior_smoke.py
 python3 tests/model_control_plane_smoke.py
+python3 tests/model_effort_routing_smoke.py
 python3 tests/adoption_memory_smoke.py
 python3 -m rops evaluate --out /tmp/researchops-product-benchmark
 python3 -m rops package --out /tmp/researchops-release --preset full --target portable

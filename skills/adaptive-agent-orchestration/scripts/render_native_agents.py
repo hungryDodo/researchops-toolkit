@@ -22,7 +22,7 @@ def q(s: Any) -> str:
 
 
 def model_for(agent: dict[str, Any], models: dict[str, dict[str, Any]], providers: set[str]) -> dict[str, Any] | None:
-    for mid in agent.get("candidate_models", []):
+    for mid in agent.get("candidate_arms") or agent.get("candidate_models") or []:
         m = models.get(mid)
         if m and m.get("enabled", False) and m.get("provider") in providers: return m
     return None
@@ -31,7 +31,7 @@ def model_for(agent: dict[str, Any], models: dict[str, dict[str, Any]], provider
 def render_codex(agent: dict[str, Any], model: dict[str, Any] | None) -> str:
     lines = [f"name = {q(agent['name'])}", f"description = {q(agent.get('description', ''))}"]
     if model:
-        lines += [f"model = {q(model.get('model'))}", f"model_reasoning_effort = {q(agent.get('reasoning_effort', 'medium'))}"]
+        lines += [f"model = {q(model.get('model'))}", f"model_reasoning_effort = {q(model.get('reasoning_effort', 'medium'))}"]
     lines += [f"sandbox_mode = {q('read-only' if agent.get('allowed_mutability') == 'read-only' else 'workspace-write')}", "developer_instructions = '''", str(agent.get("instructions", "")).replace("'''", "\'\'\'"), "'''", ""]
     return "\n".join(lines)
 
@@ -43,7 +43,7 @@ def render_claude(agent: dict[str, Any], model: dict[str, Any] | None) -> str:
 name: {agent['name']}
 description: {agent.get('description','')}
 model: {model_name}
-effort: {agent.get('reasoning_effort','medium')}{isolation}
+effort: {(model or {}).get('reasoning_effort','medium')}{isolation}
 ---
 
 {agent.get('instructions','')}
@@ -71,7 +71,7 @@ def main() -> None:
     args = ap.parse_args(); root = args.root.resolve()
     agents = load(root / ".researchops/governance/agents.json").get("agents", [])
     models_list = load(root / ".researchops/governance/models.json").get("models", [])
-    models = {m.get("id"): m for m in models_list}
+    models = {str(m.get("arm_id") or m.get("id")): m for m in models_list}
     specs = {
         "codex": (root / ".codex/agents", {"codex-native"}, ".toml", render_codex),
         "claude": (root / ".claude/agents", {"claude-native"}, ".md", render_claude),

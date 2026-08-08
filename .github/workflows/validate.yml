@@ -14,6 +14,7 @@ jobs:
       - run: python tests/intelligence_smoke.py
       - run: python tests/behavior_smoke.py
       - run: python tests/model_control_plane_smoke.py
+      - run: python tests/model_effort_routing_smoke.py
       - run: python tests/adoption_memory_smoke.py
       - run: python tests/product_benchmark_smoke.py
       - run: python -m rops evaluate --out /tmp/researchops-product-benchmark

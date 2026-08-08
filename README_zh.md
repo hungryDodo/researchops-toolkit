@@ -110,6 +110,8 @@ Model Intelligence 可以脱离完整 Research 工作流单独安装，包含：
 
 - live、shadow、anchor 三类规范化 Evaluation Event；
 - 有限、可解释的任务条件化 Profile Slice，而不是高维笛卡尔积；
+- 模型 × reasoning effort 联合 execution arm、effort-demand 匹配、硬性 effort 边界和可直接执行的 Codex 分派字段；
+- 依据任务依赖选择 single / Lead-worker / centralized-fanout 拓扑，而不是为全能模型固化公司式岗位；
 - 成功率后验、verified progress、质量、成本、延迟、人工修正与不确定性；
 - 与模型能力分开的 endpoint health、有效期价格和身份观测；
 - 新项目 warmup、soft transfer、zero-start 对照及负迁移自动拒绝；
@@ -254,6 +256,7 @@ python3 tests/smoke.py
 python3 tests/intelligence_smoke.py
 python3 tests/behavior_smoke.py
 python3 tests/model_control_plane_smoke.py
+python3 tests/model_effort_routing_smoke.py
 python3 tests/adoption_memory_smoke.py
 python3 -m rops evaluate --out /tmp/researchops-product-benchmark
 python3 -m rops package --out /tmp/researchops-release --preset full --target portable

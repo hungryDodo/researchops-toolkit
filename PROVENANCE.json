@@ -198,6 +198,24 @@
       "relationship": "research reference for canary-based and longitudinal detection of observable behavior drift without claiming access to hidden provider changes",
       "vendored": false,
       "url": "https://arxiv.org/search/?query=black-box+LLM+modification+detection&searchtype=all"
+    },
+    {
+      "name": "Towards a Science of Scaling Agent Systems",
+      "relationship": "controlled research reference for task-conditioned single/centralized/decentralized agent topology, coordination overhead, and error amplification; no code or prompts vendored",
+      "vendored": false,
+      "url": "https://arxiv.org/abs/2512.08296"
+    },
+    {
+      "name": "RADAR: Reasoning-Ability and Difficulty-Aware Routing for Reasoning LLMs",
+      "relationship": "research reference for joint model-budget routing by query difficulty; no code or data vendored",
+      "vendored": false,
+      "url": "https://openreview.net/forum?id=CB6Ds5T4ae"
+    },
+    {
+      "name": "OpenAI GPT-5.6 and Multi-agent documentation",
+      "relationship": "current platform reference for Sol/Terra/Luna positioning, reasoning effort, representative-task evaluation, and descendant agent trees",
+      "vendored": false,
+      "url": "https://developers.openai.com/api/docs/guides/latest-model"
     }
   ],
   "components": {
@@ -305,6 +323,8 @@
       "conceptual_influences": [
         "native subagent isolation and bounded handoff",
         "OpenJudge-style independent evaluation",
+        "joint model-budget routing",
+        "task-conditioned coordination topology instead of fixed occupational personas",
         "cost/quality/task-specific routing"
       ]
     },

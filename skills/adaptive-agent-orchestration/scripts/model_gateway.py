@@ -73,19 +73,22 @@ def main() -> None:
     if args.system_file: messages.append({"role": "system", "content": args.system_file.read_text(encoding="utf-8")})
     messages.append({"role": "user", "content": prompt})
     payload = {"model": model.get("model"), "messages": messages, "temperature": args.temperature, "max_tokens": args.max_tokens}
+    if model.get("reasoning_effort"):
+        payload["reasoning_effort"] = model["reasoning_effort"]
     metadata = {
         "schema_version": 1,
         "created_at": iso(),
         "model_id": args.model_id,
         "provider": model.get("provider"),
         "model": model.get("model"),
+        "reasoning_effort": model.get("reasoning_effort"),
         "base_url_host": base.split("//", 1)[-1].split("/", 1)[0],
         "prompt_sha256": sha(prompt),
         "prompt_bytes": len(prompt.encode("utf-8")),
         "dry_run": args.dry_run,
     }
     if args.dry_run:
-        result = {**metadata, "request": {"model": payload["model"], "message_count": len(messages), "max_tokens": args.max_tokens}}
+        result = {**metadata, "request": {"model": payload["model"], "reasoning_effort": payload.get("reasoning_effort"), "message_count": len(messages), "max_tokens": args.max_tokens}}
     else:
         env = str(model.get("credential_env", ""))
         key = os.environ.get(env, "") if env else ""

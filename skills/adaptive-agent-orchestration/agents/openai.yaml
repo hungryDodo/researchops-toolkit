@@ -1,6 +1,6 @@
 interface:
   display_name: "Adaptive Agent Orchestration"
-  short_description: "Use when research work can be split into independently verifiable subtasks, routed across models or providers, or when returned worker performance must be evalu"
-  default_prompt: "Use $adaptive-agent-orchestration for this task and write authoritative artifacts under .researchops/state/."
+  short_description: "Route bounded work across model-effort arms with independent acceptance"
+  default_prompt: "Use $adaptive-agent-orchestration to characterize task shape, choose model and reasoning effort, justify the coordination topology, and close every dispatch with independent evidence."
 policy:
   allow_implicit_invocation: true

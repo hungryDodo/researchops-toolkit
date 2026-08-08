@@ -1,10 +1,10 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-06T05:37:22+00:00
+- Completed: 2026-08-08T18:39:06+00:00
 - Package preset: `full`
 - Package target: `portable`
-- Python: 3.13.5
-- Platform: Linux-6.18.35-x86_64-with-glibc2.41
+- Python: 3.14.4
+- Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.43
 - Top-level Skills: 13
 - Internal components: 7
 - Behavior Packs: 8
@@ -35,7 +35,7 @@
 {
   "legacy": {
     "project": {
-      "router_primary": "codex/gpt-5.6-luna",
+      "router_primary": "codex/gpt-5.6-luna@medium",
       "verified_quality": 0.976667,
       "skills_per_framework": 13,
       "semantic_ids_normalized": true,
@@ -88,6 +88,22 @@
     "shared_dossier_projection": true,
     "secret_values_exposed": false
   },
+  "model-effort-routing": {
+    "execution_arms": 9,
+    "same_model_efforts": {
+      "medium_task": "codex/gpt-5.6-sol@medium",
+      "high_task": "codex/gpt-5.6-sol@high",
+      "extreme_task": "codex/gpt-5.6-sol@xhigh",
+      "forced_max": "codex/gpt-5.6-sol@max"
+    },
+    "lead_arm": "codex/gpt-5.6-sol@high",
+    "parallel_topology": "centralized-fanout",
+    "sequential_topology": "single-agent",
+    "codex_native_effort_rendered": true,
+    "installed_skill_compact_route": true,
+    "read_only_route_is_write_free": true,
+    "non_destructive_v2_upgrade": true
+  },
   "adoption-memory": {
     "existing_project_inspected_before_write": true,
     "non_destructive_adoption": true,
@@ -107,26 +123,16 @@
     "memory_provenance": true,
     "memory_context_bundle": true,
     "memory_sync_idempotent": true,
-    "sqlite_v2_to_v3_migration": true,
-    "dashboard_process_cleanup": true
+    "sqlite_v2_to_v3_migration": true
   },
   "product-benchmark": {
     "suite": "researchops-product-benchmark-v1",
     "checks": "19/19",
     "dashboard_http_ready": true,
+    "dashboard_process_cleanup": true,
     "memory_lifecycle": true,
-    "reports_written": true,
-    "dashboard_process_cleanup": true
-  },
-  "package": {
-    "routing_artifact_filtered": true,
-    "target_native_manifest_filtered": true,
-    "full_portable_artifact": true,
-    "package_local_validation": true,
-    "checksums": true,
-    "local_state_excluded": true
-  },
-  "evidence_note": "Each listed smoke command was run successfully against the v2.1 source during this delivery. The consolidated report avoids rerunning the long package smoke twice during final artifact staging."
+    "reports_written": true
+  }
 }
 ```
 

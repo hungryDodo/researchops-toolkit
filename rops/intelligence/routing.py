@@ -17,6 +17,7 @@ from . import mitigations, warmup
 
 RISK = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 MUTABILITY = {"read-only": 0, "workspace-write": 1, "external-write": 2, "hardware-write": 3, "destructive": 4}
+DEFAULT_EFFORT_ORDER = ["none", "low", "medium", "high", "xhigh", "max", "ultra"]
 
 
 def governance_paths(root: Path) -> dict[str, Path]:
@@ -39,6 +40,78 @@ def _provider_allowed(model: dict[str, Any], privacy: str, policy: dict[str, Any
     )
 
 
+def _arm_id(model: dict[str, Any]) -> str:
+    return str(model.get("arm_id") or model.get("id") or "")
+
+
+def _model_family(model: dict[str, Any]) -> str:
+    return str(model.get("model_family") or model.get("model") or _arm_id(model))
+
+
+def _reasoning_effort(model: dict[str, Any]) -> str | None:
+    value = str(model.get("reasoning_effort") or "").strip().lower()
+    return value or None
+
+
+def _effort_order(policy: dict[str, Any]) -> list[str]:
+    configured = policy.get("effort_routing", {}).get("order", DEFAULT_EFFORT_ORDER)
+    order = [str(value).strip().lower() for value in configured if str(value).strip()]
+    return order or list(DEFAULT_EFFORT_ORDER)
+
+
+def _effort_rank(effort: str | None, policy: dict[str, Any]) -> int | None:
+    if effort is None:
+        return None
+    order = _effort_order(policy)
+    try:
+        return order.index(effort)
+    except ValueError:
+        return None
+
+
+def _effort_fit(model: dict[str, Any], task: dict[str, Any], policy: dict[str, Any]) -> float:
+    """Score a model-effort arm against task demand without assuming more is always better."""
+
+    effort = _reasoning_effort(model)
+    rank = _effort_rank(effort, policy)
+    if rank is None:
+        return 0.5
+    settings = policy.get("effort_routing", {})
+    demand = str(task.get("reasoning_demand") or "medium")
+    target_effort = str((settings.get("target_by_reasoning_demand") or {}).get(demand, demand))
+    target = _effort_rank(target_effort, policy)
+    if target is None:
+        return 0.5
+    distance = rank - target
+    per_level = float(settings.get("overprovision_penalty_per_level", 0.10)) if distance > 0 else float(settings.get("underprovision_penalty_per_level", 0.22))
+    return max(0.0, min(1.0, 1.0 - abs(distance) * per_level))
+
+
+def recommend_topology(task: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
+    """Choose a coordination shape from task properties, not organizational personas."""
+
+    configured = policy.get("orchestration", {})
+    if task.get("shared_mutable_state"):
+        return {"topology": "single-agent", "reason": "shared-mutable-state", "max_concurrent_workers": 1}
+    if task.get("dependency_structure") == "sequential":
+        return {"topology": "single-agent", "reason": "sequential-dependencies", "max_concurrent_workers": 1}
+    if task.get("tool_intensity") == "high" and task.get("decomposability") != "high":
+        return {"topology": "single-agent", "reason": "tool-coordination-overhead", "max_concurrent_workers": 1}
+    if task.get("decomposability") == "high" and task.get("dependency_structure") == "independent":
+        return {
+            "topology": "centralized-fanout",
+            "reason": "independent-bounded-workstreams",
+            "max_concurrent_workers": int(configured.get("max_concurrent_workers", 3)),
+        }
+    if task.get("decomposability") == "medium" and task.get("dependency_structure") in {"independent", "mixed"}:
+        return {
+            "topology": "lead-worker",
+            "reason": "partially-decomposable",
+            "max_concurrent_workers": min(2, int(configured.get("max_concurrent_workers", 3))),
+        }
+    return {"topology": "single-agent", "reason": "coordination-not-justified", "max_concurrent_workers": 1}
+
+
 def eligible(model: dict[str, Any], task: dict[str, Any], agent: dict[str, Any] | None, policy: dict[str, Any], endpoint_health: dict[str, Any] | None = None) -> tuple[bool, list[str]]:
     reasons: list[str] = []
     if not model.get("enabled", False):
@@ -55,9 +128,23 @@ def eligible(model: dict[str, Any], task: dict[str, Any], agent: dict[str, Any] 
         reasons.append("missing:" + ",".join(missing))
     if agent and MUTABILITY.get(task["mutability"], 99) > MUTABILITY.get(str(agent.get("allowed_mutability", "read-only")), -1):
         reasons.append("agent-mutability")
-    candidates = set(agent.get("candidate_models", [])) if agent else set()
-    if candidates and model.get("id") not in candidates:
+    candidates = set(agent.get("candidate_arms") or agent.get("candidate_models") or []) if agent else set()
+    if candidates and _arm_id(model) not in candidates:
         reasons.append("not-in-agent-candidates")
+    allowed_families = {str(value) for value in task.get("model_family_allowlist", [])}
+    if allowed_families and _model_family(model) not in allowed_families:
+        reasons.append("model-family")
+    effort = _reasoning_effort(model)
+    exact_effort = task.get("reasoning_effort")
+    min_rank = _effort_rank(task.get("min_reasoning_effort"), policy)
+    max_rank = _effort_rank(task.get("max_reasoning_effort"), policy)
+    effort_rank = _effort_rank(effort, policy)
+    if exact_effort and effort != exact_effort:
+        reasons.append("reasoning-effort")
+    if min_rank is not None and (effort_rank is None or effort_rank < min_rank):
+        reasons.append("reasoning-effort-below-minimum")
+    if max_rank is not None and (effort_rank is None or effort_rank > max_rank):
+        reasons.append("reasoning-effort-above-maximum")
     if endpoint_health and endpoint_health.get("state") == "open-circuit":
         reasons.append("endpoint-open-circuit")
     return not reasons, reasons
@@ -180,6 +267,7 @@ def _score(model: dict[str, Any], task: dict[str, Any], profile: dict[str, Any] 
     correction = _clamp((profile or {}).get("human_correction_mean", 0.0), 0.0)
     disagreement = _clamp((profile or {}).get("verifier_disagreement_mean", 0.0), 0.0)
     operational_risk = 0.0 if health["state"] in {"healthy", "unknown"} else 0.2 if health["state"] == "degraded" else 1.0
+    reasoning_fit = _effort_fit(model, task, policy)
     exploration = 0.0
     exploration_policy = policy.get("exploration", {})
     if exploration_policy.get("enabled", True) and RISK[task["risk"]] <= RISK.get(str(exploration_policy.get("max_risk", "medium")), 1):
@@ -195,12 +283,14 @@ def _score(model: dict[str, Any], task: dict[str, Any], profile: dict[str, Any] 
         "correction_penalty": correction,
         "verifier_disagreement_penalty": disagreement,
         "operational_risk_penalty": operational_risk,
+        "reasoning_fit": reasoning_fit,
         "exploration_bonus": exploration,
     }
     score = (
         float(weights.get("verified_progress", 0.25)) * progress_value
         + float(weights.get("quality", 0.35)) * quality
         + float(weights.get("success", 0.18)) * success
+        + float(weights.get("reasoning_fit", 0.12)) * reasoning_fit
         - float(weights.get("cost", 0.07)) * cost
         - float(weights.get("latency", 0.05)) * latency
         - float(weights.get("correction", 0.04)) * correction
@@ -221,7 +311,7 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
     agent = next((entry for entry in agents if entry.get("name") == agent_name), None) if agent_name else None
     if agent_name and not agent:
         raise ValueError(f"unknown agent: {agent_name}")
-    if not store.query("SELECT 1 FROM profile_slices LIMIT 1"):
+    if write and not store.query("SELECT 1 FROM profile_slices LIMIT 1"):
         rebuild_profiles(store)
     profiles = load_profiles(store)
     total_obs = int(store.scalar(
@@ -239,7 +329,7 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
     rejected: list[dict[str, Any]] = []
     project_id = str(task_raw.get("project_id") or root.name or "default")
     for model in models:
-        arm_id = str(model.get("arm_id") or model.get("id"))
+        arm_id = _arm_id(model)
         endpoint_id = model.get("endpoint_id") or model.get("base_url")
         health = endpoint_health(store, str(endpoint_id) if endpoint_id else None)
         ok, reasons = eligible(model, task, agent, policy, health)
@@ -253,7 +343,7 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
             (project_id, arm_id, task["operation"]),
         )
         if prior_row:
-            warm = warmup.warmup_state(store, project_id, arm_id, task["operation"])
+            warm = warmup.warmup_state(store, project_id, arm_id, task["operation"], persist=write)
         else:
             warm = warmup.initialize_transfer(
                 store,
@@ -286,6 +376,15 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
             "model_id": arm_id,
             "provider": model.get("provider"),
             "model": model.get("model"),
+            "model_family": _model_family(model),
+            "reasoning_effort": _reasoning_effort(model),
+            "reasoning_mode": model.get("reasoning_mode", "standard"),
+            "execution": {
+                "provider": model.get("provider"),
+                "model": model.get("model"),
+                "reasoning_effort": _reasoning_effort(model),
+                "reasoning_mode": model.get("reasoning_mode", "standard"),
+            },
             "endpoint_id": endpoint_id,
             "score": round(score, 6),
             "profile_source": profile_source,
@@ -317,7 +416,13 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
 
     strong_markers = set(policy.get("strong_verification_required_for", []))
     require_verifier = task["risk"] in {"high", "critical"} or task["mutability"] in {"hardware-write", "destructive"} or bool(strong_markers.intersection(set(task.get("tags", []))))
-    verifier = next((item for item in ranked if item["model_id"] != selected["model_id"]), None) if require_verifier else None
+    verifier = None
+    if require_verifier:
+        verifier = next(
+            (item for item in ranked if item["model_id"] != selected["model_id"] and item.get("model_family") != selected.get("model_family")),
+            None,
+        )
+        verifier = verifier or next((item for item in ranked if item["model_id"] != selected["model_id"]), None)
     applicable_mitigations = [
         {
             "mitigation_id": item["mitigation_id"],
@@ -334,14 +439,23 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
         )
     ]
     decision_id = f"route-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}-{uuid.uuid4().hex[:6]}"
+    orchestration = recommend_topology(task, policy)
+    orchestration.update({
+        "lead_required": orchestration["topology"] != "single-agent",
+        "max_delegation_depth": int(policy.get("orchestration", {}).get("max_delegation_depth", 2)),
+        "task_partitioning": "work-unit" if orchestration["topology"] != "single-agent" else "none",
+    })
     visible_reason = [
         f"best available evidence for {task['operation']}",
+        f"model={selected['model_family']}",
+        f"effort={selected['reasoning_effort'] or 'provider-default'}",
         f"profile={selected['profile_source']}",
         f"endpoint={selected['endpoint_health']['state']}",
         f"uncertainty={selected['uncertainty']}",
+        f"topology={orchestration['topology']}",
     ]
     decision = {
-        "schema_version": 2,
+        "schema_version": 3,
         "decision_id": decision_id,
         "created_at": now(),
         "project_id": project_id,
@@ -349,6 +463,7 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
         "agent": agent_name,
         "primary": selected,
         "verifier": verifier,
+        "orchestration": orchestration,
         "verification_policy": {
             "independent_required": require_verifier,
             "acceptance_profile": task.get("acceptance_profile"),
