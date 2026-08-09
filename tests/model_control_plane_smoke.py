@@ -139,6 +139,12 @@ def main() -> None:
         assert codex_toml["model"] == "gpt-5.6-sol"
         assert codex_toml["model_providers"]["deepseek"]["env_key"] == "DEEPSEEK_API_KEY"
         assert codex_toml["model_providers"]["mimo_paygo"]["wire_api"] == "responses"
+        assert "profiles" not in codex_toml
+        deepseek_profile = tomllib.loads((root / "researchops_deepseek.config.toml").read_text(encoding="utf-8"))
+        mimo_profile = tomllib.loads((root / "researchops_mimo_token_plan.config.toml").read_text(encoding="utf-8"))
+        assert deepseek_profile["model_provider"] == "deepseek"
+        assert mimo_profile["web_search"] == "disabled"
+        assert first_codex["providers"][2]["codex_overrides"] == {"web_search": "disabled"}
         assert "experimental_bearer_token" not in codex_text and "sk-" not in codex_text
 
         original_secret_file = model_gateway.SECRET_FILE

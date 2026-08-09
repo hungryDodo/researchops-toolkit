@@ -76,6 +76,8 @@
       "credential_env": "MIMO_API_KEY",
       "codex_native": true,
       "direct_gateway_allowed": false,
+      "codex_profile": "researchops_mimo_token_plan",
+      "codex_overrides": {"web_search": "disabled"},
       "distinct_reasoning_efforts": ["none", "high"],
       "compatibility_note": "Token Plan keys start with tp-. The plan is restricted to approved programming tools, so direct ResearchOps probe/dispatch is disabled; use it through Codex.",
       "official_docs": [

@@ -22,6 +22,7 @@ SECRET_FILE = Path.home() / ".config" / "rops" / "secrets.env"
 CODEX_CONFIG_FILE = Path.home() / ".codex" / "config.toml"
 CODEX_CONFIG_BEGIN = "# >>> ResearchOps managed model providers >>>"
 CODEX_CONFIG_END = "# <<< ResearchOps managed model providers <<<"
+CODEX_PROFILE_MARKER = "# ResearchOps managed Codex provider profile."
 
 CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
     {
@@ -31,6 +32,8 @@ CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
         "env_key": "DEEPSEEK_API_KEY",
         "model": "deepseek-v4-flash",
         "efforts": ["none", "high", "max"],
+        "profile": "researchops_deepseek",
+        "codex_overrides": {"web_search": "disabled"},
     },
     {
         "id": "mimo_paygo",
@@ -39,6 +42,8 @@ CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
         "env_key": "MIMO_API_KEY",
         "model": "mimo-v2.5-pro",
         "efforts": ["none", "high"],
+        "profile": "researchops_mimo_paygo",
+        "codex_overrides": {"web_search": "disabled"},
     },
     {
         "id": "mimo_token_plan",
@@ -47,6 +52,8 @@ CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
         "env_key": "MIMO_API_KEY",
         "model": "mimo-v2.5-pro",
         "efforts": ["none", "high"],
+        "profile": "researchops_mimo_token_plan",
+        "codex_overrides": {"web_search": "disabled"},
     },
     {
         "id": "minimax_cn",
@@ -55,6 +62,8 @@ CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
         "env_key": "MINIMAX_API_KEY",
         "model": "MiniMax-M3",
         "efforts": ["none", "high"],
+        "profile": "researchops_minimax_cn",
+        "codex_overrides": {"web_search": "disabled"},
     },
     {
         "id": "minimax_global",
@@ -63,6 +72,8 @@ CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
         "env_key": "MINIMAX_API_KEY",
         "model": "MiniMax-M3",
         "efforts": ["none", "high"],
+        "profile": "researchops_minimax_global",
+        "codex_overrides": {"web_search": "disabled"},
     },
 )
 
@@ -330,6 +341,34 @@ def _codex_provider_block() -> str:
     return "\n".join(lines)
 
 
+def _codex_profile_text(spec: dict[str, Any]) -> str:
+    lines = [
+        CODEX_PROFILE_MARKER,
+        "# API keys remain environment variables referenced by the provider table in config.toml.",
+        f"model_provider = {json.dumps(spec['id'])}",
+        f"model = {json.dumps(spec['model'])}",
+        'model_reasoning_effort = "high"',
+        'model_reasoning_summary = "none"',
+        "model_supports_reasoning_summaries = true",
+    ]
+    for key, value in spec.get("codex_overrides", {}).items():
+        lines.append(f"{key} = {json.dumps(value)}")
+    return "\n".join(lines) + "\n"
+
+
+def _atomic_text(target: Path, content: str, *, default_mode: int = 0o600) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=target.name + ".", dir=str(target.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.chmod(temporary, (target.stat().st_mode & 0o777) if target.exists() else default_mode)
+        os.replace(temporary, target)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
 def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str, Any]:
     target = (path or CODEX_CONFIG_FILE).expanduser()
     installed = False
@@ -352,18 +391,13 @@ def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str
                 raise ValueError("unmanaged Codex provider table already exists: " + ", ".join(collisions))
             separator = "" if not existing or existing.endswith("\n") else "\n"
             updated = existing + separator + ("\n" if existing else "") + block
-        fd, temporary = tempfile.mkstemp(prefix=target.name + ".", dir=str(target.parent))
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write(updated)
-            if target.exists():
-                os.chmod(temporary, target.stat().st_mode & 0o777)
-            else:
-                os.chmod(temporary, 0o600)
-            os.replace(temporary, target)
-        finally:
-            if os.path.exists(temporary):
-                os.unlink(temporary)
+        profile_targets = [(spec, target.parent / f"{spec['profile']}.config.toml") for spec in CODEX_PROVIDER_SPECS]
+        for _, profile_path in profile_targets:
+            if profile_path.exists() and CODEX_PROFILE_MARKER not in profile_path.read_text(encoding="utf-8"):
+                raise ValueError(f"unmanaged Codex profile file already exists: {profile_path}")
+        _atomic_text(target, updated)
+        for spec, profile_path in profile_targets:
+            _atomic_text(profile_path, _codex_profile_text(spec))
         installed = True
     providers = [
         {
@@ -372,6 +406,9 @@ def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str
             "reasoning_efforts": spec["efforts"],
             "base_url": spec["base_url"],
             "credential_env": spec["env_key"],
+            "codex_profile": spec["profile"],
+            "codex_profile_path": str(target.parent / f"{spec['profile']}.config.toml"),
+            "codex_overrides": spec.get("codex_overrides", {}),
         }
         for spec in CODEX_PROVIDER_SPECS
     ]
@@ -384,9 +421,11 @@ def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str
         "glm_reason": "official GLM API documentation exposes Chat Completions, while Codex custom providers require Responses",
         "secret_values_written": False,
         "launch_examples": [
-            "codex -c model_provider=deepseek -m deepseek-v4-flash -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high",
-            "codex -c model_provider=mimo_paygo -m mimo-v2.5-pro -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high",
-            "codex -c model_provider=minimax_cn -m MiniMax-M3 -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high",
+            "codex -p researchops_deepseek",
+            "codex -p researchops_mimo_paygo",
+            "codex -p researchops_mimo_token_plan",
+            "codex -p researchops_minimax_cn",
+            "codex -p researchops_minimax_global",
         ],
     }
 

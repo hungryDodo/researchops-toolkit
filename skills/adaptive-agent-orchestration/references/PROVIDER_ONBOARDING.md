@@ -18,9 +18,11 @@ Snapshot date: 2026-08-09.
 |---|---|---|---|
 | DeepSeek V4 Flash | Responses, `https://api.deepseek.com` | `none/high/max` | Native; V4 Pro excluded until its Responses support is verified |
 | Z.AI/BigModel GLM-5.2 | Chat Completions, global or China general API | `none/high/max` | Gateway only |
-| MiMo v2.5 Pro | Responses, pay-as-you-go or Token Plan endpoint | `none/high` | Native; Token Plan direct gateway calls disabled |
+| MiMo v2.5 Pro | Responses, pay-as-you-go or Token Plan endpoint | `none/high` | Native; Token Plan direct gateway calls disabled and its Codex profile disables unsupported built-in web search |
 | MiniMax M3 | Responses, China or global endpoint | `none/high` | Native |
 
 DeepSeek maps low/medium to high and xhigh to max. GLM-5.2 maps none/minimal to no thinking, low/medium to high, and xhigh to max. MiMo and MiniMax use any non-none effort as an on/off thinking switch without depth control.
+
+Managed third-party Codex profiles default to `web_search = "disabled"`. Do not advertise provider-native tools that the exact endpoint/plan has not passed in a bounded compatibility probe; treat web-enabled variants as separate, explicitly verified execution configurations.
 
 Use `config/provider-recipes.json` in a source/package checkout for exact endpoints and official-documentation links. A provider may preserve one public model ID while changing hidden behavior, so use deployment epochs and observed drift without claiming an unobservable cause.

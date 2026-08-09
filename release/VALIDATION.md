@@ -1,6 +1,6 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-09T07:38:50+00:00
+- Completed: 2026-08-09T08:02:44+00:00
 - Package preset: `full`
 - Package target: `codex`
 - Python: 3.14.4

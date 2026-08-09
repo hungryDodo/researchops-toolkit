@@ -375,6 +375,16 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
             profile_source = "prior-only"
         price = current_price(store, model)
         score, components = _score(model, task, profile, profile_source, total_obs, policy, health, price)
+        execution = {
+            "provider": model.get("provider"),
+            "model": model.get("model"),
+            "reasoning_effort": _reasoning_effort(model),
+            "reasoning_mode": model.get("reasoning_mode", "standard"),
+        }
+        if model.get("codex_profile"):
+            execution["codex_profile"] = model["codex_profile"]
+        if model.get("codex_overrides"):
+            execution["codex_overrides"] = model["codex_overrides"]
         ranked.append({
             "model_id": arm_id,
             "provider": model.get("provider"),
@@ -382,12 +392,7 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
             "model_family": _model_family(model),
             "reasoning_effort": _reasoning_effort(model),
             "reasoning_mode": model.get("reasoning_mode", "standard"),
-            "execution": {
-                "provider": model.get("provider"),
-                "model": model.get("model"),
-                "reasoning_effort": _reasoning_effort(model),
-                "reasoning_mode": model.get("reasoning_mode", "standard"),
-            },
+            "execution": execution,
             "endpoint_id": endpoint_id,
             "score": round(score, 6),
             "profile_source": profile_source,

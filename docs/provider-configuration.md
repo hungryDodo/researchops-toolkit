@@ -56,21 +56,23 @@ Codex custom providers are user-level configuration. Project `.codex/config.toml
 python3 -m rops models codex-config --install
 ```
 
-The command preserves the current default model/provider and manages only marked provider tables. It writes `env_key` references, never bearer-token values. Inspect the resulting non-secret status with:
+The command preserves the current default model/provider, manages only marked provider tables, and writes separately layered `~/.codex/researchops_*.config.toml` profile files required by current Codex. It writes `env_key` references, never bearer-token values. See the official [Codex profile documentation](https://developers.openai.com/codex/config-advanced#profiles). Inspect the resulting non-secret status with:
 
 ```bash
 python3 -m rops models codex-config
 ```
 
-Start an explicitly selected provider session:
+Start an explicitly selected provider session with the managed profiles:
 
 ```bash
-codex -c model_provider=deepseek -m deepseek-v4-flash -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high
-codex -c model_provider=mimo_paygo -m mimo-v2.5-pro -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high
-codex -c model_provider=mimo_token_plan -m mimo-v2.5-pro -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high
-codex -c model_provider=minimax_cn -m MiniMax-M3 -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high
-codex -c model_provider=minimax_global -m MiniMax-M3 -c model_supports_reasoning_summaries=true -c model_reasoning_summary=none -c model_reasoning_effort=high
+codex -p researchops_deepseek
+codex -p researchops_mimo_paygo
+codex -p researchops_mimo_token_plan
+codex -p researchops_minimax_cn
+codex -p researchops_minimax_global
 ```
+
+Override the profile's default `high` effort when a routed arm requests another canonical mode, for example `codex -p researchops_deepseek -c model_reasoning_effort=max`. Managed third-party profiles default to `web_search = "disabled"`: MiMo Token Plan rejects Codex's built-in declaration before model execution, and the other heterogeneous endpoints should not be assumed to implement the same provider-native tool. Enable it only for a separately validated arm.
 
 Choose exactly the MiMo plan and MiniMax region that issued the key. Do not pool their endpoint observations or costs under one arm.
 
@@ -82,7 +84,7 @@ Choose exactly the MiMo plan and MiniMax region that issued the key. Do not pool
 | Z.AI `glm-5.2` | `https://api.z.ai/api/paas/v4/chat/completions` | `none`, `high`, `max` | No | Official API exposes Chat Completions, while Codex custom providers require Responses. Use the ResearchOps gateway. |
 | BigModel China `glm-5.2` | `https://open.bigmodel.cn/api/paas/v4/chat/completions` | `none`, `high`, `max` | No | Use only with a key issued by the China platform. Keep its endpoint evidence separate from Z.AI global. |
 | Xiaomi `mimo-v2.5-pro` pay-as-you-go | `https://api.xiaomimimo.com/v1/responses` | `none`, `high` | Yes | Pay-as-you-go keys start with `sk-`. Low/medium/high enable identical thinking behavior. |
-| Xiaomi `mimo-v2.5-pro` Token Plan | `https://token-plan-cn.xiaomimimo.com/v1/responses` | `none`, `high` | Yes | Token Plan keys start with `tp-` and are restricted to approved programming tools. Direct ResearchOps probe/dispatch is disabled. |
+| Xiaomi `mimo-v2.5-pro` Token Plan | `https://token-plan-cn.xiaomimimo.com/v1/responses` | `none`, `high` | Yes | Token Plan keys start with `tp-` and are restricted to approved programming tools. Direct ResearchOps probe/dispatch is disabled, and its Codex profile disables the unsupported built-in web-search declaration. |
 | MiniMax `MiniMax-M3` China | `https://api.minimaxi.com/v1/responses` | `none`, `high` | Yes | Non-`none` effort enables Adaptive Thinking but does not tune depth. |
 | MiniMax `MiniMax-M3` global | `https://api.minimax.io/v1/responses` | `none`, `high` | Yes | Use the endpoint matching the platform that issued the key. |
 

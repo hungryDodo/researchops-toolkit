@@ -256,6 +256,7 @@ def main() -> None:
         assert external_none["primary"]["model_id"] == "deepseek/deepseek-v4-flash@none"
         assert external_max["primary"]["model_id"] == "deepseek/deepseek-v4-flash@max"
         assert external_max["primary"]["execution"]["provider"] == "deepseek"
+        assert external_max["primary"]["execution"]["codex_profile"] == "researchops_deepseek"
 
         models_path.write_text(
             json.dumps(
