@@ -28,6 +28,7 @@ const STATUS_ZH = {
   offline: "未启用",
   open: "待处理",
   pending: "等待中",
+  planned: "已规划",
   provisional: "临时证据",
   recommended: "建议采用",
   red: "异常",
