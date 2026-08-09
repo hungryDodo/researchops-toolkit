@@ -1,7 +1,8 @@
 {
   "hooks": {
-    "SessionStart": [{"hooks": [{"name": "researchops-session", "type": "command", "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini", "timeout": 10000, "description": "Load compact ResearchOps behavior context"}]}],
-    "BeforeAgent": [{"hooks": [{"name": "researchops-task-behavior", "type": "command", "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini", "timeout": 10000, "description": "Classify the task and inject relevant behavior packs"}]}],
-    "BeforeTool": [{"matcher": "run_shell_command|write_file|replace|mcp_.*", "hooks": [{"name": "researchops-tool-policy", "type": "command", "command": "python \"${extensionPath}${/}hooks${/}researchops_hook.py\" --framework gemini", "timeout": 10000, "description": "Apply content-bound risk policy before exposed tool use"}]}]
+    "SessionStart": [{"hooks": [{"type": "command", "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto", "commandWindows": "py -3 \"%PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto", "timeout": 10, "additionalContextLimit": 1800}]}],
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto", "commandWindows": "py -3 \"%PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto", "timeout": 10, "additionalContextLimit": 1800}]}],
+    "PreToolUse": [{"matcher": "Bash|apply_patch|Edit|Write|Agent|mcp__.*", "hooks": [{"type": "command", "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto", "commandWindows": "py -3 \"%PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto", "timeout": 10, "additionalContextLimit": 1200}]}],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "python3 \"${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/researchops_hook.py\" --framework auto", "commandWindows": "py -3 \"%PLUGIN_ROOT%\\hooks\\researchops_hook.py\" --framework auto", "timeout": 10, "additionalContextLimit": 1800}]}]
   }
 }

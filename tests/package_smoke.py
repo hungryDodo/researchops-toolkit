@@ -25,6 +25,10 @@ def contains(paths: set[str], suffix: str) -> bool:
 
 
 def main() -> None:
+    source_hooks = json.loads((ROOT / "hooks/hooks.json").read_text(encoding="utf-8"))
+    codex_hooks = json.loads((ROOT / "hooks/codex-hooks.json").read_text(encoding="utf-8"))
+    assert source_hooks == codex_hooks
+
     with tempfile.TemporaryDirectory(prefix="researchops-package-smoke-") as temp:
         out = Path(temp) / "dist"
         routing, routing_sum = package_release(out, skip_smoke=True, preset="routing-core", target="codex")
