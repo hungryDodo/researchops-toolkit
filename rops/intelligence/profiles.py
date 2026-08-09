@@ -41,6 +41,10 @@ def _mean(values: list[float]) -> float:
     return round(sum(values) / len(values), 6) if values else 0.0
 
 
+def _optional_median(values: list[float]) -> float | None:
+    return _median(values) if values else None
+
+
 def _beta_summary(accepted: int, observations: int) -> dict[str, Any]:
     alpha, beta = accepted + 1.0, observations - accepted + 1.0
     mean = alpha / (alpha + beta)
@@ -85,6 +89,11 @@ def _snapshot(rows: list[dict[str, Any]], *, arm_id: str, project_id: str | None
     source_mix: dict[str, int] = defaultdict(int)
     for row in ordered:
         source_mix[row["source"]] += 1
+    usage_rows = [json.loads(row["usage_json"]) for row in ordered]
+    cache_counts = {"hit": 0, "miss": 0, "unknown": 0}
+    for usage in usage_rows:
+        cache_hit = usage.get("cache_hit")
+        cache_counts["hit" if cache_hit is True else "miss" if cache_hit is False else "unknown"] += 1
     lifetime_success = accepted / len(ordered)
     recent_success = sum(int(row["accepted"]) for row in recent) / len(recent) if recent else lifetime_success
     delta = recent_success - lifetime_success
@@ -124,6 +133,18 @@ def _snapshot(rows: list[dict[str, Any]], *, arm_id: str, project_id: str | None
         "tokens": {
             "input_median": _median([float(row["input_tokens"]) for row in ordered]),
             "output_median": _median([float(row["output_tokens"]) for row in ordered]),
+            "input_cached_median": _optional_median(
+                [float(row["input_tokens_cached"]) for row in usage_rows if row.get("input_tokens_cached") is not None]
+            ),
+            "reasoning_median": _optional_median(
+                [float(row["reasoning_tokens"]) for row in usage_rows if row.get("reasoning_tokens") is not None]
+            ),
+        },
+        "cache": cache_counts,
+        "ttft_seconds": {
+            "median": _optional_median(
+                [float(row["ttft_seconds"]) for row in usage_rows if row.get("ttft_seconds") is not None]
+            )
         },
         "recent_window": {
             "observations": len(recent),

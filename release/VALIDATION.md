@@ -1,8 +1,8 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-09T11:36:37+00:00
+- Completed: 2026-08-09T14:42:16+00:00
 - Package preset: `full`
-- Package target: `codex`
+- Package target: `portable`
 - Python: 3.14.4
 - Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.43
 - Top-level Skills: 13
@@ -137,6 +137,8 @@
     "dashboard_quick_start": {
       "served": true,
       "url_has_ephemeral_port": true,
+      "localized_zh_cn": true,
+      "completed_actions_archived": true,
       "adoption_mode": "adopt",
       "phase": "communication",
       "memory_visible": true,

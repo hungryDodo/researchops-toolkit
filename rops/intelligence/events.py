@@ -66,6 +66,14 @@ def _integer(value: Any, default: int = 0) -> int:
         return default
 
 
+def _optional_integer(value: Any) -> int | None:
+    return None if value is None else _integer(value)
+
+
+def _optional_nonnegative(value: Any) -> float | None:
+    return None if value is None else _nonnegative(value)
+
+
 def _choice(value: Any, allowed: set[str], default: str) -> str:
     normalized = str(value or default).strip().lower()
     return normalized if normalized in allowed else default
@@ -153,6 +161,11 @@ class EvaluationEvent:
         task = normalize_task(raw.get("task") if isinstance(raw.get("task"), dict) else {})
         outcome_raw = raw.get("outcome") if isinstance(raw.get("outcome"), dict) else {}
         usage_raw = raw.get("usage") if isinstance(raw.get("usage"), dict) else {}
+        execution_identity = (
+            raw.get("execution_identity")
+            if isinstance(raw.get("execution_identity"), dict)
+            else {}
+        )
         verification = raw.get("verification") if isinstance(raw.get("verification"), dict) else {}
         versions = raw.get("versions") if isinstance(raw.get("versions"), dict) else {}
 
@@ -182,6 +195,7 @@ class EvaluationEvent:
             "route_decision_id": raw.get("route_decision_id"),
             "source": source,
             "execution_arm_id": arm_id,
+            "execution_identity": dict(execution_identity),
             "task": task,
             "outcome": {
                 **outcome_raw,
@@ -196,6 +210,13 @@ class EvaluationEvent:
                 **usage_raw,
                 "input_tokens": _integer(usage_raw.get("input_tokens", raw.get("input_tokens", 0))),
                 "output_tokens": _integer(usage_raw.get("output_tokens", raw.get("output_tokens", 0))),
+                "input_tokens_cached": _optional_integer(usage_raw.get("input_tokens_cached")),
+                "input_tokens_uncached": _optional_integer(usage_raw.get("input_tokens_uncached")),
+                "reasoning_tokens": _optional_integer(usage_raw.get("reasoning_tokens")),
+                "cache_hit": usage_raw.get("cache_hit") if isinstance(usage_raw.get("cache_hit"), bool) else None,
+                "cache_source": usage_raw.get("cache_source"),
+                "ttft_seconds": _optional_nonnegative(usage_raw.get("ttft_seconds")),
+                "measurement_status": str(usage_raw.get("measurement_status") or "partial"),
                 "latency_seconds": _nonnegative(latency),
                 "cost_amount": _nonnegative(cost),
                 "currency": str(usage_raw.get("currency", raw.get("currency", "USD"))).upper(),

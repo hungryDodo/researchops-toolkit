@@ -28,12 +28,14 @@ The routing/evaluation unit is a bounded work unit, not every token or every mod
 - complete execution-arm identity;
 - orientation, primary operation, primary artifact, risk and permissions;
 - accepted state, verified progress, quality and human correction;
-- cost, token use and latency;
+- cost, input/output/reasoning token use, provider cache telemetry, TTFT and latency;
 - verifier evidence and versions;
 - failure observations;
 - selection probability for future off-policy analysis.
 
-Smoke/probe data is not an Evaluation Event and is never competence evidence.
+Smoke/probe data is not an Evaluation Event and is never competence evidence. Missing provider
+telemetry is stored as `null` with `measurement_status=partial`; unknown cache, reasoning-token or
+TTFT values are never invented as zero.
 
 ## One aggregation engine
 
@@ -43,7 +45,7 @@ The engine validates eligible events, ignores superseded observations, creates a
 - verified-progress mean/median;
 - quality;
 - cost and latency distributions;
-- input/output token distributions;
+- input/output/reasoning token distributions, cache hit/miss/unknown counts and TTFT;
 - human correction and verifier disagreement;
 - lifetime and recent windows;
 - source mix and evidence freshness;
@@ -81,6 +83,10 @@ same project + operation
 ```
 
 Current price and endpoint health are queried at decision time; they are not folded permanently into model competence. The current UCB-style policy remains a transparent baseline while the data layer stabilizes. The decision stores its policy version and selection probability.
+
+Cache observations affect only cost and latency analysis. They do not increase accepted rate,
+quality or verified progress, and comparisons should retain hit/miss/unknown strata rather than
+mistaking prompt reuse for a model capability change.
 
 Each recorded decision also writes one normalized row per eligible arm to `route_candidate_scores`. These rows retain rank, selected state, exact arm/effort, task score, profile source, uncertainty, score components, endpoint health, price, and execution fields. `route_decisions.summary_json` remains the self-contained audit snapshot, while the normalized table supports direct SQL analysis across tasks and arms.
 

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from . import models
+from .usage_metrics import normalize_provider_usage
 
 MAX_ACCEPTANCE_FILE_BYTES = 64 * 1024 * 1024
 
@@ -451,6 +452,9 @@ def evaluate(
                 ),
             }
         )
+    usage = normalize_provider_usage(result)
+    worker_complete = result.get("status") == "complete"
+    output_present = bool(result.get("output_text") or result.get("artifacts"))
     event = {
         "schema_version": 2,
         "source": "live",
@@ -460,21 +464,35 @@ def evaluate(
         "route_decision_id": result.get("route_decision_id"),
         "task": raw_task,
         "execution_arm_id": result.get("execution_arm_id") or result.get("model_id"),
+        "execution_identity": {
+            "provider": result.get("provider"),
+            "model": result.get("model"),
+            "reasoning_effort": result.get("reasoning_effort"),
+            "requested_model": result.get("requested_model"),
+            "returned_model": result.get("returned_model"),
+            "endpoint_id": result.get("endpoint_id"),
+        },
         "outcome": {
             "accepted": accepted,
             "disposition": disposition,
+            "worker_status": result.get("status"),
+            "output_present": output_present,
+            "contract_complete": worker_complete and not required_failures,
+            "required_artifacts_complete": not any(
+                check["required"] and not check["passed"] for check in checks
+            ),
             "verified_progress": deterministic_quality,
             "quality": round(quality, 6),
             "human_correction": human_data["correction_fraction"],
             "verifier_disagreement": verifier_data["verifier_disagreement"],
         },
         "usage": {
+            **usage,
             "latency_seconds": float(result.get("latency_seconds", 0.0)),
             "cost_amount": float(result.get("cost", 0.0)),
             "currency": result.get("currency", "USD"),
-            "input_tokens": int((result.get("usage") or {}).get("prompt_tokens", result.get("input_tokens", 0)) or 0),
-            "output_tokens": int((result.get("usage") or {}).get("completion_tokens", result.get("output_tokens", 0)) or 0),
             "price_quote_id": result.get("price_quote_id"),
+            "cost_provenance": "provider_usage" if result.get("cost") is not None else "unknown",
         },
         "verification": {
             "deterministic_checks_count": len(checks),
