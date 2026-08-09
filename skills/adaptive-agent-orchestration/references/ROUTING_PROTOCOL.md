@@ -42,7 +42,7 @@ Agent templates are capability, context, mutability, and acceptance envelopes. T
 - Use a centralized Lead with fan-out/fan-in for independent bounded work units. The Lead owns the session objective, task graph, budgets, routing, and synthesis.
 - Use fresh-context workers for independent evidence lanes or implementation units, then pass artifact references rather than repeatedly summarizing full outputs.
 - Use a separate verifier because context isolation and non-self-approval are evaluation controls, not because the verifier is a permanent occupational persona.
-- Subagents may create descendants when the Harness supports an agent tree, but only when the handoff grants it. The default ResearchOps policy caps active workers at three and delegation depth at two.
+- A Harness may technically support agent trees, but the current ResearchOps executor uses centralized Lead fan-out and caps worker delegation depth at zero. Workers return decomposition requests so the Lead can route and record each child independently.
 
 Current evidence supports task-conditioned topology rather than a universal multi-agent company chart: centralized coordination improves parallelizable work, while multi-agent variants can degrade sequential reasoning. See [Google Research's controlled agent-system study](https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/) and [the paper](https://arxiv.org/abs/2512.08296). OpenAI's [Multi-agent guide](https://developers.openai.com/api/docs/guides/responses-multi-agent) likewise recommends bounded independent workstreams and documents descendant agent trees.
 

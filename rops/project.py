@@ -131,6 +131,14 @@ def _install_behavior_runtime(
         shutil.copytree(available[pack], behavior_target / "packs" / pack)
     shutil.copytree(ROOT / "hooks", hooks_target)
     shutil.copytree(ROOT / "rops", rops_target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    runtime_config = runtime_root / "config"
+    remove_path(runtime_config)
+    runtime_config.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / "config/provider-recipes.json", runtime_config / "provider-recipes.json")
+    shutil.copy2(
+        ROOT / "skills/adaptive-agent-orchestration/assets/models.example.json",
+        runtime_config / "execution-arms.json",
+    )
     shutil.copy2(ROOT / "VERSION", runtime_root / "VERSION")
     write_json(behavior_target / "config.json", {"schema_version": 1, "mode": mode, "updated_at": now()})
     report = {
@@ -298,8 +306,13 @@ def _merge_governance_upgrade(destination_name: str, existing: dict[str, Any], d
 
     if destination_name == "models.json":
         current = existing.setdefault("models", [])
-        known = {str(item.get("arm_id") or item.get("id")) for item in current}
+        by_id = {str(item.get("arm_id") or item.get("id")): item for item in current}
+        known = set(by_id)
         current.extend(item for item in defaults.get("models", []) if str(item.get("arm_id") or item.get("id")) not in known)
+        for default_model in defaults.get("models", []):
+            target = by_id.get(str(default_model.get("arm_id") or default_model.get("id")))
+            if target is not None and "returned_model_aliases" in default_model:
+                target.setdefault("returned_model_aliases", list(default_model["returned_model_aliases"]))
     elif destination_name == "agents.json":
         current = existing.setdefault("agents", [])
         by_name = {str(item.get("name")): item for item in current}
@@ -601,6 +614,8 @@ def project_status(project: str | Path = ".") -> dict[str, Any]:
             "profiles": int(store.scalar("SELECT COUNT(*) n FROM profile_slices", default=0)),
             "route_decisions": int(store.scalar("SELECT COUNT(*) n FROM route_decisions", default=0)),
             "route_candidate_scores": int(store.scalar("SELECT COUNT(*) n FROM route_candidate_scores", default=0)),
+            "worker_dispatches": int(store.scalar("SELECT COUNT(*) n FROM worker_dispatches", default=0)),
+            "active_worker_dispatches": int(store.scalar("SELECT COUNT(*) n FROM worker_dispatches WHERE status='running'", default=0)),
             "memory": memory.status(store),
         })
     return {

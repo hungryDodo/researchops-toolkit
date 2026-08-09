@@ -8,7 +8,7 @@
       "required_capabilities": ["reasoning", "coordination", "tool-use"],
       "allowed_mutability": "read-only",
       "candidate_arms": ["codex/gpt-5.6-sol@high", "codex/gpt-5.6-sol@xhigh", "codex/gpt-5.6-terra@high", "codex/gpt-5.6-sol@max", "deepseek/deepseek-v4-flash@high", "deepseek/deepseek-v4-flash@max", "zai/glm-5.2@high", "zai/glm-5.2@max", "zhipu-bigmodel-cn/glm-5.2@high", "zhipu-bigmodel-cn/glm-5.2@max", "litellm-zai/glm-5.2@high", "litellm-zai/glm-5.2@max", "xiaomi-mimo-paygo/mimo-v2.5-pro@high", "minimax-cn/MiniMax-M3@high", "minimax-global/MiniMax-M3@high"],
-      "instructions": "Own the session objective and split only independent, bounded work units. Route every work unit by task evidence, model, and effort; do not assign permanent department-style identities. Keep sequential work in one context. Require independent acceptance when the contract calls for it. Descendant delegation is allowed only when the handoff explicitly grants it and the configured depth/budget permits it."
+      "instructions": "Own the session objective and split only independent, bounded work units. Route every work unit by task evidence, model, and effort; do not assign permanent department-style identities. Keep sequential work in one context. Require independent acceptance when the contract calls for it. Use centralized fan-out: workers return decomposition requests and the Lead routes every child."
     },
     {
       "name": "bounded_read_worker",
@@ -16,7 +16,7 @@
       "required_capabilities": ["tool-use"],
       "allowed_mutability": "read-only",
       "candidate_arms": ["codex/gpt-5.6-luna@low", "codex/gpt-5.6-luna@medium", "codex/gpt-5.6-terra@medium", "codex/gpt-5.6-terra@high", "codex/gpt-5.6-sol@medium", "codex/gpt-5.6-sol@high", "codex/gpt-5.6-sol@xhigh", "codex/gpt-5.6-sol@max", "deepseek/deepseek-v4-flash@none", "deepseek/deepseek-v4-flash@high", "deepseek/deepseek-v4-flash@max", "zai/glm-5.2@none", "zai/glm-5.2@high", "zai/glm-5.2@max", "zhipu-bigmodel-cn/glm-5.2@none", "zhipu-bigmodel-cn/glm-5.2@high", "zhipu-bigmodel-cn/glm-5.2@max", "litellm-zai/glm-5.2@none", "litellm-zai/glm-5.2@high", "litellm-zai/glm-5.2@max", "xiaomi-mimo-paygo/mimo-v2.5-pro@none", "xiaomi-mimo-paygo/mimo-v2.5-pro@high", "minimax-cn/MiniMax-M3@none", "minimax-cn/MiniMax-M3@high", "minimax-global/MiniMax-M3@none", "minimax-global/MiniMax-M3@high"],
-      "instructions": "Complete only the frozen work unit and return evidence plus unresolved uncertainty. Do not redefine the session goal, claim global completion, or approve your own work. Do not delegate again unless the handoff explicitly permits descendant delegation."
+      "instructions": "Complete only the frozen work unit and return evidence plus unresolved uncertainty. Do not redefine the session goal, claim global completion, approve your own work, or launch descendants; return decomposition requests to the Lead."
     },
     {
       "name": "bounded_write_worker",

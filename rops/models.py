@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -13,13 +14,14 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .common import load_json, now
+from .common import atomic_json, load_json, now
 from .intelligence.drift import record_endpoint_observation, record_identity_observation
 from .intelligence.projections import rebuild_projections
 from .intelligence.store import IntelligenceStore
 from .layout import layout
 
 SECRET_FILE = Path.home() / ".config" / "rops" / "secrets.env"
+PROVIDER_APPROVAL_FILE = Path.home() / ".config" / "rops" / "provider-approvals.json"
 CODEX_CONFIG_FILE = Path.home() / ".codex" / "config.toml"
 CODEX_CONFIG_BEGIN = "# >>> ResearchOps managed model providers >>>"
 CODEX_CONFIG_END = "# <<< ResearchOps managed model providers <<<"
@@ -30,6 +32,17 @@ LITELLM_CONFIG_FILE = Path.home() / ".config" / "rops" / "litellm" / "glm.yaml"
 LITELLM_SERVICE_FILE = Path.home() / ".config" / "systemd" / "user" / "researchops-litellm-glm.service"
 LITELLM_CONFIG_MARKER = "# ResearchOps managed LiteLLM GLM Responses bridge."
 LITELLM_SERVICE_MARKER = "# ResearchOps managed LiteLLM GLM user service."
+
+
+class ProviderHTTPError(RuntimeError):
+    """A provider HTTP rejection with an explicit fallback/health scope."""
+
+    def __init__(self, status: int, detail: str):
+        super().__init__(f"HTTP {status}: {detail}")
+        self.status = status
+        self.failure_scope = (
+            "endpoint" if status in {401, 403, 408, 429} or status >= 500 else "arm"
+        )
 
 CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
     {
@@ -130,6 +143,191 @@ def _models(root: Path) -> list[dict[str, Any]]:
     return (load_json(layout(root).governance / "models.json", {"models": []}) or {}).get("models", [])
 
 
+def _trusted_provider_recipes() -> list[dict[str, Any]]:
+    path = Path(__file__).resolve().parents[1] / "config" / "provider-recipes.json"
+    return (load_json(path, {"recipes": []}) or {}).get("recipes", [])
+
+
+def _trusted_arm_specs() -> dict[str, dict[str, Any]]:
+    runtime_path = Path(__file__).resolve().parents[1] / "config" / "execution-arms.json"
+    source_path = (
+        Path(__file__).resolve().parents[1]
+        / "skills/adaptive-agent-orchestration/assets/models.example.json"
+    )
+    path = runtime_path if runtime_path.exists() else source_path
+    arms = (load_json(path, {"models": []}) or {}).get("models", [])
+    return {
+        str(item.get("arm_id") or item.get("id") or ""): item
+        for item in arms
+        if item.get("arm_id") or item.get("id")
+    }
+
+
+EXECUTION_IDENTITY_FIELDS = (
+    "provider",
+    "model",
+    "model_family",
+    "model_revision",
+    "endpoint_id",
+    "deployment_epoch",
+    "base_url",
+    "api_protocol",
+    "credential_env",
+    "upstream_credential_env",
+    "reasoning_effort",
+    "api_reasoning_effort",
+    "reasoning_mode",
+    "thinking_type",
+    "codex_profile",
+    "codex_overrides",
+    "request_path",
+    "chat_path",
+    "headers",
+    "direct_gateway_allowed",
+    "adapter_revision",
+    "tool_schema_revision",
+    "returned_model_aliases",
+    "trust_zone",
+    "risk_ceiling",
+    "privacy_ceiling",
+    "allowed_operations",
+    "capabilities",
+    "region",
+    "plan",
+)
+
+
+def _canonical_identity(model: dict[str, Any]) -> dict[str, Any]:
+    identity: dict[str, Any] = {}
+    for field in EXECUTION_IDENTITY_FIELDS:
+        value = model.get(field)
+        if field == "base_url":
+            value = str(value or "").rstrip("/")
+        elif field == "api_protocol":
+            value = _protocol(model)
+        elif field == "direct_gateway_allowed":
+            value = bool(model.get(field, True))
+        elif field in {"headers", "codex_overrides"}:
+            value = dict(value or {})
+        elif field in {"allowed_operations", "capabilities", "returned_model_aliases"}:
+            value = sorted(map(str, value or []))
+        elif value is None:
+            value = ""
+        identity[field] = value
+    return identity
+
+
+def validate_execution_arm_identity(model: dict[str, Any]) -> None:
+    arm_id = str(model.get("arm_id") or model.get("id") or "")
+    trusted = _trusted_arm_specs().get(arm_id)
+    if not trusted or _canonical_identity(model) != _canonical_identity(trusted):
+        raise ValueError(f"execution arm {arm_id} does not match its installed immutable identity")
+    suffix = arm_id.rsplit("@", 1)[-1] if "@" in arm_id else ""
+    if suffix != str(model.get("reasoning_effort") or ""):
+        raise ValueError(f"execution arm {arm_id} effort suffix does not match reasoning_effort")
+
+
+def governed_credential_names() -> set[str]:
+    names: set[str] = set()
+    for recipe in _trusted_provider_recipes():
+        for field in ("credential_env", "upstream_credential_env"):
+            if recipe.get(field):
+                names.add(str(recipe[field]))
+    return names
+
+
+def _trusted_recipe_for(model: dict[str, Any]) -> dict[str, Any] | None:
+    provider = str(model.get("provider") or "")
+    model_name = str(model.get("model") or "")
+    base_url = str(model.get("base_url") or "").rstrip("/")
+    protocol = _protocol(model)
+    credential = str(model.get("credential_env") or "")
+    for recipe in _trusted_provider_recipes():
+        allowed_models = {str(recipe.get("model") or ""), *map(str, recipe.get("model_aliases") or [])}
+        if (
+            provider == str(recipe.get("provider") or "")
+            and model_name in allowed_models
+            and base_url == str(recipe.get("base_url") or "").rstrip("/")
+            and protocol == str(recipe.get("api_protocol") or "chat_completions")
+            and credential == str(recipe.get("credential_env") or "")
+            and dict(model.get("headers") or {}) == dict(recipe.get("headers") or {})
+            and str(model.get("request_path") or model.get("chat_path") or "")
+            == str(recipe.get("request_path") or "")
+            and bool(model.get("direct_gateway_allowed", True))
+            == bool(recipe.get("direct_gateway_allowed", True))
+        ):
+            try:
+                validate_execution_arm_identity(model)
+            except ValueError:
+                return None
+            return recipe
+    return None
+
+
+def _provider_fingerprint(model: dict[str, Any]) -> str:
+    fields = {"arm_id": str(model.get("arm_id") or model.get("id") or ""), **_canonical_identity(model)}
+    return hashlib.sha256(json.dumps(fields, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _provider_approvals() -> dict[str, Any]:
+    return load_json(PROVIDER_APPROVAL_FILE, {"schema_version": 2, "projects": {}}) or {
+        "schema_version": 2,
+        "projects": {},
+    }
+
+
+def _project_approval_identity(project_root: Path) -> tuple[str, str]:
+    canonical_root = str(project_root.resolve())
+    project_key = hashlib.sha256(canonical_root.encode()).hexdigest()
+    return project_key, canonical_root
+
+
+def approve_external_arm(model: dict[str, Any], project_root: Path) -> dict[str, Any]:
+    recipe = _trusted_recipe_for(model)
+    if not recipe:
+        raise ValueError(
+            "external arm does not match an installed trusted provider recipe; refusing to approve endpoint or credential transfer"
+        )
+    arm_id = str(model.get("arm_id") or model.get("id") or "")
+    approvals = _provider_approvals()
+    project_key, canonical_root = _project_approval_identity(project_root)
+    approvals["schema_version"] = 2
+    projects = approvals.setdefault("projects", {})
+    project = projects.setdefault(project_key, {"canonical_root": canonical_root, "arms": {}})
+    project["canonical_root"] = canonical_root
+    project.setdefault("arms", {})[arm_id] = {
+        "fingerprint": _provider_fingerprint(model),
+        "recipe_id": recipe.get("id"),
+        "approved_at": now(),
+    }
+    PROVIDER_APPROVAL_FILE.parent.mkdir(parents=True, exist_ok=True)
+    atomic_json(PROVIDER_APPROVAL_FILE, approvals)
+    PROVIDER_APPROVAL_FILE.chmod(0o600)
+    return {
+        "arm_id": arm_id,
+        "recipe_id": recipe.get("id"),
+        "project_bound": True,
+        "values_exposed": False,
+    }
+
+
+def validate_external_arm_approval(model: dict[str, Any], project_root: Path) -> None:
+    if str(model.get("provider") or "") == "codex-native":
+        return
+    recipe = _trusted_recipe_for(model)
+    if not recipe:
+        raise ValueError("external arm does not match an installed trusted provider recipe")
+    arm_id = str(model.get("arm_id") or model.get("id") or "")
+    project_key, canonical_root = _project_approval_identity(project_root)
+    project = (_provider_approvals().get("projects") or {}).get(project_key) or {}
+    approval = (project.get("arms") or {}).get(arm_id) or {}
+    if approval.get("fingerprint") != _provider_fingerprint(model):
+        raise ValueError(
+            f"external arm {arm_id} is not user-approved for project {canonical_root} and this exact execution identity; "
+            f"run `rops models enable --arm-id {arm_id}` from that project"
+        )
+
+
 def _find(root: Path, arm_id: str) -> dict[str, Any]:
     model = next((item for item in _models(root) if str(item.get("arm_id") or item.get("id")) == arm_id), None)
     if not model:
@@ -162,6 +360,37 @@ def sync_registry(store: IntelligenceStore) -> dict[str, Any]:
             )
             updated += 1
     return {"execution_arms": updated}
+
+
+def set_enabled(store: IntelligenceStore, arm_ids: list[str], enabled: bool) -> dict[str, Any]:
+    requested = [str(value).strip() for value in arm_ids if str(value).strip()]
+    if not requested:
+        raise ValueError("at least one --arm-id is required")
+    path = store.layout.governance / "models.json"
+    registry = load_json(path, {"models": []}) or {"models": []}
+    by_id = {_arm_id: item for item in registry.get("models", []) if (_arm_id := str(item.get("arm_id") or item.get("id") or ""))}
+    missing = sorted(set(requested) - set(by_id))
+    if missing:
+        raise ValueError("unknown execution arm: " + ", ".join(missing))
+    changed: list[str] = []
+    approvals: list[dict[str, Any]] = []
+    for arm_id in requested:
+        model = by_id[arm_id]
+        if enabled and str(model.get("provider") or "") != "codex-native":
+            approvals.append(approve_external_arm(model, store.layout.root))
+        if bool(model.get("enabled", False)) != enabled:
+            model["enabled"] = enabled
+            changed.append(arm_id)
+    atomic_json(path, registry)
+    synced = sync_registry(store)
+    return {
+        "enabled": enabled,
+        "requested": requested,
+        "changed": changed,
+        "registry": synced,
+        "provider_approvals": approvals,
+        "competence_updated": False,
+    }
 
 
 def secret_template(root: Path) -> dict[str, Any]:
@@ -275,7 +504,7 @@ def _request(model: dict[str, Any], payload: dict[str, Any], *, timeout: float =
             headers = {key.lower(): value for key, value in response.headers.items()}
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"HTTP {exc.code}: {body[:800]}") from exc
+        raise ProviderHTTPError(exc.code, body[:800]) from exc
     latency = time.monotonic() - started
     data = json.loads(body)
     if not isinstance(data, dict):
@@ -285,6 +514,7 @@ def _request(model: dict[str, Any], payload: dict[str, Any], *, timeout: float =
 
 def probe(store: IntelligenceStore, arm_id: str, *, timeout: float = 60.0) -> dict[str, Any]:
     model = _find(store.layout.root, arm_id)
+    validate_external_arm_approval(model, store.layout.root)
     if not _direct_gateway_allowed(model):
         return {
             "status": "skipped",
@@ -316,12 +546,15 @@ def probe(store: IntelligenceStore, arm_id: str, *, timeout: float = 60.0) -> di
         identity_obs = record_identity_observation(store, arm_id=arm_id, endpoint_id=endpoint, declared_identity=declared, fingerprint=fingerprint)
         return {"status": "healthy", "arm_id": arm_id, "latency_seconds": round(latency, 6), "endpoint_observation": endpoint_obs, "identity_observation": identity_obs, "competence_updated": False}
     except Exception as exc:
-        endpoint_obs = record_endpoint_observation(store, endpoint_id=endpoint, arm_id=arm_id, success=False, latency_seconds=timeout, error_class=type(exc).__name__, metadata={"kind": "probe"})
+        endpoint_obs = None
+        if not isinstance(exc, ProviderHTTPError) or exc.failure_scope == "endpoint":
+            endpoint_obs = record_endpoint_observation(store, endpoint_id=endpoint, arm_id=arm_id, success=False, latency_seconds=timeout, error_class=type(exc).__name__, metadata={"kind": "probe", "http_status": getattr(exc, "status", None)})
         return {"status": "failed", "arm_id": arm_id, "error": str(exc), "endpoint_observation": endpoint_obs, "competence_updated": False}
 
 
 def dispatch(store: IntelligenceStore, arm_id: str, request_data: dict[str, Any], *, timeout: float = 120.0) -> dict[str, Any]:
     model = _find(store.layout.root, arm_id)
+    validate_external_arm_approval(model, store.layout.root)
     if not _direct_gateway_allowed(model):
         raise ValueError("this execution arm is restricted to an approved coding client; direct gateway dispatch is disabled")
     endpoint = str(model.get("endpoint_id") or model.get("base_url") or arm_id)
@@ -331,7 +564,8 @@ def dispatch(store: IntelligenceStore, arm_id: str, request_data: dict[str, Any]
         record_endpoint_observation(store, endpoint_id=endpoint, arm_id=arm_id, success=True, latency_seconds=latency, metadata={"kind": "dispatch", "usage": response.get("usage")})
         return {"dispatch_id": "dispatch-" + uuid.uuid4().hex[:16], "arm_id": arm_id, "model": model.get("model"), "reasoning_effort": model.get("reasoning_effort"), "api_protocol": _protocol(model), "latency_seconds": round(latency, 6), "response": response, "returned_model": response.get("model"), "evaluation_pending": True}
     except Exception as exc:
-        record_endpoint_observation(store, endpoint_id=endpoint, arm_id=arm_id, success=False, latency_seconds=timeout, error_class=type(exc).__name__, metadata={"kind": "dispatch"})
+        if not isinstance(exc, ProviderHTTPError) or exc.failure_scope == "endpoint":
+            record_endpoint_observation(store, endpoint_id=endpoint, arm_id=arm_id, success=False, latency_seconds=timeout, error_class=type(exc).__name__, metadata={"kind": "dispatch", "http_status": getattr(exc, "status", None)})
         raise
 
 
@@ -566,6 +800,8 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor"); doctor.add_argument("--probe", action="store_true")
     probe_parser = sub.add_parser("probe"); probe_parser.add_argument("--arm-id", required=True); probe_parser.add_argument("--timeout", type=float, default=60)
     dispatch_parser = sub.add_parser("dispatch"); dispatch_parser.add_argument("--arm-id", required=True); dispatch_parser.add_argument("--request-json"); dispatch_parser.add_argument("--request-file"); dispatch_parser.add_argument("--timeout", type=float, default=120)
+    enable_parser = sub.add_parser("enable"); enable_parser.add_argument("--arm-id", action="append", required=True)
+    disable_parser = sub.add_parser("disable"); disable_parser.add_argument("--arm-id", action="append", required=True)
     dossier_parser = sub.add_parser("dossier"); dossier_parser.add_argument("--arm-id")
     return parser
 
@@ -607,6 +843,10 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("provide exactly one of --request-json or --request-file")
         request_data = json.loads(args.request_json) if args.request_json else json.loads(Path(args.request_file).read_text(encoding="utf-8"))
         _emit(dispatch(store, args.arm_id, request_data, timeout=args.timeout))
+    elif args.command == "enable":
+        _emit(set_enabled(store, args.arm_id, True))
+    elif args.command == "disable":
+        _emit(set_enabled(store, args.arm_id, False))
     elif args.command == "dossier":
         _emit(dossier(root, args.arm_id))
     return 0

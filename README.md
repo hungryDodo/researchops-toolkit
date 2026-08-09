@@ -119,6 +119,7 @@ The independently installable Model Intelligence module provides:
 - canonical live, shadow, and anchor Evaluation Events;
 - finite task-conditioned profile slices rather than a high-dimensional Cartesian product;
 - joint model × reasoning-effort arms, effort-demand fit, hard effort bounds, and executable Codex dispatch fields;
+- route-driven isolated worker sessions across Codex-native and profiled third-party providers, with bounded eligible-arm fallback and acceptance-event closure;
 - task-conditioned single/Lead-worker/centralized-fanout topology instead of fixed company-style model personas;
 - posterior success estimates, verified progress, quality, cost, latency, human correction, and uncertainty;
 - separate endpoint-health, pricing, and declared/observed model-identity signals;
@@ -271,6 +272,7 @@ python3 tests/intelligence_smoke.py
 python3 tests/behavior_smoke.py
 python3 tests/model_control_plane_smoke.py
 python3 tests/model_effort_routing_smoke.py
+python3 tests/worker_dispatch_smoke.py
 # After installing the pinned LiteLLM proxy dependency:
 python3 tests/litellm_glm_bridge_smoke.py
 python3 tests/adoption_memory_smoke.py

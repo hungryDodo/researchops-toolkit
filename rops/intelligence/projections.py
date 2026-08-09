@@ -117,6 +117,15 @@ def rebuild_projections(store: IntelligenceStore) -> dict[str, Any]:
         """,
         json_columns=("task_json",),
     )
+    recent_dispatches = store.json_rows(
+        """
+        SELECT dispatch_id,parent_dispatch_id,route_decision_id,project_id,task_id,arm_id,
+               backend,status,started_at,finished_at,worker_session_id,artifact_root,error_class,metadata_json
+        FROM worker_dispatches
+        ORDER BY started_at DESC,dispatch_id DESC LIMIT 10
+        """,
+        json_columns=("metadata_json",),
+    )
     warmup = all_warmup_states(store)
     latest_snapshot = store.one(
         "SELECT snapshot_id,project_id,captured_at,adoption_mode,root_digest,assessment_json FROM project_snapshots ORDER BY captured_at DESC LIMIT 1"
@@ -128,6 +137,7 @@ def rebuild_projections(store: IntelligenceStore) -> dict[str, Any]:
         "routing": {
             "recent_decisions": recent_routes,
             "recent_outcomes": recent_outcomes,
+            "recent_dispatches": recent_dispatches,
             "model_summary": dossier_index,
             "warmup": warmup,
             "endpoint_health": endpoint_rows,
@@ -254,4 +264,3 @@ def rebuild_projections(store: IntelligenceStore) -> dict[str, Any]:
         "event_count": event_count,
         "profile_count": len(profiles),
     }
-

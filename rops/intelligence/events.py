@@ -113,6 +113,11 @@ def normalize_task(task: dict[str, Any]) -> dict[str, Any]:
         family_allowlist = [family_allowlist]
     if not isinstance(family_allowlist, (list, tuple, set)):
         raise ValueError("model_family_allowlist must be a string or array")
+    arm_denylist = task.get("execution_arm_denylist", [])
+    if isinstance(arm_denylist, str):
+        arm_denylist = [arm_denylist]
+    if not isinstance(arm_denylist, (list, tuple, set)):
+        raise ValueError("execution_arm_denylist must be a string or array")
     return {
         **task,
         "objective": str(task.get("objective") or task.get("description") or "").strip(),
@@ -131,6 +136,7 @@ def normalize_task(task: dict[str, Any]) -> dict[str, Any]:
         "min_reasoning_effort": min_effort,
         "max_reasoning_effort": max_effort,
         "model_family_allowlist": sorted({str(x) for x in family_allowlist if str(x).strip()}),
+        "execution_arm_denylist": sorted({str(x) for x in arm_denylist if str(x).strip()}),
         "required_capabilities": sorted({str(x) for x in task.get("required_capabilities", []) if str(x).strip()}),
         "uncertain_fields": sorted({str(x) for x in task.get("uncertain_fields", []) if str(x).strip()}),
     }

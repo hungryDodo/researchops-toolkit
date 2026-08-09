@@ -119,6 +119,7 @@ There is not one universal table for everything. Each semantic fact has one auth
 | Fact domain | Authority |
 |---|---|
 | Work-unit evaluation | `evaluation_events` in SQLite |
+| Worker session lifecycle | `worker_dispatches` in SQLite; private raw output under `.researchops/artifacts/dispatches/` |
 | Endpoint observations | `endpoint_observations` |
 | Effective-dated prices | `pricing_rules` |
 | Identity/drift observations | identity and deployment-epoch tables |

@@ -113,6 +113,25 @@ def build_parser() -> argparse.ArgumentParser:
     models.add_argument("args", nargs=argparse.REMAINDER)
     behavior = sub.add_parser("behavior", help="Behavior policy runtime")
     behavior.add_argument("args", nargs=argparse.REMAINDER)
+    route_run = sub.add_parser("route-run", help="Route, launch, verify, and record one bounded worker")
+    route_run.add_argument("--root", default=".")
+    route_task = route_run.add_mutually_exclusive_group(required=True)
+    route_task.add_argument("--task-file")
+    route_task.add_argument("--task-json")
+    route_contract = route_run.add_mutually_exclusive_group(required=True)
+    route_contract.add_argument("--contract-file")
+    route_contract.add_argument("--contract-json")
+    route_run.add_argument("--human-feedback-file")
+    route_run.add_argument("--agent")
+    route_run.add_argument("--backend", choices=["auto", "codex", "gateway"], default="auto")
+    route_run.add_argument("--timeout", type=float, default=900.0)
+    route_run.add_argument("--max-attempts", type=int, default=2)
+    route_run.add_argument("--allow-commands", action="store_true")
+    route_run.add_argument("--codex-bin", default="codex")
+    route_run.add_argument("--persist-session", action="store_true")
+    route_run.add_argument("--random-seed", type=int)
+    route_run.add_argument("--dry-run", action="store_true")
+    route_run.add_argument("--output")
     audit = sub.add_parser("skill-audit", help="Audit one Skill directory")
     audit.add_argument("args", nargs=argparse.REMAINDER)
     return parser
@@ -206,6 +225,32 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "behavior":
         from .behavior import main as behavior_main
         return behavior_main(args.args)
+    elif args.command == "route-run":
+        from .common import atomic_json, load_json
+        from .orchestration import route_and_dispatch
+
+        task = json.loads(args.task_json) if args.task_json else load_json(Path(args.task_file))
+        contract = json.loads(args.contract_json) if args.contract_json else load_json(Path(args.contract_file))
+        human_feedback = load_json(Path(args.human_feedback_file)) if args.human_feedback_file else None
+        result = route_and_dispatch(
+            Path(args.root),
+            task,
+            contract,
+            agent_name=args.agent,
+            backend=args.backend,
+            timeout=args.timeout,
+            max_attempts=args.max_attempts,
+            allow_commands=args.allow_commands,
+            codex_bin=args.codex_bin,
+            persist_session=args.persist_session,
+            human_feedback=human_feedback,
+            random_seed=args.random_seed,
+            dry_run=args.dry_run,
+        )
+        if args.output:
+            atomic_json(Path(args.output), result)
+        emit(result)
+        return 0 if args.dry_run or result.get("status") == "accepted" else 1
     elif args.command == "dashboard":
         return passthrough(ROOT / "components/dashboard/dashboard.py", args.args)
     elif args.command == "ledger":

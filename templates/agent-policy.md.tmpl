@@ -6,6 +6,8 @@ At stage hinges and before consequential actions, run the lightweight capability
 
 Use bounded subagents only for independently verifiable tasks with separate write and resource scopes. Worker self-score never accepts work; record independent verification, corrections, cost, latency, and failure attribution.
 
+When adaptive routing selects an execution arm, consume the result with `adaptive-agent-orchestration/scripts/dispatch_worker.py` or the installed `rops route-run` runtime. Keep the current session as Lead; do not ask the user to restart Codex under a third-party profile. Require a structured handoff and machine-checkable acceptance test before launch. Direct gateways require an input-free self-contained contract with `gateway_self_contained=true`. Automatic workspace writes run in a detached private Git clone and apply only an accepted bounded patch; higher-impact mutability stays behind its specialist approval path.
+
 Preserve frozen metrics, protocols, safety limits, negative results, and claim–evidence links. Prefer minimum sufficient code and existing capabilities. Public outputs use semantic names rather than bare internal IDs.
 
 Use archive-first for stale material. Permanent purge, hardware writes, external-provider data transfer, and worktree removal require the corresponding specialist workflow and explicit operational approval.

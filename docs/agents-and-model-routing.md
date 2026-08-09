@@ -68,7 +68,7 @@ Worker templates describe context, tools, mutability, and acceptance boundaries:
 - `bounded_write_worker`: one isolated implementation unit with deterministic checks;
 - `independent_verifier`: a fresh-context acceptance path that does not inherit the worker's hidden reasoning.
 
-The decomposition axis is the task space. A general model may execute different work units over time. Context-isolated review/Judge work remains separate because independence and non-self-approval are experimental controls.
+The decomposition axis is the task space. A general model may execute different work units over time. Context-isolated review/Judge work remains separate because independence and non-self-approval are experimental controls. This is not a claim that role prompting is never useful; it is a refusal to treat a human company chart as the default decomposition. The [ICML 2025 position paper on LLM-agent scaling](https://openreview.net/forum?id=LEYmr1TsBW) similarly argues that intuitive human-role decomposition can be far from efficient and that the algorithmic structure of the task should drive the split.
 
 Current controlled evidence does not support a universal “more agents” rule. Multi-agent coordination helps parallelizable tasks, while sequential tasks can regress because coordination consumes the same reasoning/tool budget. Therefore the router emits a topology recommendation:
 
@@ -81,7 +81,7 @@ independent acceptance / disputed result → fresh-context verifier
 
 Sources: [Towards a Science of Scaling Agent Systems](https://arxiv.org/abs/2512.08296), [Google Research summary](https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/), and [OpenAI Multi-agent](https://developers.openai.com/api/docs/guides/responses-multi-agent).
 
-OpenAI's Multi-agent API supports descendant trees rather than only one flat fan-out. ResearchOps still defaults to three concurrent workers and depth two because an available mechanism is not evidence that deeper delegation improves a given task. The handoff must explicitly grant descendant spawning.
+OpenAI's Multi-agent API can support descendant trees rather than only one flat fan-out. The current ResearchOps executor deliberately sets delegation depth to zero: it supports centralized Lead fan-out only, and workers must return decomposition requests instead of launching children. This keeps every provider/model/effort choice and acceptance event attached to the authoritative project store.
 
 ## Work-unit contract
 
@@ -89,7 +89,7 @@ Delegation is appropriate when a task can be bounded with:
 
 - objective and frozen acceptance contract;
 - allowed read/write/tool scope;
-- budget and stop conditions;
+- time budget and stop conditions (the runner enforces `max_minutes` across worker attempts, verification, and acceptance; mandatory cleanup and bounded patch integration still run to completion; monetary caps remain Lead/provider governance);
 - required artifacts and verifier;
 - orientation, primary operation, artifact, risk and privacy;
 - an independent acceptance path where risk warrants it.
@@ -117,6 +117,32 @@ python3 .agents/skills/adaptive-agent-orchestration/scripts/agent_registry.py \
 ```
 
 `--compact` returns only the executable primary/verifier arms, orchestration contract, and visible rationale. `--no-write` opens the last checkpointed SQLite snapshot in immutable read-only mode, which is safe inside a read-only Harness sandbox.
+
+## Route-driven worker execution
+
+The Lead should remain on its normal provider. It must not ask the user to restart the top-level session with `codex -p ...`. After freezing `task.json` and a structured `contract.json`, consume the route and execute it in one bounded operation:
+
+```bash
+python3 .agents/skills/adaptive-agent-orchestration/scripts/dispatch_worker.py \
+  --root . \
+  --task-file task.json \
+  --contract-file contract.json \
+  --agent bounded_read_worker \
+  --max-attempts 2
+```
+
+The contract must contain a task ID, objective, mutability, bounded write scope when applicable, delegation policy, and at least one machine-checkable acceptance test. Automatic `workspace-write` is limited to a clean Git snapshot with tracked inputs and non-ignored outputs; ignored ResearchOps state stays Lead-owned. The runner:
+
+1. freezes one canonical task before routing and rejects safety-field conflicts;
+2. launches the selected exact provider/model/effort arm in an isolated `codex exec` session when a native or ResearchOps-managed profile exists; profiled third-party sessions additionally require Linux bubblewrap and see only a private tracked project clone, a dedicated writable output directory, minimal system files, and a sanitized temporary Codex home;
+3. permits a direct gateway only for explicitly input-free, self-contained, read-only text work whose contract sets `gateway_self_contained=true`; artifact/file readers and verifiers always use a tool-capable Codex session;
+4. runs `workspace-write` workers in a detached private Git clone, enforces a 256-path, 16 MiB-per-file, 64 MiB binary-patch ceiling, evaluates that bounded patch, and applies it to a still-clean project only after acceptance;
+5. records private raw artifacts under `.researchops/artifacts/dispatches/` and a durable lifecycle row in `worker_dispatches`;
+6. on local or arm-scoped request failure, excludes the failed arm; on endpoint-wide provider failure, excludes every sibling arm on that endpoint; then creates a linked new route decision before retrying;
+7. starts a separately routed fresh-context verifier when required;
+8. records Evaluation Events and updates competence profiles only from registry-eligible evidence.
+
+Use `--dry-run` to inspect the selected backend and argument vector without launching a worker or writing route state. Real third-party credentials remain in a parent-owned local broker and never appear in the worker command, prompt, summary, database, or process environment; the worker gets a one-dispatch token for the exact approved endpoint/model/effort. Third-party workers receive a positive environment allowlist rather than the Lead's ambient environment. Worker-to-worker descendants and native unaccounted multi-agent spawning are disabled: a worker returns a decomposition request and the authoritative Lead creates every child session.
 
 ## Probe, Anchor, Shadow, Live
 

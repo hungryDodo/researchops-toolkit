@@ -6,7 +6,7 @@
       "skill": "adaptive-agent-orchestration",
       "should_trigger": true,
       "prompt": "Delegate citation extraction to a cheaper approved model and independently validate it.",
-      "expected": "Define a bounded task-space contract, choose a model-effort worker arm and independent verifier, and record outcome."
+      "expected": "Define a bounded task-space contract, choose a model-effort worker arm and independent verifier, launch the selected arm through the managed dispatcher, and record outcome."
     },
     {
       "skill": "adaptive-agent-orchestration",

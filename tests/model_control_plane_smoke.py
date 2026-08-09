@@ -24,9 +24,66 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="researchops-model-plane-") as temp:
         root = Path(temp) / "project"
         bootstrap(root, "Model Control Plane Smoke", upgrade=True)
+        original_provider_approval_file = model_gateway.PROVIDER_APPROVAL_FILE
+        model_gateway.PROVIDER_APPROVAL_FILE = Path(temp) / "provider-approvals.json"
         store = IntelligenceStore(root)
         registry = sync_registry(store)
         assert registry["execution_arms"] >= 1
+        external_arm = "litellm-zai/glm-5.2@none"
+        enabled = model_gateway.set_enabled(store, [external_arm], True)
+        assert enabled["changed"] == [external_arm] and not enabled["competence_updated"]
+        disabled = model_gateway.set_enabled(store, [external_arm], False)
+        assert disabled["changed"] == [external_arm] and not disabled["competence_updated"]
+        endpoint_id = next(
+            item["endpoint_id"]
+            for item in model_gateway._models(root)
+            if item.get("id") == external_arm
+        )
+        original_request = model_gateway._request
+
+        def arm_scoped_failure(*_args, **_kwargs):
+            raise model_gateway.ProviderHTTPError(400, "synthetic invalid effort")
+
+        model_gateway._request = arm_scoped_failure
+        observations_before = int(
+            store.scalar(
+                "SELECT COUNT(*) FROM endpoint_observations WHERE endpoint_id=?",
+                (endpoint_id,),
+                0,
+            )
+        )
+        try:
+            model_gateway.dispatch(store, external_arm, {"input": "test"})
+        except model_gateway.ProviderHTTPError as exc:
+            assert exc.failure_scope == "arm"
+        else:
+            raise AssertionError("synthetic provider HTTP 400 did not fail")
+        assert int(
+            store.scalar(
+                "SELECT COUNT(*) FROM endpoint_observations WHERE endpoint_id=?",
+                (endpoint_id,),
+                0,
+            )
+        ) == observations_before, "arm-scoped HTTP 400 polluted shared endpoint health"
+
+        def endpoint_scoped_failure(*_args, **_kwargs):
+            raise model_gateway.ProviderHTTPError(503, "synthetic outage")
+
+        model_gateway._request = endpoint_scoped_failure
+        try:
+            model_gateway.dispatch(store, external_arm, {"input": "test"})
+        except model_gateway.ProviderHTTPError as exc:
+            assert exc.failure_scope == "endpoint"
+        else:
+            raise AssertionError("synthetic provider HTTP 503 did not fail")
+        assert int(
+            store.scalar(
+                "SELECT COUNT(*) FROM endpoint_observations WHERE endpoint_id=?",
+                (endpoint_id,),
+                0,
+            )
+        ) == observations_before + 1, "endpoint-scoped HTTP 503 was not recorded"
+        model_gateway._request = original_request
         before = int(store.scalar("SELECT COUNT(*) FROM evaluation_events", default=0))
         endpoint = record_endpoint_observation(
             store,
@@ -236,6 +293,7 @@ def main() -> None:
             assert os.stat(bridge_service_path).st_mode & 0o777 == 0o600
         finally:
             model_gateway.SECRET_FILE = original_secret_file
+            model_gateway.PROVIDER_APPROVAL_FILE = original_provider_approval_file
 
         print(
             json.dumps(

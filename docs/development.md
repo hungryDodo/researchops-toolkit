@@ -71,6 +71,8 @@ python3 tests/smoke.py
 python3 tests/intelligence_smoke.py
 python3 tests/behavior_smoke.py
 python3 tests/model_control_plane_smoke.py
+python3 tests/model_effort_routing_smoke.py
+python3 tests/worker_dispatch_smoke.py
 python3 tests/package_smoke.py
 python3 -m rops package --out /tmp/researchops-release --preset full --target portable
 ```

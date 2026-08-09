@@ -267,6 +267,8 @@ def main(argv: list[str] | None = None) -> int:
             "mitigations": int(store.scalar("SELECT COUNT(*) n FROM mitigations", default=0)),
             "route_decisions": int(store.scalar("SELECT COUNT(*) n FROM route_decisions", default=0)),
             "route_candidate_scores": int(store.scalar("SELECT COUNT(*) n FROM route_candidate_scores", default=0)),
+            "worker_dispatches": int(store.scalar("SELECT COUNT(*) n FROM worker_dispatches", default=0)),
+            "active_worker_dispatches": int(store.scalar("SELECT COUNT(*) n FROM worker_dispatches WHERE status='running'", default=0)),
             "warmup": warmup.all_warmup_states(store),
             "memory": memory.status(store),
         })

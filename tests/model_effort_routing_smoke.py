@@ -166,6 +166,13 @@ def main() -> None:
         assert sum("researchops_hook.py" in command for command in pre_tool_commands) == 1
         assert all(merged_hooks[event] for event in ("SessionStart", "UserPromptSubmit", "SubagentStart"))
         installed_registry = root / ".agents/skills/adaptive-agent-orchestration/scripts/agent_registry.py"
+        installed_dispatcher = root / ".agents/skills/adaptive-agent-orchestration/scripts/dispatch_worker.py"
+        installed_evaluator = root / ".agents/skills/adaptive-agent-orchestration/scripts/evaluate_dispatch.py"
+        installed_runtime = root / ".researchops/runtime/rops/orchestration.py"
+        assert installed_dispatcher.is_file() and installed_evaluator.is_file() and installed_runtime.is_file()
+        assert os.access(installed_dispatcher, os.X_OK) and os.access(installed_evaluator, os.X_OK)
+        assert (root / ".researchops/runtime/config/provider-recipes.json").is_file()
+        assert (root / ".researchops/runtime/config/execution-arms.json").is_file()
         clean_env = dict(os.environ)
         clean_env.pop("PYTHONPATH", None)
         installed = subprocess.run(
@@ -307,6 +314,9 @@ def main() -> None:
             "codex_overrides": {"web_search": "disabled"},
         }
 
+        legacy_glm = dict(next(model for model in bridge_registry["models"] if model["id"] == "litellm-zai/glm-5.2@high"))
+        legacy_glm.pop("returned_model_aliases", None)
+        legacy_glm["task_affinity"] = {"discover": 0.123}
         models_path.write_text(
             json.dumps(
                 {
@@ -317,7 +327,8 @@ def main() -> None:
                             "provider": "operator-provider",
                             "model": "custom-model",
                             "enabled": False,
-                        }
+                        },
+                        legacy_glm,
                     ],
                 }
             )
@@ -342,6 +353,9 @@ def main() -> None:
         assert any(model["id"] == "codex/gpt-5.6-sol@high" for model in upgraded_models["models"])
         assert any(model["id"] == "deepseek/deepseek-v4-flash@high" for model in upgraded_models["models"])
         assert any(model["id"] == "litellm-zai/glm-5.2@high" for model in upgraded_models["models"])
+        upgraded_glm = next(model for model in upgraded_models["models"] if model["id"] == "litellm-zai/glm-5.2@high")
+        assert upgraded_glm["returned_model_aliases"] == ["glm-5.2"]
+        assert upgraded_glm["task_affinity"] == {"discover": 0.123}
         upgraded_agents = json.loads(agents_path.read_text(encoding="utf-8"))
         upgraded_lead = next(agent for agent in upgraded_agents["agents"] if agent["name"] == "session_lead")
         assert "deepseek/deepseek-v4-flash@high" in upgraded_lead["candidate_arms"]

@@ -134,6 +134,9 @@ def eligible(model: dict[str, Any], task: dict[str, Any], agent: dict[str, Any] 
     candidates = set(agent.get("candidate_arms") or agent.get("candidate_models") or []) if agent else set()
     if candidates and _arm_id(model) not in candidates:
         reasons.append("not-in-agent-candidates")
+    denied_arms = {str(value) for value in task.get("execution_arm_denylist", [])}
+    if _arm_id(model) in denied_arms:
+        reasons.append("execution-arm-denied")
     allowed_families = {str(value) for value in task.get("model_family_allowlist", [])}
     if allowed_families and _model_family(model) not in allowed_families:
         reasons.append("model-family")
@@ -450,7 +453,7 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
     orchestration = recommend_topology(task, policy)
     orchestration.update({
         "lead_required": orchestration["topology"] != "single-agent",
-        "max_delegation_depth": int(policy.get("orchestration", {}).get("max_delegation_depth", 2)),
+        "max_delegation_depth": int(policy.get("orchestration", {}).get("max_delegation_depth", 0)),
         "task_partitioning": "work-unit" if orchestration["topology"] != "single-agent" else "none",
     })
     visible_reason = [

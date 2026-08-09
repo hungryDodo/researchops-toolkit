@@ -150,7 +150,7 @@ Official references: [Codex configuration reference](https://developers.openai.c
 
 Provider arms ship disabled. After setting the matching credential:
 
-1. Enable only the endpoint/plan and modes actually available in `.researchops/governance/models.json`.
+1. Enable only the endpoint/plan and modes actually available, using one or more exact arm IDs, for example `python3 -m rops models --root PROJECT enable --arm-id litellm-zai/glm-5.2@high`. This validates the arm against the installed execution-arm and provider recipes, records the exact model/effort/security/endpoint/credential identity under that project's canonical root in the user-owned `~/.config/rops/provider-approvals.json`, updates `.researchops/governance/models.json`, and synchronizes SQLite without creating competence evidence. Approval is project-bound: another clone or moved project must be explicitly enabled again, and a cloned project cannot authorize an external transfer merely by committing `enabled: true`.
 2. Run `python3 -m rops models --root PROJECT sync`.
 3. Run `python3 -m rops models --root PROJECT doctor --probe`. A probe updates endpoint and identity telemetry only.
 4. Run bounded Anchor or low-risk Shadow tasks with independent acceptance.
@@ -158,3 +158,7 @@ Provider arms ship disabled. After setting the matching credential:
 6. Compare quality, verified progress, correction, disagreement, cost, latency, and endpoint health before widening its risk ceiling.
 
 Every accepted route writes one row per eligible candidate to `route_candidate_scores`, linked to the route decision. Model, endpoint/plan, and behaviorally meaningful reasoning mode therefore converge into the same task-specific scoring system without collapsing evidence across arms.
+
+Once an arm is enabled and calibrated, `adaptive-agent-orchestration/scripts/dispatch_worker.py` consumes the selected `codex_profile` automatically. Running `codex -p researchops_glm` by hand remains a connectivity/debugging entry point; it is not the normal Lead workflow. Direct text gateways accept only contracts that explicitly set `gateway_self_contained=true` and contain no file inputs, and never act as artifact verifiers. Infrastructure failures produce endpoint/lifecycle evidence with `registry_eligible=false`, then trigger a new constrained route decision if another eligible arm exists.
+
+Automatic profiled third-party Codex sessions fail closed unless `bwrap` is installed. They execute against a clean private Git clone inside an OS read-allowlist sandbox with a sanitized temporary `CODEX_HOME`; the user's home directory, SSH material, other projects, ignored state, Codex sessions, ResearchOps secret file, frozen contract, and evaluator evidence are not mounted writable. The real provider credential remains in a parent-owned local broker; the sandbox receives only a random one-dispatch bearer token pinned to that arm's approved upstream and request path. Native Codex arms do not require this third-party profile wrapper.

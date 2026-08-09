@@ -1,6 +1,6 @@
 interface:
   display_name: "Adaptive Agent Orchestration"
   short_description: "Route bounded work across model-effort arms with independent acceptance"
-  default_prompt: "Use $adaptive-agent-orchestration to characterize task shape, choose model and reasoning effort, justify the coordination topology, and close every dispatch with independent evidence."
+  default_prompt: "Use $adaptive-agent-orchestration to characterize task shape, choose model and reasoning effort, freeze a bounded handoff, execute the selected arm with dispatch_worker.py, and close every dispatch with independent evidence."
 policy:
   allow_implicit_invocation: true

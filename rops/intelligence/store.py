@@ -8,7 +8,7 @@ from typing import Any, Iterator
 
 from ..layout import ProjectLayout, layout
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 SCHEMA = r"""
 PRAGMA foreign_keys = ON;
@@ -120,6 +120,26 @@ CREATE INDEX IF NOT EXISTS idx_route_candidate_arm_time
     ON route_candidate_scores(arm_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_route_candidate_decision_rank
     ON route_candidate_scores(decision_id, rank);
+CREATE TABLE IF NOT EXISTS worker_dispatches (
+    dispatch_id TEXT PRIMARY KEY,
+    parent_dispatch_id TEXT,
+    route_decision_id TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    arm_id TEXT NOT NULL,
+    backend TEXT NOT NULL CHECK(backend IN ('codex','gateway')),
+    status TEXT NOT NULL CHECK(status IN ('running','completed','failed','timed_out','rejected')),
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    worker_session_id TEXT,
+    artifact_root TEXT NOT NULL,
+    error_class TEXT,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    FOREIGN KEY(route_decision_id) REFERENCES route_decisions(decision_id),
+    FOREIGN KEY(parent_dispatch_id) REFERENCES worker_dispatches(dispatch_id)
+);
+CREATE INDEX IF NOT EXISTS idx_worker_dispatch_route ON worker_dispatches(route_decision_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_worker_dispatch_task ON worker_dispatches(project_id, task_id, started_at);
 CREATE TABLE IF NOT EXISTS endpoint_observations (
     observation_id TEXT PRIMARY KEY,
     observed_at TEXT NOT NULL,

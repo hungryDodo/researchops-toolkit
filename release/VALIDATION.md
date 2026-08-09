@@ -1,6 +1,6 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-09T08:48:25+00:00
+- Completed: 2026-08-09T11:36:37+00:00
 - Package preset: `full`
 - Package target: `codex`
 - Python: 3.14.4
@@ -124,6 +124,10 @@
       "litellm-zai/glm-5.2@none",
       "litellm-zai/glm-5.2@max"
     ]
+  },
+  "worker-dispatch": {
+    "status": "ok",
+    "events": 25
   },
   "adoption-memory": {
     "existing_project_inspected_before_write": true,

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task_id": "bounded-work-unit-01",
+  "objective": "Complete one independently verifiable work unit.",
+  "inputs": [
+    "docs/input.md"
+  ],
+  "constraints": [
+    "Do not expand scope",
+    "Do not infer missing evidence"
+  ],
+  "write_scope": [],
+  "delegation": {
+    "may_spawn_descendants": false,
+    "remaining_depth": 0
+  },
+  "minimum_verified_quality": 0.8,
+  "requires_independent_verifier": false,
+  "acceptance_tests": [
+    {
+      "name": "worker completed",
+      "type": "json_path_equals",
+      "source": "result",
+      "json_path": "status",
+      "expected": "complete",
+      "required": true,
+      "weight": 1.0
+    }
+  ]
+}

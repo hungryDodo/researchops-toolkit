@@ -25,7 +25,7 @@
   },
   "orchestration": {
     "max_concurrent_workers": 3,
-    "max_delegation_depth": 2,
+    "max_delegation_depth": 0,
     "default_topology": "single-agent",
     "parallel_topology": "centralized-fanout"
   },

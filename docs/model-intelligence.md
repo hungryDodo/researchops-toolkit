@@ -86,6 +86,8 @@ Each recorded decision also writes one normalized row per eligible arm to `route
 
 Read-only recommendations use an immutable, checkpointed SQLite snapshot and skip profile rebuilds, registry sync, warmup persistence, and route-decision writes. This makes `recommend --no-write --compact` suitable for an installed Codex skill running under a read-only sandbox; normal recorded routes continue to use transactional WAL mode.
 
+`worker_dispatches` records running/completed/failed/timed-out/rejected execution lifecycle separately from competence. A provider, harness, verifier, integration, or environment failure remains visible there, while its Evaluation Event is marked `registry_eligible=false`; only confirmed remote attempts update endpoint health. Raw Codex JSONL, final worker messages, and isolated patches are private local artifacts, not database payloads or routing-profile input.
+
 ## Execution-arm identity
 
 A model name is not sufficient. An execution arm can include:
