@@ -265,6 +265,10 @@ def _stage_package(package_root: Path, preset: ResolvedPreset, target: str) -> N
     _copy(ROOT / "docs", package_root / "docs")
     _copy(ROOT / "templates", package_root / "templates")
     _copy(ROOT / "hooks", package_root / "hooks")
+    if target == "codex":
+        shutil.copy2(ROOT / "hooks/codex-hooks.json", package_root / "hooks/hooks.json")
+    elif target == "portable":
+        shutil.copy2(ROOT / "hooks/portable-hooks.json", package_root / "hooks/hooks.json")
     _copy(ROOT / "release/VALIDATION.md", package_root / "release/VALIDATION.md")
     _copy(ROOT / "release/product-benchmark.json", package_root / "release/product-benchmark.json")
     _copy(ROOT / "release/product-benchmark.md", package_root / "release/product-benchmark.md")

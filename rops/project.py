@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from . import ROOT, VERSION
-from .common import now, remove_path, run, write_json
+from .common import atomic_json, now, remove_path, run, write_json
 from .layout import layout, migrate_legacy_layout
 from .intake import assess as assess_project, write_assessment
 from .presets import default_name, list_presets, load_manifest, resolve
@@ -37,7 +37,74 @@ def _destination(framework: str, scope: str, project: Path) -> Path:
     return Path(os.path.expanduser(raw)) if scope == "user" else project / raw
 
 
-def _install_behavior_runtime(project_path: Path, selected_packs: tuple[str, ...] | list[str], mode: str) -> dict[str, Any]:
+def _codex_project_hook_group(event: str, script: Path) -> dict[str, Any]:
+    unix_script = str(script)
+    windows_script = str(script).replace("/", "\\")
+    hook: dict[str, Any] = {
+        "hooks": [{
+            "type": "command",
+            "command": f'python3 "{unix_script}" --framework codex',
+            "commandWindows": f'py -3 "{windows_script}" --framework codex',
+            "timeout": 10,
+            "additionalContextLimit": 1200 if event == "PreToolUse" else 1800,
+        }]
+    }
+    if event == "PreToolUse":
+        hook["matcher"] = "Bash|apply_patch|Edit|Write|Agent|mcp__.*"
+    return hook
+
+
+def _is_researchops_hook_group(group: Any) -> bool:
+    if not isinstance(group, dict):
+        return False
+    return any(
+        isinstance(item, dict) and "researchops_hook.py" in str(item.get("command", ""))
+        for item in group.get("hooks", [])
+    )
+
+
+def _install_codex_project_hooks(project_path: Path, script: Path) -> dict[str, Any]:
+    """Merge project-local Codex hooks without replacing operator hooks."""
+
+    target = project_path / ".codex" / "hooks.json"
+    existed = target.exists()
+    if existed:
+        try:
+            payload = json.loads(target.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"cannot merge invalid Codex hooks file: {target}: {exc}") from exc
+        if not isinstance(payload, dict) or not isinstance(payload.get("hooks", {}), dict):
+            raise ValueError(f"Codex hooks file must contain an object-valued 'hooks': {target}")
+    else:
+        payload = {"hooks": {}}
+
+    events = ("SessionStart", "UserPromptSubmit", "PreToolUse", "SubagentStart")
+    hooks = payload.setdefault("hooks", {})
+    preserved = 0
+    for event in events:
+        groups = hooks.get(event, [])
+        if not isinstance(groups, list):
+            raise ValueError(f"Codex hooks event must be an array: {target}: {event}")
+        retained = [group for group in groups if not _is_researchops_hook_group(group)]
+        preserved += len(retained)
+        hooks[event] = [*retained, _codex_project_hook_group(event, script)]
+    atomic_json(target, payload)
+    return {
+        "path": str(target),
+        "events": list(events),
+        "merged_existing": existed,
+        "preserved_groups": preserved,
+        "requires_trust": True,
+    }
+
+
+def _install_behavior_runtime(
+    project_path: Path,
+    selected_packs: tuple[str, ...] | list[str],
+    mode: str,
+    *,
+    codex_hooks: bool = False,
+) -> dict[str, Any]:
     if mode not in {"off", "observe", "guide", "enforce"}:
         raise ValueError(f"invalid behavior mode: {mode}")
     runtime_root = layout(project_path).ensure().runtime
@@ -66,13 +133,23 @@ def _install_behavior_runtime(project_path: Path, selected_packs: tuple[str, ...
     shutil.copytree(ROOT / "rops", rops_target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     shutil.copy2(ROOT / "VERSION", runtime_root / "VERSION")
     write_json(behavior_target / "config.json", {"schema_version": 1, "mode": mode, "updated_at": now()})
-    return {
+    report = {
         "root": str(runtime_root),
         "mode": mode,
         "packs": sorted(set(selected_packs)),
-        "hook_manifests": [str(hooks_target / "claude-codex-hooks.json"), str(hooks_target / "hooks.json")],
+        "hook_manifests": [
+            str(hooks_target / "claude-codex-hooks.json"),
+            str(hooks_target / "hooks.json"),
+            str(hooks_target / "codex-hooks.json"),
+            str(hooks_target / "portable-hooks.json"),
+        ],
         "replaceable": True,
     }
+    if codex_hooks:
+        report["codex_project_hooks"] = _install_codex_project_hooks(
+            project_path, hooks_target / "researchops_hook.py"
+        )
+    return report
 
 
 def install(
@@ -150,7 +227,12 @@ def install(
     if install_behavior:
         if scope != "project":
             raise ValueError("behavior runtime installation requires project scope; native plugins carry it for user scope")
-        report["behavior_runtime"] = _install_behavior_runtime(project_path, resolved.behavior_packs, behavior_mode)
+        report["behavior_runtime"] = _install_behavior_runtime(
+            project_path,
+            resolved.behavior_packs,
+            behavior_mode,
+            codex_hooks="codex" in frameworks,
+        )
     return report
 
 

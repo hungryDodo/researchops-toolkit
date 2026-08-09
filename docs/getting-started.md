@@ -71,6 +71,11 @@ Behavior modes:
 
 The platform sandbox and OS permissions remain the final authority.
 
+For a Codex project install, the Behavior installer merges its four handlers into
+`.codex/hooks.json` and preserves unrelated existing hook groups. Codex will ask the user to trust
+new or changed project hooks; that trust step is intentionally not bypassed by ResearchOps. Native
+Codex plugin artifacts instead ship the current conventional `hooks/hooks.json` entry point.
+
 ## Inspect installation
 
 ```bash

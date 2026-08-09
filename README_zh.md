@@ -39,6 +39,9 @@ python3 -m rops doctor --target codex --project /path/to/project
 python3 -m rops up --root /path/to/project --open
 ```
 
+在 Codex 中，项目级安装会保留 `.codex/hooks.json` 里已有的 Hook 组，并合并所选的 Behavior
+处理器。Codex 对新增或变更 Hook 的正常人工信任确认不会被 ResearchOps 绕过。
+
 用户项目根目录只增加一个隐藏目录：
 
 ```text

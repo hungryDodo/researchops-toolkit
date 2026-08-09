@@ -1,8 +1,8 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-08T18:39:06+00:00
-- Package preset: `full`
-- Package target: `portable`
+- Completed: 2026-08-09T04:05:47+00:00
+- Package preset: `research-routed`
+- Package target: `codex`
 - Python: 3.14.4
 - Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.43
 - Top-level Skills: 13
@@ -101,11 +101,13 @@
     "sequential_topology": "single-agent",
     "codex_native_effort_rendered": true,
     "installed_skill_compact_route": true,
+    "codex_project_hooks_merged": true,
     "read_only_route_is_write_free": true,
     "non_destructive_v2_upgrade": true
   },
   "adoption-memory": {
     "existing_project_inspected_before_write": true,
+    "new_mode_refuses_existing_project": true,
     "non_destructive_adoption": true,
     "single_hidden_root": true,
     "dashboard_quick_start": {

@@ -232,6 +232,53 @@ def markdown_links(root: Path = ROOT) -> dict[str, Any]:
     return {"checked": len(list(root.rglob("*.md"))), "errors": errors}
 
 
+def validate_native_manifests(root: Path = ROOT) -> dict[str, Any]:
+    """Check the current Codex plugin ingestion boundary and hook convention."""
+
+    errors: list[str] = []
+    manifest_path = root / ".codex-plugin" / "plugin.json"
+    checked = False
+    if manifest_path.exists():
+        checked = True
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f".codex-plugin/plugin.json: invalid JSON: {exc}")
+            manifest = {}
+        if not isinstance(manifest, dict):
+            errors.append(".codex-plugin/plugin.json: root must be an object")
+            manifest = {}
+        for field in ("name", "version", "description", "skills"):
+            if not isinstance(manifest.get(field), str) or not manifest[field].strip():
+                errors.append(f".codex-plugin/plugin.json: missing non-empty {field}")
+        author = manifest.get("author")
+        if not isinstance(author, dict) or not isinstance(author.get("name"), str) or not author["name"].strip():
+            errors.append(".codex-plugin/plugin.json: author.name is required")
+        if "hooks" in manifest:
+            errors.append(".codex-plugin/plugin.json: hooks is not accepted; use hooks/hooks.json")
+        interface = manifest.get("interface")
+        for field in ("displayName", "shortDescription", "longDescription", "developerName", "category"):
+            if not isinstance(interface, dict) or not isinstance(interface.get(field), str) or not interface[field].strip():
+                errors.append(f".codex-plugin/plugin.json: interface.{field} is required")
+
+        hook_path = root / "hooks" / "codex-hooks.json"
+        if not hook_path.exists():
+            hook_path = root / "hooks" / "hooks.json"
+        try:
+            hook_payload = json.loads(hook_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f"hooks/hooks.json: invalid or missing: {exc}")
+            hook_payload = {}
+        hook_events = hook_payload.get("hooks") if isinstance(hook_payload, dict) else None
+        if not isinstance(hook_events, dict):
+            errors.append("hooks/hooks.json: root hooks must be an object")
+        else:
+            for event in ("SessionStart", "UserPromptSubmit", "PreToolUse", "SubagentStart"):
+                if not isinstance(hook_events.get(event), list) or not hook_events[event]:
+                    errors.append(f"hooks/hooks.json: missing {event} handler")
+    return {"codex_manifest_checked": checked, "errors": errors}
+
+
 def validate_all(root: Path = ROOT, write_manifest: bool = False) -> dict[str, Any]:
     catalog = generate_catalog(root)
     reports = {
@@ -240,6 +287,7 @@ def validate_all(root: Path = ROOT, write_manifest: bool = False) -> dict[str, A
         "context": context_budget(root),
         "provenance": provenance_audit(root, write_manifest=write_manifest),
         "links": markdown_links(root),
+        "native": validate_native_manifests(root),
     }
     if write_manifest:
         reports["manifest"] = verify_manifest(root)

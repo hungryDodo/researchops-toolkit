@@ -112,6 +112,19 @@ def main() -> None:
         assert 'model = "gpt-5.6-sol"' in lead_toml
         assert 'model_reasoning_effort = "high"' in lead_toml
 
+        existing_hooks = root / ".codex/hooks.json"
+        existing_hooks.write_text(
+            json.dumps({
+                "hooks": {
+                    "PreToolUse": [{
+                        "matcher": "Bash",
+                        "hooks": [{"type": "command", "command": "echo existing-hook"}],
+                    }]
+                }
+            }) + "\n",
+            encoding="utf-8",
+        )
+
         install(
             target="codex",
             scope="project",
@@ -121,6 +134,15 @@ def main() -> None:
             with_agents=True,
             with_behavior=True,
         )
+        merged_hooks = json.loads(existing_hooks.read_text(encoding="utf-8"))["hooks"]
+        pre_tool_commands = [
+            item["command"]
+            for group in merged_hooks["PreToolUse"]
+            for item in group.get("hooks", [])
+        ]
+        assert "echo existing-hook" in pre_tool_commands
+        assert sum("researchops_hook.py" in command for command in pre_tool_commands) == 1
+        assert all(merged_hooks[event] for event in ("SessionStart", "UserPromptSubmit", "SubagentStart"))
         installed_registry = root / ".agents/skills/adaptive-agent-orchestration/scripts/agent_registry.py"
         clean_env = dict(os.environ)
         clean_env.pop("PYTHONPATH", None)
@@ -209,6 +231,7 @@ def main() -> None:
                     "sequential_topology": medium["orchestration"]["topology"],
                     "codex_native_effort_rendered": True,
                     "installed_skill_compact_route": True,
+                    "codex_project_hooks_merged": True,
                     "read_only_route_is_write_free": True,
                     "non_destructive_v2_upgrade": True,
                 },

@@ -37,6 +37,7 @@ def main() -> None:
         assert contains(routing_names, "behavior/packs/delegation-quality/pack.json")
         assert not contains(routing_names, "behavior/packs/research-integrity/pack.json")
         assert contains(routing_names, ".codex-plugin/plugin.json")
+        assert contains(routing_names, "hooks/hooks.json")
         assert not contains(routing_names, ".claude-plugin/plugin.json")
         assert contains(routing_names, "PACKAGE.json")
         if (ROOT / "release/product-benchmark.json").exists():
@@ -71,12 +72,16 @@ def main() -> None:
             capture_output=True,
         )
         assert check.returncode == 0, check.stdout + "\n" + check.stderr
+        plugin_manifest = json.loads((roots[0] / ".codex-plugin/plugin.json").read_text(encoding="utf-8"))
+        assert plugin_manifest["author"]["name"]
+        assert "hooks" not in plugin_manifest
 
         print(
             json.dumps(
                 {
                     "routing_artifact_filtered": True,
                     "target_native_manifest_filtered": True,
+                    "codex_conventional_hooks": True,
                     "full_portable_artifact": True,
                     "package_local_validation": True,
                     "checksums": True,

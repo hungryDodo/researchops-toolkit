@@ -195,6 +195,14 @@ def main() -> None:
         assert preview["adoption_mode"] == "adopt"
         assert not (project / ".researchops").exists()
 
+        try:
+            bootstrap(project, title="Existing Project", mode="new")
+        except ValueError as exc:
+            assert "refusing new-project initialization" in str(exc)
+        else:
+            raise AssertionError("new-project mode unexpectedly accepted a non-empty project")
+        assert not (project / ".researchops").exists()
+
         bootstrap(project, title="Existing Project", mode="auto")
         after_names = {path.name for path in project.iterdir()}
         assert after_names - before_names == {".researchops"}
@@ -283,6 +291,7 @@ def main() -> None:
 
         print(json.dumps({
             "existing_project_inspected_before_write": True,
+            "new_mode_refuses_existing_project": True,
             "non_destructive_adoption": True,
             "single_hidden_root": True,
             "dashboard_quick_start": dashboard,

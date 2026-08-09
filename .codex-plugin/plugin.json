@@ -2,6 +2,10 @@
   "name": "researchops-toolkit",
   "version": "2.1.0",
   "description": "Project-scoped research and development workflows with model intelligence, verified routing, lifecycle behavior, and one local state root.",
+  "author": {
+    "name": "ResearchOps Toolkit contributors",
+    "url": "https://github.com/hungryDodo/researchops-toolkit"
+  },
   "homepage": "https://github.com/hungryDodo/researchops-toolkit",
   "repository": "https://github.com/hungryDodo/researchops-toolkit",
   "license": "MIT",
@@ -15,7 +19,6 @@
     "reproducibility"
   ],
   "skills": "./skills/",
-  "hooks": "./hooks/claude-codex-hooks.json",
   "interface": {
     "displayName": "ResearchOps Toolkit",
     "shortDescription": "Verified R&D workflows and adaptive model routing",

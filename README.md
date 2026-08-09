@@ -39,6 +39,10 @@ python3 -m rops doctor --target codex --project /path/to/project
 python3 -m rops up --root /path/to/project --open
 ```
 
+On Codex, project installation preserves existing `.codex/hooks.json` groups while adding the
+selected Behavior handlers. Codex still requires its normal user trust decision for new or changed
+hooks.
+
 The project receives one hidden root:
 
 ```text
