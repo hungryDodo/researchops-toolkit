@@ -24,6 +24,7 @@ const STATUS_ZH = {
   green: "正常",
   healthy: "健康",
   initialized: "已初始化",
+  in_progress: "进行中",
   offline: "未启用",
   open: "待处理",
   pending: "等待中",
@@ -150,7 +151,11 @@ function renderStatus(data) {
 }
 
 function renderActions(data) {
-  const actions = data.human_actions || [];
+  const archivedStatuses = new Set(["complete", "completed", "dismissed"]);
+  const actions = (data.human_actions || []).filter(
+    (entry) => !entry.archived
+      && !archivedStatuses.has(String(entry.status || "open").toLowerCase()),
+  );
   byId("actions-count").textContent = `${actions.length} 项`;
   byId("actions").innerHTML = actions.map((entry) => item(
     label(entry),

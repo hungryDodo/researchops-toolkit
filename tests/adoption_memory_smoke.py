@@ -119,6 +119,7 @@ def dashboard_round_trip(project: Path) -> dict[str, object]:
             page = response.read().decode("utf-8")
         with urllib.request.urlopen(url + "/view.json", timeout=5) as response:
             payload = json.loads(response.read().decode("utf-8"))
+        dashboard_script = (ROOT / "components/dashboard/web/app.js").read_text(encoding="utf-8")
         result.update({
             "served": True,
             "url_has_ephemeral_port": not url.endswith(":0"),
@@ -127,6 +128,11 @@ def dashboard_round_trip(project: Path) -> dict[str, object]:
                 and "下一道验证关口" in page
                 and "结论与证据" in page
                 and "需要人工处理" in page
+            ),
+            "completed_actions_archived": (
+                'new Set(["complete", "completed", "dismissed"])' in dashboard_script
+                and "archivedStatuses.has" in dashboard_script
+                and "!entry.archived" in dashboard_script
             ),
             "adoption_mode": payload.get("onboarding", {}).get("adoption_mode"),
             "phase": payload.get("status", {}).get("phase"),
