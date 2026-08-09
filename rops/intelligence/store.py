@@ -8,7 +8,7 @@ from typing import Any, Iterator
 
 from ..layout import ProjectLayout, layout
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 SCHEMA = r"""
 PRAGMA foreign_keys = ON;
@@ -97,6 +97,29 @@ CREATE TABLE IF NOT EXISTS route_decisions (
     policy_version TEXT NOT NULL,
     summary_json TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS route_candidate_scores (
+    decision_id TEXT NOT NULL,
+    arm_id TEXT NOT NULL,
+    rank INTEGER NOT NULL,
+    selected INTEGER NOT NULL,
+    score REAL NOT NULL,
+    reasoning_effort TEXT,
+    reasoning_mode TEXT NOT NULL,
+    profile_source TEXT NOT NULL,
+    observations REAL NOT NULL DEFAULT 0,
+    uncertainty TEXT NOT NULL,
+    components_json TEXT NOT NULL,
+    endpoint_health_json TEXT NOT NULL,
+    price_json TEXT NOT NULL,
+    execution_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(decision_id, arm_id),
+    FOREIGN KEY(decision_id) REFERENCES route_decisions(decision_id)
+);
+CREATE INDEX IF NOT EXISTS idx_route_candidate_arm_time
+    ON route_candidate_scores(arm_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_route_candidate_decision_rank
+    ON route_candidate_scores(decision_id, rank);
 CREATE TABLE IF NOT EXISTS endpoint_observations (
     observation_id TEXT PRIMARY KEY,
     observed_at TEXT NOT NULL,
@@ -368,8 +391,8 @@ class IntelligenceStore:
     def _migrate(self, connection: sqlite3.Connection) -> None:
         """Apply small, idempotent local migrations without a second authority.
 
-        v2 databases only need additive memory columns. Existing rows are
-        backfilled deterministically, then the FTS projection is rebuilt.
+        Existing databases receive additive tables from ``SCHEMA`` plus the
+        memory-column backfill below. The FTS projection is then rebuilt.
         """
         columns = self._columns(connection, "memory_items")
         additions = {

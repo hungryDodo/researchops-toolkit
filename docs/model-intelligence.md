@@ -82,6 +82,8 @@ same project + operation
 
 Current price and endpoint health are queried at decision time; they are not folded permanently into model competence. The current UCB-style policy remains a transparent baseline while the data layer stabilizes. The decision stores its policy version and selection probability.
 
+Each recorded decision also writes one normalized row per eligible arm to `route_candidate_scores`. These rows retain rank, selected state, exact arm/effort, task score, profile source, uncertainty, score components, endpoint health, price, and execution fields. `route_decisions.summary_json` remains the self-contained audit snapshot, while the normalized table supports direct SQL analysis across tasks and arms.
+
 Read-only recommendations use an immutable, checkpointed SQLite snapshot and skip profile rebuilds, registry sync, warmup persistence, and route-decision writes. This makes `recommend --no-write --compact` suitable for an installed Codex skill running under a read-only sandbox; normal recorded routes continue to use transactional WAL mode.
 
 ## Execution-arm identity

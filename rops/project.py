@@ -302,10 +302,24 @@ def _merge_governance_upgrade(destination_name: str, existing: dict[str, Any], d
         current.extend(item for item in defaults.get("models", []) if str(item.get("arm_id") or item.get("id")) not in known)
     elif destination_name == "agents.json":
         current = existing.setdefault("agents", [])
-        known = {str(item.get("name")) for item in current}
-        current.extend(item for item in defaults.get("agents", []) if str(item.get("name")) not in known)
+        by_name = {str(item.get("name")): item for item in current}
+        for default_agent in defaults.get("agents", []):
+            name = str(default_agent.get("name"))
+            if name not in by_name:
+                current.append(default_agent)
+                continue
+            candidate_key = "candidate_arms" if "candidate_arms" in default_agent else "candidate_models"
+            candidates = by_name[name].setdefault(candidate_key, [])
+            known_candidates = {str(value) for value in candidates}
+            candidates.extend(value for value in default_agent.get(candidate_key, []) if str(value) not in known_candidates)
     else:
         _merge_missing(existing, defaults)
+        if destination_name == "routing-policy.json":
+            current_privacy = existing.setdefault("privacy_provider_allowlist", {})
+            for privacy, default_providers in defaults.get("privacy_provider_allowlist", {}).items():
+                providers = current_privacy.setdefault(privacy, [])
+                known_providers = {str(value) for value in providers}
+                providers.extend(value for value in default_providers if str(value) not in known_providers)
     existing["schema_version"] = max(int(existing.get("schema_version", 1)), int(defaults.get("schema_version", 1)))
     return existing
 
@@ -586,6 +600,7 @@ def project_status(project: str | Path = ".") -> dict[str, Any]:
             "events": int(store.scalar("SELECT COUNT(*) n FROM evaluation_events", default=0)),
             "profiles": int(store.scalar("SELECT COUNT(*) n FROM profile_slices", default=0)),
             "route_decisions": int(store.scalar("SELECT COUNT(*) n FROM route_decisions", default=0)),
+            "route_candidate_scores": int(store.scalar("SELECT COUNT(*) n FROM route_candidate_scores", default=0)),
             "memory": memory.status(store),
         })
     return {

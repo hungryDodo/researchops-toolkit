@@ -33,8 +33,49 @@ def sha(text: str) -> str:
 
 def find_model(registry: dict[str, Any], model_id: str) -> dict[str, Any]:
     for m in registry.get("models", []):
-        if m.get("id") == model_id: return m
+        if (m.get("arm_id") or m.get("id")) == model_id: return m
     raise SystemExit(f"unknown model id: {model_id}")
+
+
+def protocol(model: dict[str, Any]) -> str:
+    raw = str(model.get("api_protocol") or "chat_completions").strip().lower().replace("-", "_")
+    aliases = {"openai_chat_compatible": "chat_completions", "openai_responses": "responses"}
+    value = aliases.get(raw, raw)
+    if value not in {"chat_completions", "responses"}:
+        raise SystemExit(f"unsupported API protocol: {raw}")
+    return value
+
+
+def prepare_payload(model: dict[str, Any], messages: list[dict[str, str]], max_tokens: int, temperature: float) -> dict[str, Any]:
+    effort = model.get("api_reasoning_effort", model.get("reasoning_effort"))
+    if protocol(model) == "responses":
+        payload: dict[str, Any] = {"model": model.get("model"), "input": messages, "max_output_tokens": max_tokens}
+        if effort is not None:
+            payload["reasoning"] = {"effort": effort}
+    else:
+        payload = {"model": model.get("model"), "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
+        if effort is not None:
+            payload["reasoning_effort"] = effort
+        if model.get("thinking_type"):
+            payload["thinking"] = {"type": model["thinking_type"]}
+    return payload
+
+
+def output_text(response: dict[str, Any], api_protocol: str) -> tuple[str, str | None]:
+    if api_protocol == "responses":
+        if response.get("output_text") is not None:
+            return str(response.get("output_text") or ""), str(response.get("status") or "") or None
+        parts = []
+        for item in response.get("output", []):
+            if item.get("type") != "message":
+                continue
+            for content in item.get("content", []):
+                if content.get("type") == "output_text":
+                    parts.append(str(content.get("text") or ""))
+        return "".join(parts), str(response.get("status") or "") or None
+    choices = response.get("choices", [])
+    text = str((choices[0].get("message") or {}).get("content", "")) if choices else ""
+    return text, choices[0].get("finish_reason") if choices else None
 
 
 def request_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeout: float) -> dict[str, Any]:
@@ -63,18 +104,19 @@ def main() -> None:
     args = ap.parse_args()
 
     model = find_model(load(args.registry), args.model_id)
-    if model.get("provider") not in {"openai-compatible", "local-openai-compatible"}:
-        raise SystemExit("model_gateway only handles OpenAI-compatible entries")
+    if not model.get("base_url"):
+        raise SystemExit("model_gateway only handles entries with an OpenAI-compatible base_url")
     if not model.get("enabled", False): raise SystemExit("model is disabled")
+    if not model.get("direct_gateway_allowed", True):
+        raise SystemExit("model plan is restricted to an approved coding client; direct gateway dispatch is disabled")
     base = str(model.get("base_url", "")).rstrip("/")
     if not base: raise SystemExit("model entry has no base_url")
     prompt = args.prompt_file.read_text(encoding="utf-8")
     messages: list[dict[str, str]] = []
     if args.system_file: messages.append({"role": "system", "content": args.system_file.read_text(encoding="utf-8")})
     messages.append({"role": "user", "content": prompt})
-    payload = {"model": model.get("model"), "messages": messages, "temperature": args.temperature, "max_tokens": args.max_tokens}
-    if model.get("reasoning_effort"):
-        payload["reasoning_effort"] = model["reasoning_effort"]
+    api_protocol = protocol(model)
+    payload = prepare_payload(model, messages, args.max_tokens, args.temperature)
     metadata = {
         "schema_version": 1,
         "created_at": iso(),
@@ -82,23 +124,23 @@ def main() -> None:
         "provider": model.get("provider"),
         "model": model.get("model"),
         "reasoning_effort": model.get("reasoning_effort"),
+        "api_protocol": api_protocol,
         "base_url_host": base.split("//", 1)[-1].split("/", 1)[0],
         "prompt_sha256": sha(prompt),
         "prompt_bytes": len(prompt.encode("utf-8")),
         "dry_run": args.dry_run,
     }
     if args.dry_run:
-        result = {**metadata, "request": {"model": payload["model"], "reasoning_effort": payload.get("reasoning_effort"), "message_count": len(messages), "max_tokens": args.max_tokens}}
+        result = {**metadata, "request": {"model": payload["model"], "reasoning": payload.get("reasoning") or payload.get("reasoning_effort"), "message_count": len(messages), "max_tokens": args.max_tokens}}
     else:
         env = str(model.get("credential_env", ""))
         key = os.environ.get(env, "") if env else ""
         headers = {"Content-Type": "application/json"}
         if key: headers["Authorization"] = f"Bearer {key}"
-        start = time.monotonic(); response = request_json(base + "/chat/completions", headers, payload, args.timeout); elapsed = time.monotonic() - start
-        choices = response.get("choices", [])
-        text = ""
-        if choices:
-            text = str((choices[0].get("message") or {}).get("content", ""))
+        path = str(model.get("request_path") or ("/responses" if api_protocol == "responses" else "/chat/completions"))
+        if not path.startswith("/"): path = "/" + path
+        start = time.monotonic(); response = request_json(base + path, headers, payload, args.timeout); elapsed = time.monotonic() - start
+        text, finish_reason = output_text(response, api_protocol)
         result = {
             **metadata,
             "latency_seconds": round(elapsed, 6),
@@ -106,7 +148,7 @@ def main() -> None:
             "usage": response.get("usage"),
             "output_text": text,
             "output_sha256": sha(text),
-            "finish_reason": choices[0].get("finish_reason") if choices else None,
+            "finish_reason": finish_reason,
         }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

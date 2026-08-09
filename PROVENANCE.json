@@ -216,6 +216,30 @@
       "relationship": "current platform reference for Sol/Terra/Luna positioning, reasoning effort, representative-task evaluation, and descendant agent trees",
       "vendored": false,
       "url": "https://developers.openai.com/api/docs/guides/latest-model"
+    },
+    {
+      "name": "DeepSeek API documentation",
+      "relationship": "current provider reference for V4 Flash Responses/Codex compatibility, endpoints, thinking modes, and effort equivalence; no provider content vendored",
+      "vendored": false,
+      "url": "https://api-docs.deepseek.com/guides/responses_api/"
+    },
+    {
+      "name": "Z.AI API documentation",
+      "relationship": "current provider reference for GLM-5.2 Chat Completions, general/coding endpoint boundaries, and reasoning-effort equivalence; no provider content vendored",
+      "vendored": false,
+      "url": "https://docs.z.ai/api-reference/llm/chat-completion"
+    },
+    {
+      "name": "Xiaomi MiMo API documentation",
+      "relationship": "current provider reference for Responses/Codex endpoints, key environments, plan restrictions, and on/off thinking behavior; no provider content vendored",
+      "vendored": false,
+      "url": "https://mimo.mi.com/docs/en-US/tokenplan/integration/codex-configuration"
+    },
+    {
+      "name": "MiniMax API documentation",
+      "relationship": "current provider reference for China/global Responses endpoints, Codex configuration, and Adaptive Thinking behavior; no provider content vendored",
+      "vendored": false,
+      "url": "https://platform.minimaxi.com/docs/api-reference/responses-create"
     }
   ],
   "components": {

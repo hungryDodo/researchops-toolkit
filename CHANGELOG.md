@@ -6,6 +6,9 @@ All notable user-visible changes are documented here. The project follows semant
 
 ### Changed
 
+- Added provider recipes and protocol-aware gateway/Codex configuration for DeepSeek V4 Flash, Xiaomi MiMo, MiniMax, and gateway-only GLM 5.2, with secrets kept in environment variables.
+- Persisted every eligible model × reasoning-mode candidate score for each routing decision, rather than storing only the selected arm.
+- Added non-destructive project upgrades for newly introduced model arms and routing allowlists, plus direct-operation restrictions for plan-specific endpoints.
 - Model selection now routes over explicit model × reasoning-effort execution arms, with effort-specific evidence, cost, latency, failure patterns, mitigations, and executable Codex parameters.
 - Added reasoning-demand/effort fit, exact/min/max effort constraints, `orchestrate` Lead routing, task-conditioned coordination topology, and model-family-diverse verifier preference.
 - Replaced occupational worker personas with session Lead, bounded read/write work-unit, and fresh-context verifier templates.

@@ -248,6 +248,7 @@ python3 -m rops package \
 | [State and memory](docs/state-and-memory.md) | `.researchops/`、SQLite 权威、生命周期 Memory 与可选 Adapter |
 | [Skills and progressive loading](docs/skills-and-bundles.md) | 顶层 owner、内部 mode、触发 |
 | [Agents and model routing](docs/agents-and-model-routing.md) | Provider、Execution Arm、Dispatch 与评价 |
+| [External provider configuration](docs/provider-configuration.md) | DeepSeek、GLM、MiMo、MiniMax 的 API、环境变量与 Codex 配置 |
 | [Safety and hygiene](docs/safety-and-hygiene.md) | Hook、审批、archive-first |
 | [Migration to v2](docs/migration-v2.md) | 旧目录与 JSONL 迁移 |
 | [Development and release](docs/development.md) | 测试、provenance、打包与贡献 |

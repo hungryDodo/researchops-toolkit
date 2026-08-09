@@ -54,6 +54,8 @@ Unknown provider-side revisions are handled through observed deployment epochs r
 
 `reasoning_effort` is a routed dimension. `gpt-5.6-sol@medium`, `gpt-5.6-sol@high`, and `gpt-5.6-sol@xhigh` are separate arms with separate observations, costs, latencies, failure patterns, and mitigations. `model_family` preserves their relationship for comparison without pooling their evidence.
 
+Provider labels are normalized by observed behavior, not by marketing UI. When a provider maps several effort labels to one behavior, ResearchOps keeps only the distinct arms (for example MiMo/MiniMax `none` versus `high`). Region, plan, and endpoint remain distinct where they affect policy or telemetry. See [`provider-configuration.md`](provider-configuration.md) for the current DeepSeek, GLM, MiMo, and MiniMax recipes.
+
 The default registry includes declared cold-start priors for GPT-5.6 Sol, Terra, and Luna across a bounded set of efforts. These priors follow current [official OpenAI model guidance](https://developers.openai.com/api/docs/guides/latest-model), but remain hypotheses until representative project tasks validate them. Effective-dated price records remain separate from capability priors.
 
 ## Session Lead and task-space partitioning

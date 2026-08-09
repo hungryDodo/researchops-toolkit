@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
+import tomllib
 import sys
 from pathlib import Path
 
@@ -13,6 +15,7 @@ from rops.intelligence.drift import record_endpoint_observation, record_identity
 from rops.intelligence.events import record_event
 from rops.intelligence.projections import rebuild_projections
 from rops.intelligence.store import IntelligenceStore
+from rops import models as model_gateway
 from rops.models import dossier, secret_status, sync_registry
 from rops.project import bootstrap
 
@@ -98,6 +101,64 @@ def main() -> None:
         assert secrets["values_exposed"] is False
         assert (Path(__file__).parents[1] / "components/model-control-plane/profile-schema.json").exists()
 
+        responses_payload = model_gateway._prepare_payload(
+            {
+                "model": "deepseek-v4-flash",
+                "api_protocol": "responses",
+                "reasoning_effort": "max",
+            },
+            {"messages": [{"role": "user", "content": "hello"}], "max_tokens": 32},
+        )
+        assert responses_payload["reasoning"] == {"effort": "max"}
+        assert "reasoning_effort" not in responses_payload and "messages" not in responses_payload
+        assert responses_payload["max_output_tokens"] == 32
+        assert model_gateway._request_path({"api_protocol": "responses"}) == "/responses"
+
+        chat_payload = model_gateway._prepare_payload(
+            {
+                "model": "glm-5.2",
+                "api_protocol": "chat_completions",
+                "reasoning_effort": "high",
+                "thinking_type": "enabled",
+            },
+            {"input": "hello", "max_tokens": 32},
+        )
+        assert chat_payload["reasoning_effort"] == "high"
+        assert chat_payload["thinking"] == {"type": "enabled"}
+        assert chat_payload["messages"][0]["content"] == "hello"
+
+        codex_path = root / "codex-config.toml"
+        codex_path.write_text('model = "gpt-5.6-sol"\n', encoding="utf-8")
+        first_codex = model_gateway.codex_config(install=True, path=codex_path)
+        second_codex = model_gateway.codex_config(install=True, path=codex_path)
+        codex_text = codex_path.read_text(encoding="utf-8")
+        codex_toml = tomllib.loads(codex_text)
+        assert first_codex["installed"] and second_codex["installed"]
+        assert first_codex["default_model_changed"] is False
+        assert codex_text.count(model_gateway.CODEX_CONFIG_BEGIN) == 1
+        assert codex_toml["model"] == "gpt-5.6-sol"
+        assert codex_toml["model_providers"]["deepseek"]["env_key"] == "DEEPSEEK_API_KEY"
+        assert codex_toml["model_providers"]["mimo_paygo"]["wire_api"] == "responses"
+        assert "experimental_bearer_token" not in codex_text and "sk-" not in codex_text
+
+        original_secret_file = model_gateway.SECRET_FILE
+        try:
+            model_gateway.SECRET_FILE = root / "secrets.env"
+            model_gateway.SECRET_FILE.write_text(
+                "# keep comments and operator variables\nDEEPSEEK_API_KEY=keep-me\nCUSTOM_VALUE=keep-too\n",
+                encoding="utf-8",
+            )
+            secret_template = model_gateway.secret_template(root)
+            secret_template_again = model_gateway.secret_template(root)
+            secret_text = model_gateway.SECRET_FILE.read_text(encoding="utf-8")
+            assert set(secret_template["variables"]) >= {"DEEPSEEK_API_KEY", "MIMO_API_KEY", "MINIMAX_API_KEY", "ZAI_API_KEY"}
+            assert set(secret_template["added"]) >= {"MIMO_API_KEY", "MINIMAX_API_KEY", "ZAI_API_KEY"}
+            assert secret_template_again["added"] == []
+            assert "DEEPSEEK_API_KEY=keep-me" in secret_text and "CUSTOM_VALUE=keep-too" in secret_text
+            assert os.stat(model_gateway.SECRET_FILE).st_mode & 0o777 == 0o600
+        finally:
+            model_gateway.SECRET_FILE = original_secret_file
+
         print(
             json.dumps(
                 {
@@ -107,6 +168,9 @@ def main() -> None:
                     "endpoint_observation": bool(endpoint.get("observation_id")),
                     "shared_dossier_projection": True,
                     "secret_values_exposed": False,
+                    "chat_and_responses_protocols": True,
+                    "codex_provider_config_secret_safe": True,
+                    "secret_template_idempotent": True,
                 },
                 indent=2,
             )

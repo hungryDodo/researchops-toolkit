@@ -30,6 +30,7 @@ The provided registry uses constrained ranking, not an opaque learned router:
 4. subtract normalized cost, latency, correction, and verifier-disagreement penalties;
 5. add a bounded exploration bonus for eligible low-risk tasks;
 6. select a primary and, when required, a verifier/escalation arm from a different model family when possible.
+7. persist the complete eligible candidate ranking, exact arm identity, score components, and selection flag under the route decision.
 
 This is intentionally interpretable during cold start. Once hundreds of well-labeled tasks exist, the history can train a separate router, but it must be evaluated offline against static, random, strongest-only, cheapest-only, and rules-based baselines before deployment.
 

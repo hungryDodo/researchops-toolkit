@@ -120,6 +120,9 @@ def eligible(model: dict[str, Any], task: dict[str, Any], agent: dict[str, Any] 
         reasons.append("risk-ceiling")
     if not _provider_allowed(model, task["privacy"], policy):
         reasons.append("privacy-provider")
+    allowed_operations = {str(value) for value in model.get("allowed_operations", [])}
+    if allowed_operations and task["operation"] not in allowed_operations:
+        reasons.append("operation-scope")
     required = set(task.get("required_capabilities", []))
     if agent:
         required.update(agent.get("required_capabilities", []))
@@ -455,7 +458,7 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
         f"topology={orchestration['topology']}",
     ]
     decision = {
-        "schema_version": 3,
+        "schema_version": 4,
         "decision_id": decision_id,
         "created_at": now(),
         "project_id": project_id,
@@ -488,4 +491,31 @@ def recommend(store: IntelligenceStore, task_raw: dict[str, Any], *, agent_name:
                     json.dumps(decision, ensure_ascii=False, sort_keys=True),
                 ),
             )
+            for rank, candidate in enumerate(ranked, start=1):
+                connection.execute(
+                    """
+                    INSERT INTO route_candidate_scores(
+                        decision_id,arm_id,rank,selected,score,reasoning_effort,reasoning_mode,
+                        profile_source,observations,uncertainty,components_json,endpoint_health_json,
+                        price_json,execution_json,created_at
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        decision_id,
+                        candidate["model_id"],
+                        rank,
+                        int(candidate["model_id"] == selected["model_id"]),
+                        candidate["score"],
+                        candidate.get("reasoning_effort"),
+                        candidate.get("reasoning_mode", "standard"),
+                        candidate["profile_source"],
+                        candidate["observations"],
+                        candidate["uncertainty"],
+                        json.dumps(candidate["components"], ensure_ascii=False, sort_keys=True),
+                        json.dumps(candidate["endpoint_health"], ensure_ascii=False, sort_keys=True),
+                        json.dumps(candidate["price"], ensure_ascii=False, sort_keys=True),
+                        json.dumps(candidate["execution"], ensure_ascii=False, sort_keys=True),
+                        decision["created_at"],
+                    ),
+                )
     return decision

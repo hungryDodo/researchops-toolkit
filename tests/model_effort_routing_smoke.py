@@ -18,7 +18,7 @@ from rops.models import sync_registry
 from rops.project import bootstrap, doctor, install
 
 
-def route(store: IntelligenceStore, *, demand: str, effort: str | None = None) -> dict:
+def route(store: IntelligenceStore, *, demand: str, effort: str | None = None, write: bool = False) -> dict:
     task = {
         "project_id": "model-effort-smoke",
         "objective": f"Solve one {demand} reasoning work unit",
@@ -36,7 +36,7 @@ def route(store: IntelligenceStore, *, demand: str, effort: str | None = None) -
     }
     if effort:
         task["reasoning_effort"] = effort
-    return recommend(store, task, agent_name="bounded_read_worker", write=False, random_seed=7)
+    return recommend(store, task, agent_name="bounded_read_worker", write=write, random_seed=7)
 
 
 def main() -> None:
@@ -56,6 +56,7 @@ def main() -> None:
         high = route(store, demand="high")
         extreme = route(store, demand="extreme")
         forced_max = route(store, demand="extreme", effort="max")
+        recorded = route(store, demand="high", write=True)
 
         assert medium["primary"]["model_family"] == high["primary"]["model_family"] == "gpt-5.6-sol"
         assert medium["primary"]["reasoning_effort"] == "medium"
@@ -68,6 +69,17 @@ def main() -> None:
             "reasoning_effort": "max",
             "reasoning_mode": "standard",
         }
+        score_rows = store.json_rows(
+            "SELECT * FROM route_candidate_scores WHERE decision_id=? ORDER BY rank",
+            (recorded["decision_id"],),
+            json_columns=("components_json", "endpoint_health_json", "price_json", "execution_json"),
+        )
+        assert recorded["schema_version"] == 4
+        assert len(score_rows) == len(recorded["ranked"])
+        assert sum(int(row["selected"]) for row in score_rows) == 1
+        assert score_rows[0]["arm_id"] == recorded["ranked"][0]["model_id"]
+        assert all("reasoning_fit" in row["components_json"] for row in score_rows)
+        assert {row["reasoning_effort"] for row in score_rows} >= {"medium", "high", "xhigh", "max"}
 
         parallel = recommend(
             store,
@@ -203,6 +215,48 @@ def main() -> None:
             raise AssertionError("read-only store unexpectedly allowed a transaction")
 
         models_path = root / ".researchops/governance/models.json"
+        external_registry = json.loads(models_path.read_text(encoding="utf-8"))
+        for model in external_registry["models"]:
+            if model.get("model_family") == "deepseek-v4-flash":
+                model["enabled"] = True
+        models_path.write_text(json.dumps(external_registry) + "\n", encoding="utf-8")
+        sync_registry(store)
+        external_none = recommend(
+            store,
+            {
+                "project_id": "model-effort-smoke",
+                "objective": "Run a bounded direct extraction without thinking",
+                "operation": "discover",
+                "risk": "low",
+                "privacy": "internal",
+                "mutability": "read-only",
+                "model_family_allowlist": ["deepseek-v4-flash"],
+                "reasoning_effort": "none",
+            },
+            agent_name="bounded_read_worker",
+            write=False,
+            random_seed=7,
+        )
+        external_max = recommend(
+            store,
+            {
+                "project_id": "model-effort-smoke",
+                "objective": "Solve a bounded difficult debugging analysis",
+                "operation": "debug",
+                "risk": "medium",
+                "privacy": "internal",
+                "mutability": "read-only",
+                "model_family_allowlist": ["deepseek-v4-flash"],
+                "reasoning_effort": "max",
+            },
+            agent_name="bounded_read_worker",
+            write=False,
+            random_seed=7,
+        )
+        assert external_none["primary"]["model_id"] == "deepseek/deepseek-v4-flash@none"
+        assert external_max["primary"]["model_id"] == "deepseek/deepseek-v4-flash@max"
+        assert external_max["primary"]["execution"]["provider"] == "deepseek"
+
         models_path.write_text(
             json.dumps(
                 {
@@ -220,11 +274,28 @@ def main() -> None:
             + "\n",
             encoding="utf-8",
         )
+        agents_path = root / ".researchops/governance/agents.json"
+        legacy_agents = json.loads(agents_path.read_text(encoding="utf-8"))
+        for agent in legacy_agents["agents"]:
+            agent["candidate_arms"] = [arm for arm in agent.get("candidate_arms", []) if not arm.startswith("deepseek/")]
+        agents_path.write_text(json.dumps(legacy_agents) + "\n", encoding="utf-8")
+        policy_path = root / ".researchops/governance/routing-policy.json"
+        legacy_policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        legacy_policy["privacy_provider_allowlist"]["internal"] = [
+            provider for provider in legacy_policy["privacy_provider_allowlist"]["internal"] if provider != "deepseek"
+        ]
+        policy_path.write_text(json.dumps(legacy_policy) + "\n", encoding="utf-8")
         bootstrap(root, "Model Effort Routing Smoke", mode="resume", upgrade=True)
         upgraded_models = json.loads(models_path.read_text(encoding="utf-8"))
         assert upgraded_models["schema_version"] >= 3
         assert any(model["id"] == "operator/custom-arm" for model in upgraded_models["models"])
         assert any(model["id"] == "codex/gpt-5.6-sol@high" for model in upgraded_models["models"])
+        assert any(model["id"] == "deepseek/deepseek-v4-flash@high" for model in upgraded_models["models"])
+        upgraded_agents = json.loads(agents_path.read_text(encoding="utf-8"))
+        upgraded_lead = next(agent for agent in upgraded_agents["agents"] if agent["name"] == "session_lead")
+        assert "deepseek/deepseek-v4-flash@high" in upgraded_lead["candidate_arms"]
+        upgraded_policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        assert "deepseek" in upgraded_policy["privacy_provider_allowlist"]["internal"]
 
         print(
             json.dumps(
@@ -240,11 +311,14 @@ def main() -> None:
                     "parallel_topology": parallel["orchestration"]["topology"],
                     "sequential_topology": medium["orchestration"]["topology"],
                     "codex_native_effort_rendered": True,
+                    "normalized_candidate_scores": len(score_rows),
                     "installed_skill_compact_route": True,
                     "preset_aware_doctor": True,
                     "codex_project_hooks_merged": True,
                     "read_only_route_is_write_free": True,
                     "non_destructive_v2_upgrade": True,
+                    "external_provider_upgrade_merged": True,
+                    "external_model_modes_routable": [external_none["primary"]["model_id"], external_max["primary"]["model_id"]],
                 },
                 indent=2,
             )

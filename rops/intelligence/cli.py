@@ -266,6 +266,7 @@ def main(argv: list[str] | None = None) -> int:
             "patterns": int(store.scalar("SELECT COUNT(*) n FROM failure_patterns", default=0)),
             "mitigations": int(store.scalar("SELECT COUNT(*) n FROM mitigations", default=0)),
             "route_decisions": int(store.scalar("SELECT COUNT(*) n FROM route_decisions", default=0)),
+            "route_candidate_scores": int(store.scalar("SELECT COUNT(*) n FROM route_candidate_scores", default=0)),
             "warmup": warmup.all_warmup_states(store),
             "memory": memory.status(store),
         })

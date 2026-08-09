@@ -255,6 +255,7 @@ Each archive contains only the selected Skills, components, and Behavior Packs; 
 | [State and memory](docs/state-and-memory.md) | `.researchops/`, SQLite authority, lifecycle-aware Memory and optional adapters |
 | [Skills and progressive loading](docs/skills-and-bundles.md) | top-level ownership, internal modes, triggers |
 | [Agents and model routing](docs/agents-and-model-routing.md) | provider setup, execution arms, dispatch and evaluation |
+| [External provider configuration](docs/provider-configuration.md) | DeepSeek, GLM, MiMo, MiniMax endpoints, credentials, modes, and Codex compatibility |
 | [Safety and hygiene](docs/safety-and-hygiene.md) | lifecycle hooks, approvals, archive-first operations |
 | [Migration to v2](docs/migration-v2.md) | legacy state and JSONL migration |
 | [Development and release](docs/development.md) | tests, provenance, packaging, contribution |

@@ -1,7 +1,7 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-09T04:13:26+00:00
-- Package preset: `research-routed`
+- Completed: 2026-08-09T07:38:50+00:00
+- Package preset: `full`
 - Package target: `codex`
 - Python: 3.14.4
 - Platform: Linux-7.0.0-28-generic-x86_64-with-glibc2.43
@@ -86,10 +86,13 @@
     "identity_observation": true,
     "endpoint_observation": true,
     "shared_dossier_projection": true,
-    "secret_values_exposed": false
+    "secret_values_exposed": false,
+    "chat_and_responses_protocols": true,
+    "codex_provider_config_secret_safe": true,
+    "secret_template_idempotent": true
   },
   "model-effort-routing": {
-    "execution_arms": 9,
+    "execution_arms": 26,
     "same_model_efforts": {
       "medium_task": "codex/gpt-5.6-sol@medium",
       "high_task": "codex/gpt-5.6-sol@high",
@@ -100,11 +103,17 @@
     "parallel_topology": "centralized-fanout",
     "sequential_topology": "single-agent",
     "codex_native_effort_rendered": true,
+    "normalized_candidate_scores": 4,
     "installed_skill_compact_route": true,
     "preset_aware_doctor": true,
     "codex_project_hooks_merged": true,
     "read_only_route_is_write_free": true,
-    "non_destructive_v2_upgrade": true
+    "non_destructive_v2_upgrade": true,
+    "external_provider_upgrade_merged": true,
+    "external_model_modes_routable": [
+      "deepseek/deepseek-v4-flash@none",
+      "deepseek/deepseek-v4-flash@max"
+    ]
   },
   "adoption-memory": {
     "existing_project_inspected_before_write": true,

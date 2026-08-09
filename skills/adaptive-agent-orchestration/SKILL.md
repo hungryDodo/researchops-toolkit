@@ -12,6 +12,7 @@ Own task-space decomposition, coordination topology, Lead/worker execution-arm s
 ## Progressive loading
 
 - task/model routing: `references/ROUTING_PROTOCOL.md`;
+- external provider/API onboarding: `references/PROVIDER_ONBOARDING.md`;
 - bounded handoff: `references/HANDOFF_SCHEMA.md`;
 - independent evaluation and profile updates: `references/EVALUATION_PROTOCOL.md`.
 
