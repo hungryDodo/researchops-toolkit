@@ -41,6 +41,23 @@ def main() -> None:
     assert unknown["ttft_seconds"] is None
     assert unknown["measurement_status"] == "partial"
 
+    zero_cached = normalize_provider_usage(
+        {"usage": {"input_tokens": 7, "input_tokens_details": {"cached_tokens": 0}}}
+    )
+    assert zero_cached["input_tokens_cached"] == 0
+    assert zero_cached["cache_hit"] is None
+
+    explicit_miss = normalize_provider_usage(
+        {
+            "usage": {
+                "input_tokens": 7,
+                "input_tokens_details": {"cached_tokens": 0},
+                "cache_hit": False,
+            }
+        }
+    )
+    assert explicit_miss["cache_hit"] is False
+
     event = EvaluationEvent.normalize(
         {
             "project_id": "usage-smoke",

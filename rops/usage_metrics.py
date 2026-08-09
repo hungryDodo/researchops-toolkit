@@ -64,7 +64,12 @@ def normalize_provider_usage(result: Mapping[str, Any]) -> dict[str, object]:
     reasoning = _optional_int(output_details.get("reasoning_tokens"))
     ttft = _optional_float(_first(result.get("ttft_seconds"), usage.get("ttft_seconds")))
     uncached = None if cached is None or input_tokens is None else max(0, input_tokens - cached)
-    cache_hit = None if cached is None else cached > 0
+    explicit_cache_hit = _first(result.get("cache_hit"), usage.get("cache_hit"))
+    cache_hit = (
+        explicit_cache_hit
+        if isinstance(explicit_cache_hit, bool)
+        else True if cached is not None and cached > 0 else None
+    )
     measured = (cached, reasoning, ttft)
     return {
         "input_tokens": input_tokens or 0,

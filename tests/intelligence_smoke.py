@@ -141,6 +141,18 @@ def main() -> None:
         # Extra metadata did not create sparse profile dimensions.
         assert all("python" not in key and "sqlite" not in key for key in profiles)
 
+        # A known zero cached-token count without an explicit disposition must
+        # remain unknown in the profile, not become a cache miss.
+        cache_unknown = event(event_id="cache-zero", arm="provider/cache@epoch-1/config-a")
+        cache_unknown["usage"].update({"input_tokens_cached": 0, "cache_hit": None})
+        record_event(store, cache_unknown)
+        cache_profiles = rebuild_profiles(store)
+        assert cache_profiles["profiles"][scope_key("provider/cache@epoch-1/config-a")]["cache"] == {
+            "hit": 0,
+            "miss": 0,
+            "unknown": 1,
+        }
+
         pattern_result = patterns.rebuild_patterns(store)
         assert pattern_result["patterns"][0]["status"] == "active"
         assert pattern_result["patterns"][0]["occurrence_count"] == 2
