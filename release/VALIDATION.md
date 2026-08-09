@@ -1,6 +1,6 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-09T04:05:47+00:00
+- Completed: 2026-08-09T04:13:26+00:00
 - Package preset: `research-routed`
 - Package target: `codex`
 - Python: 3.14.4
@@ -101,6 +101,7 @@
     "sequential_topology": "single-agent",
     "codex_native_effort_rendered": true,
     "installed_skill_compact_route": true,
+    "preset_aware_doctor": true,
     "codex_project_hooks_merged": true,
     "read_only_route_is_write_free": true,
     "non_destructive_v2_upgrade": true

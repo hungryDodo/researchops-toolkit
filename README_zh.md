@@ -39,6 +39,9 @@ python3 -m rops doctor --target codex --project /path/to/project
 python3 -m rops up --root /path/to/project --open
 ```
 
+安装器会在 Harness 的 Skills 目录旁记录所选 Preset；`doctor` 因而只检查预期清单，不会把
+Preset 有意省略的 Skills 误报为缺失。
+
 在 Codex 中，项目级安装会保留 `.codex/hooks.json` 里已有的 Hook 组，并合并所选的 Behavior
 处理器。Codex 对新增或变更 Hook 的正常人工信任确认不会被 ResearchOps 绕过。
 

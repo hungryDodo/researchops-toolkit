@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 from rops.intelligence.routing import recommend
 from rops.intelligence.store import IntelligenceStore
 from rops.models import sync_registry
-from rops.project import bootstrap, install
+from rops.project import bootstrap, doctor, install
 
 
 def route(store: IntelligenceStore, *, demand: str, effort: str | None = None) -> dict:
@@ -134,6 +134,16 @@ def main() -> None:
             with_agents=True,
             with_behavior=True,
         )
+        installation_health = doctor(target="codex", project=root)["targets"]["codex"]
+        assert installation_health["healthy"]
+        assert not installation_health["missing"]
+        assert installation_health["preset"] == "routing-core"
+        stale_skill = root / ".agents/skills/software-development"
+        stale_skill.symlink_to(ROOT / "skills/software-development", target_is_directory=True)
+        stale_health = doctor(target="codex", project=root)["targets"]["codex"]
+        assert not stale_health["healthy"]
+        assert stale_health["extra"] == ["software-development"]
+        stale_skill.unlink()
         merged_hooks = json.loads(existing_hooks.read_text(encoding="utf-8"))["hooks"]
         pre_tool_commands = [
             item["command"]
@@ -231,6 +241,7 @@ def main() -> None:
                     "sequential_topology": medium["orchestration"]["topology"],
                     "codex_native_effort_rendered": True,
                     "installed_skill_compact_route": True,
+                    "preset_aware_doctor": True,
                     "codex_project_hooks_merged": True,
                     "read_only_route_is_write_free": True,
                     "non_destructive_v2_upgrade": True,

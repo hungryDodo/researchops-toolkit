@@ -84,6 +84,10 @@ python3 -m rops intelligence --root /path/to/project status
 python3 -m rops behavior --root /path/to/project status
 ```
 
+Each installation writes `.researchops-install.json` inside the harness Skill directory. `doctor`
+uses that inventory to distinguish an actually missing selected Skill from one intentionally
+excluded by the chosen Preset, and reports stale extras separately.
+
 ## One-command status and Dashboard
 
 ```bash

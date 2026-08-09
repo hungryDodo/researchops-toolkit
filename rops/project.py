@@ -206,7 +206,21 @@ def install(
             else:
                 shutil.copytree(source, output)
             installed.append(name)
-        report["frameworks"][framework] = {"path": str(destination), "installed": installed}
+        inventory_path = destination / ".researchops-install.json"
+        atomic_json(inventory_path, {
+            "schema_version": 1,
+            "toolkit_version": VERSION,
+            "source": str(ROOT),
+            "installed_at": now(),
+            "preset": None if skills else resolved.name,
+            "skills": installed,
+            "mode": mode,
+        })
+        report["frameworks"][framework] = {
+            "path": str(destination),
+            "installed": installed,
+            "inventory": str(inventory_path),
+        }
         if framework == "codex" and legacy_codex:
             old = (Path.home() / ".codex/skills") if scope == "user" else project_path / ".codex/skills"
             if not old.exists() and not old.is_symlink():
@@ -607,14 +621,39 @@ def doctor(target: str = "all", project: str | Path | None = None) -> dict[str, 
     }
     for framework in frameworks:
         base = _destination(framework, "project" if project else "user", project_path)
-        installed, missing = [], []
+        installed = []
+        available: set[str] = set()
         for skill in sorted((ROOT / "skills").iterdir()):
             if not skill.is_dir():
                 continue
+            available.add(skill.name)
             path = base / skill.name
             if path.exists():
                 installed.append({"name": skill.name, "path": str(path), "link": path.is_symlink()})
-            else:
-                missing.append(skill.name)
-        report["targets"][framework] = {"path": str(base), "installed": installed, "missing": missing}
+        installed_names = {item["name"] for item in installed}
+        inventory_path = base / ".researchops-install.json"
+        inventory: dict[str, Any] | None = None
+        if inventory_path.exists():
+            try:
+                candidate = json.loads(inventory_path.read_text(encoding="utf-8"))
+                if isinstance(candidate, dict) and isinstance(candidate.get("skills"), list):
+                    inventory = candidate
+            except (OSError, json.JSONDecodeError):
+                inventory = None
+        expected = (
+            {str(name) for name in inventory["skills"] if str(name) in available}
+            if inventory is not None
+            else available
+        )
+        missing = sorted(expected - installed_names)
+        extra = sorted(installed_names - expected)
+        report["targets"][framework] = {
+            "path": str(base),
+            "installed": installed,
+            "missing": missing,
+            "extra": extra,
+            "preset": inventory.get("preset") if inventory else None,
+            "inventory": str(inventory_path) if inventory else None,
+            "healthy": not missing and not extra,
+        }
     return report

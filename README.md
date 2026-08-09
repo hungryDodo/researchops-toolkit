@@ -39,6 +39,9 @@ python3 -m rops doctor --target codex --project /path/to/project
 python3 -m rops up --root /path/to/project --open
 ```
 
+The installer records the selected Preset beside the harness Skills, so `doctor` checks the intended
+inventory instead of reporting intentionally omitted Skills as missing.
+
 On Codex, project installation preserves existing `.codex/hooks.json` groups while adding the
 selected Behavior handlers. Codex still requires its normal user trust decision for new or changed
 hooks.

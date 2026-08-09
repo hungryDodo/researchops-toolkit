@@ -111,7 +111,7 @@ def project_test(base: Path) -> dict[str, Any]:
     bundle_project = base / "bundle-project"
     bundle_project.mkdir()
     run(PYTHON, "-m", "rops", "install", "--target", "portable", "--scope", "project", "--project", str(bundle_project), "--mode", "copy", "--bundle", "discovery")
-    assert len(list((bundle_project / ".agent-skills/skills").iterdir())) == 4
+    assert len([path for path in (bundle_project / ".agent-skills/skills").iterdir() if path.is_dir()]) == 4
 
     next_step = read_json_from_stdout(run(PYTHON, tool("research-program-orchestrator", "next_step.py"), "--root", str(project), capture=True).stdout)
     assert next_step["next"]["kind"] == "human-gate"
