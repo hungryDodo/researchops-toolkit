@@ -117,8 +117,8 @@
     },
     {
       "name": "LiteLLM",
-      "url": "https://docs.litellm.ai/",
-      "relationship": "optional third-party/local model gateway and provider normalization reference",
+      "url": "https://github.com/BerriAI/litellm/blob/main/litellm/responses/litellm_completion_transformation/handler.py",
+      "relationship": "optional pinned local Responses-to-Chat bridge and Z.AI provider normalization dependency; installed separately and not vendored",
       "vendored": false
     },
     {

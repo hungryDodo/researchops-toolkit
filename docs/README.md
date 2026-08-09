@@ -25,7 +25,7 @@
 | [`product-landscape.md`](product-landscape.md) | comparing or integrating observability, research-agent, coding-agent, or memory products |
 | [`research-agenda.md`](research-agenda.md) | designing research questions, baselines, metrics, ablations, or longitudinal study |
 | [`agents-and-model-routing.md`](agents-and-model-routing.md) | onboarding providers or dispatching workers |
-| [`provider-configuration.md`](provider-configuration.md) | configuring DeepSeek, GLM, MiMo, MiniMax, credentials, endpoints, and Codex compatibility |
+| [`provider-configuration.md`](provider-configuration.md) | configuring DeepSeek, GLM/LiteLLM, MiMo, MiniMax, credentials, endpoints, and Codex compatibility |
 | [`presets-and-distribution.md`](presets-and-distribution.md) | generating Routing-only, Development-only, Research, or full artifacts |
 | [`safety-and-hygiene.md`](safety-and-hygiene.md) | high-risk operations, approvals, hardware, cleanup, and privacy |
 | [`migration-v2.md`](migration-v2.md) | moving from `.research/`, old JSONL profiles, or v1 Bundles |

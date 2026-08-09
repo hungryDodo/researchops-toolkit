@@ -4,11 +4,12 @@ Verified against official provider documentation on 2026-08-09. Re-check the lin
 
 ## Where API keys belong
 
-There are two consumers with different secret-loading behavior:
+There are three consumers with different secret-loading behavior:
 
 | Consumer | Key location | Non-secret provider configuration |
 |---|---|---|
 | ResearchOps gateway | process environment, or `~/.config/rops/secrets.env` with mode `0600` | project `.researchops/governance/models.json` |
+| Local LiteLLM GLM bridge | protected environment file loaded by its localhost-only user service | `~/.config/rops/litellm/glm.yaml` |
 | Codex native custom provider | environment of the process that starts Codex | user `~/.codex/config.toml` |
 
 Codex does not read the ResearchOps secret file automatically. If the same key should work in both paths, export it before starting Codex and optionally keep the same value in the protected ResearchOps secret file. Never put a key value in this repository, `models.json`, a task contract, a log, or a Codex agent TOML file.
@@ -25,6 +26,7 @@ Fill these lines locally:
 ```dotenv
 DEEPSEEK_API_KEY=
 ZAI_API_KEY=
+LITELLM_MASTER_KEY=
 MIMO_API_KEY=
 MINIMAX_API_KEY=
 ```
@@ -34,6 +36,7 @@ For Codex, export the same variable names in the shell or service environment th
 ```bash
 export DEEPSEEK_API_KEY='...'
 export ZAI_API_KEY='...'
+export LITELLM_MASTER_KEY='...'
 export MIMO_API_KEY='...'
 export MINIMAX_API_KEY='...'
 ```
@@ -66,6 +69,9 @@ Start an explicitly selected provider session with the managed profiles:
 
 ```bash
 codex -p researchops_deepseek
+codex -p researchops_glm_none
+codex -p researchops_glm
+codex -p researchops_glm_max
 codex -p researchops_mimo_paygo
 codex -p researchops_mimo_token_plan
 codex -p researchops_minimax_cn
@@ -76,12 +82,60 @@ Override the profile's default `high` effort when a routed arm requests another 
 
 Choose exactly the MiMo plan and MiniMax region that issued the key. Do not pool their endpoint observations or costs under one arm.
 
+## GLM Responses bridge with LiteLLM
+
+GLM's upstream API remains Chat Completions. The local bridge accepts Codex Responses requests at `http://127.0.0.1:4000/v1/responses`, translates them to Z.AI Chat Completions, and translates the result back to Responses. The proxy is an adapter endpoint with its own identity, latency, health, and evaluation history; it is never pooled with direct `zai/glm-5.2@*` observations.
+
+Install the pinned proxy and generate the protected localhost proxy credential:
+
+```bash
+uv tool install --force 'litellm[proxy]==1.96.0' --with 'fastapi==0.136.3'
+python3 -m rops models litellm-config --install --generate-master-key
+python3 -m rops models codex-config --install
+systemctl --user daemon-reload
+systemctl --user enable --now researchops-litellm-glm.service
+```
+
+The FastAPI pin is intentional. LiteLLM 1.96.0 imports `get_flat_dependant`, while
+newer FastAPI releases can remove that internal symbol. Keeping the proxy in an
+isolated `uv tool` environment and pinning FastAPI 0.136.3 makes this deployment
+reproducible without changing the project's Python environment.
+
+The Codex installer also writes `~/.codex/researchops_glm_models.json` and points
+all three GLM profiles at it through the documented `model_catalog_json` setting.
+This prevents Codex from trying to interpret LiteLLM's standard OpenAI `/models`
+response as a Codex backend catalog. The catalog records GLM-5.2's official 1M
+context window and text-only modality; it does not fabricate benchmark scores.
+
+Check the service without exposing either key:
+
+```bash
+systemctl --user --no-pager status researchops-litellm-glm.service
+curl --fail --silent http://127.0.0.1:4000/health/liveliness
+```
+
+Three fixed aliases preserve the exact GLM behavior after translation:
+
+| LiteLLM alias | Codex profile | Upstream Chat Completions parameters |
+|---|---|---|
+| `glm-5.2-none` | `researchops_glm_none` | `thinking.type=disabled`, `reasoning_effort=none` |
+| `glm-5.2-high` | `researchops_glm` | `thinking.type=enabled`, `reasoning_effort=high` |
+| `glm-5.2-max` | `researchops_glm_max` | `thinking.type=enabled`, `reasoning_effort=max` |
+
+The fixed aliases are deliberate. LiteLLM 1.96.0's generic Responses bridge converts `reasoning.effort` into a Chat Completions `reasoning_effort`, but provider metadata may drop a parameter that is not declared for the exact model. Pinning both `thinking` and `reasoning_effort` in each alias prevents silent effort collapse. The bridge implementation is visible in LiteLLM's official [`LiteLLMCompletionTransformationHandler`](https://github.com/BerriAI/litellm/blob/main/litellm/responses/litellm_completion_transformation/handler.py), and Z.AI documents the [GLM-5.2 effort mapping](https://docs.z.ai/guides/capabilities/thinking).
+
+After installing LiteLLM, run `python3 tests/litellm_glm_bridge_smoke.py` for a
+credential-free end-to-end check. It starts a temporary Chat Completions-only
+mock GLM upstream and verifies Responses input/output translation, fixed effort
+preservation, and the Codex freeform `apply_patch` custom-tool round trip.
+
 ## Provider matrix
 
 | Provider/model | Endpoint and protocol | Meaningful modes | Codex native | Important boundary |
 |---|---|---|---|---|
 | DeepSeek `deepseek-v4-flash` | `https://api.deepseek.com/responses` | `none`, `high`, `max` | Yes | V4 Pro did not support Responses/Codex on the verification date. `low/medium → high`; `xhigh → max`. |
-| Z.AI `glm-5.2` | `https://api.z.ai/api/paas/v4/chat/completions` | `none`, `high`, `max` | No | Official API exposes Chat Completions, while Codex custom providers require Responses. Use the ResearchOps gateway. |
+| Z.AI `glm-5.2` direct | `https://api.z.ai/api/paas/v4/chat/completions` | `none`, `high`, `max` | No | Direct ResearchOps gateway arm; no Responses facade. |
+| Z.AI `glm-5.2` via LiteLLM | local `http://127.0.0.1:4000/v1/responses` → Z.AI Chat Completions | `none`, `high`, `max` | Yes, bridged | Requires the pinned local service, `ZAI_API_KEY`, and a separate `LITELLM_MASTER_KEY`; bridge evidence remains isolated. |
 | BigModel China `glm-5.2` | `https://open.bigmodel.cn/api/paas/v4/chat/completions` | `none`, `high`, `max` | No | Use only with a key issued by the China platform. Keep its endpoint evidence separate from Z.AI global. |
 | Xiaomi `mimo-v2.5-pro` pay-as-you-go | `https://api.xiaomimimo.com/v1/responses` | `none`, `high` | Yes | Pay-as-you-go keys start with `sk-`. Low/medium/high enable identical thinking behavior. |
 | Xiaomi `mimo-v2.5-pro` Token Plan | `https://token-plan-cn.xiaomimimo.com/v1/responses` | `none`, `high` | Yes | Token Plan keys start with `tp-` and are restricted to approved programming tools. Direct ResearchOps probe/dispatch is disabled, and its Codex profile disables the unsupported built-in web-search declaration. |
@@ -90,7 +144,7 @@ Choose exactly the MiMo plan and MiniMax region that issued the key. Do not pool
 
 GLM Coding Plan has a separate coding endpoint, but its official terms restrict it to listed supported tools. ResearchOps therefore does not declare it as a generic direct-dispatch arm or a Codex-native provider.
 
-Official references: [Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference), [DeepSeek Responses](https://api-docs.deepseek.com/guides/responses_api/), [DeepSeek thinking](https://api-docs.deepseek.com/guides/thinking_mode), [Z.AI Chat Completions](https://docs.z.ai/api-reference/llm/chat-completion), [Z.AI thinking](https://docs.z.ai/guides/capabilities/thinking), [MiMo Codex configuration](https://mimo.mi.com/docs/en-US/tokenplan/integration/codex-configuration), [MiMo Responses](https://mimo.mi.com/docs/en-US/api/chat/responses), [MiniMax global Codex](https://platform.minimax.io/docs/token-plan/codex), [MiniMax China Responses](https://platform.minimaxi.com/docs/api-reference/responses-create).
+Official references: [Codex configuration reference](https://developers.openai.com/codex/config-reference/), [LiteLLM Responses bridge source](https://github.com/BerriAI/litellm/blob/main/litellm/responses/litellm_completion_transformation/handler.py), [LiteLLM custom-tool bridge source](https://github.com/BerriAI/litellm/blob/main/litellm/responses/litellm_completion_transformation/custom_tools.py), [LiteLLM Z.AI adapter source](https://github.com/BerriAI/litellm/blob/main/litellm/llms/zai/chat/transformation.py), [DeepSeek Responses](https://api-docs.deepseek.com/guides/responses_api/), [DeepSeek thinking](https://api-docs.deepseek.com/guides/thinking_mode), [Z.AI GLM-5.2](https://docs.z.ai/guides/llm/glm-5.2), [Z.AI Chat Completions](https://docs.z.ai/api-reference/llm/chat-completion), [Z.AI thinking](https://docs.z.ai/guides/capabilities/thinking), [MiMo Codex configuration](https://mimo.mi.com/docs/en-US/tokenplan/integration/codex-configuration), [MiMo Responses](https://mimo.mi.com/docs/en-US/api/chat/responses), [MiniMax global Codex](https://platform.minimax.io/docs/token-plan/codex), [MiniMax China Responses](https://platform.minimaxi.com/docs/api-reference/responses-create).
 
 ## Enabling and calibrating arms
 

@@ -1,0 +1,18 @@
+# ResearchOps managed LiteLLM GLM user service.
+[Unit]
+Description=ResearchOps LiteLLM GLM Responses bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/rops/secrets.env
+ExecStart=%h/.local/bin/litellm --config %h/.config/rops/litellm/glm.yaml --host 127.0.0.1 --port 4000
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=default.target

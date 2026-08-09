@@ -258,6 +258,55 @@ def main() -> None:
         assert external_max["primary"]["execution"]["provider"] == "deepseek"
         assert external_max["primary"]["execution"]["codex_profile"] == "researchops_deepseek"
 
+        bridge_registry = json.loads(models_path.read_text(encoding="utf-8"))
+        for model in bridge_registry["models"]:
+            if model.get("provider") == "litellm-zai":
+                model["enabled"] = True
+        models_path.write_text(json.dumps(bridge_registry) + "\n", encoding="utf-8")
+        sync_registry(store)
+        bridge_none = recommend(
+            store,
+            {
+                "project_id": "model-effort-smoke",
+                "objective": "Extract one bounded fact through the local GLM bridge",
+                "operation": "discover",
+                "risk": "low",
+                "privacy": "internal",
+                "mutability": "read-only",
+                "model_family_allowlist": ["glm-5.2"],
+                "reasoning_effort": "none",
+            },
+            agent_name="bounded_read_worker",
+            write=False,
+            random_seed=7,
+        )
+        bridge_max = recommend(
+            store,
+            {
+                "project_id": "model-effort-smoke",
+                "objective": "Analyze a difficult failure through the local GLM bridge",
+                "operation": "debug",
+                "risk": "medium",
+                "privacy": "internal",
+                "mutability": "read-only",
+                "model_family_allowlist": ["glm-5.2"],
+                "reasoning_effort": "max",
+            },
+            agent_name="bounded_read_worker",
+            write=False,
+            random_seed=7,
+        )
+        assert bridge_none["primary"]["model_id"] == "litellm-zai/glm-5.2@none"
+        assert bridge_max["primary"]["model_id"] == "litellm-zai/glm-5.2@max"
+        assert bridge_max["primary"]["execution"] == {
+            "provider": "litellm-zai",
+            "model": "glm-5.2-max",
+            "reasoning_effort": "max",
+            "reasoning_mode": "thinking",
+            "codex_profile": "researchops_glm_max",
+            "codex_overrides": {"web_search": "disabled"},
+        }
+
         models_path.write_text(
             json.dumps(
                 {
@@ -292,11 +341,14 @@ def main() -> None:
         assert any(model["id"] == "operator/custom-arm" for model in upgraded_models["models"])
         assert any(model["id"] == "codex/gpt-5.6-sol@high" for model in upgraded_models["models"])
         assert any(model["id"] == "deepseek/deepseek-v4-flash@high" for model in upgraded_models["models"])
+        assert any(model["id"] == "litellm-zai/glm-5.2@high" for model in upgraded_models["models"])
         upgraded_agents = json.loads(agents_path.read_text(encoding="utf-8"))
         upgraded_lead = next(agent for agent in upgraded_agents["agents"] if agent["name"] == "session_lead")
         assert "deepseek/deepseek-v4-flash@high" in upgraded_lead["candidate_arms"]
+        assert "litellm-zai/glm-5.2@high" in upgraded_lead["candidate_arms"]
         upgraded_policy = json.loads(policy_path.read_text(encoding="utf-8"))
         assert "deepseek" in upgraded_policy["privacy_provider_allowlist"]["internal"]
+        assert "litellm-zai" in upgraded_policy["privacy_provider_allowlist"]["internal"]
 
         print(
             json.dumps(
@@ -320,6 +372,7 @@ def main() -> None:
                     "non_destructive_v2_upgrade": True,
                     "external_provider_upgrade_merged": True,
                     "external_model_modes_routable": [external_none["primary"]["model_id"], external_max["primary"]["model_id"]],
+                    "glm_litellm_modes_routable": [bridge_none["primary"]["model_id"], bridge_max["primary"]["model_id"]],
                 },
                 indent=2,
             )

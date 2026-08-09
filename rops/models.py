@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+import secrets
 import tempfile
 import time
 import urllib.error
@@ -23,6 +24,12 @@ CODEX_CONFIG_FILE = Path.home() / ".codex" / "config.toml"
 CODEX_CONFIG_BEGIN = "# >>> ResearchOps managed model providers >>>"
 CODEX_CONFIG_END = "# <<< ResearchOps managed model providers <<<"
 CODEX_PROFILE_MARKER = "# ResearchOps managed Codex provider profile."
+CODEX_GLM_MODEL_CATALOG = "researchops_glm_models.json"
+CODEX_GLM_MODEL_CATALOG_MARKER = "codex-glm-model-catalog-v1"
+LITELLM_CONFIG_FILE = Path.home() / ".config" / "rops" / "litellm" / "glm.yaml"
+LITELLM_SERVICE_FILE = Path.home() / ".config" / "systemd" / "user" / "researchops-litellm-glm.service"
+LITELLM_CONFIG_MARKER = "# ResearchOps managed LiteLLM GLM Responses bridge."
+LITELLM_SERVICE_MARKER = "# ResearchOps managed LiteLLM GLM user service."
 
 CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
     {
@@ -33,6 +40,23 @@ CODEX_PROVIDER_SPECS: tuple[dict[str, Any], ...] = (
         "model": "deepseek-v4-flash",
         "efforts": ["none", "high", "max"],
         "profile": "researchops_deepseek",
+        "codex_overrides": {"web_search": "disabled"},
+    },
+    {
+        "id": "glm_litellm",
+        "name": "GLM 5.2 via local LiteLLM",
+        "base_url": "http://127.0.0.1:4000/v1",
+        "env_key": "LITELLM_MASTER_KEY",
+        "model": "glm-5.2-high",
+        "efforts": ["none", "high", "max"],
+        "profile": "researchops_glm",
+        "default_effort": "high",
+        "model_catalog": "codex-glm-models.json",
+        "supports_reasoning_summaries": False,
+        "profile_variants": [
+            {"profile": "researchops_glm_none", "model": "glm-5.2-none", "default_effort": "none"},
+            {"profile": "researchops_glm_max", "model": "glm-5.2-max", "default_effort": "max"},
+        ],
         "codex_overrides": {"web_search": "disabled"},
     },
     {
@@ -341,19 +365,30 @@ def _codex_provider_block() -> str:
     return "\n".join(lines)
 
 
-def _codex_profile_text(spec: dict[str, Any]) -> str:
+def _codex_profile_text(spec: dict[str, Any], *, config_dir: Path) -> str:
     lines = [
         CODEX_PROFILE_MARKER,
         "# API keys remain environment variables referenced by the provider table in config.toml.",
         f"model_provider = {json.dumps(spec['id'])}",
         f"model = {json.dumps(spec['model'])}",
-        'model_reasoning_effort = "high"',
+        f"model_reasoning_effort = {json.dumps(spec.get('default_effort', 'high'))}",
         'model_reasoning_summary = "none"',
-        "model_supports_reasoning_summaries = true",
+        f"model_supports_reasoning_summaries = {str(spec.get('supports_reasoning_summaries', True)).lower()}",
     ]
+    if spec.get("model_catalog"):
+        lines.append(f"model_catalog_json = {json.dumps(str(config_dir / CODEX_GLM_MODEL_CATALOG))}")
     for key, value in spec.get("codex_overrides", {}).items():
         lines.append(f"{key} = {json.dumps(value)}")
     return "\n".join(lines) + "\n"
+
+
+def _codex_profile_specs() -> list[dict[str, Any]]:
+    profiles: list[dict[str, Any]] = []
+    for provider in CODEX_PROVIDER_SPECS:
+        profiles.append(dict(provider))
+        for variant in provider.get("profile_variants", []):
+            profiles.append({**provider, **variant, "profile_variants": []})
+    return profiles
 
 
 def _atomic_text(target: Path, content: str, *, default_mode: int = 0o600) -> None:
@@ -367,6 +402,82 @@ def _atomic_text(target: Path, content: str, *, default_mode: int = 0o600) -> No
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
+
+
+def _litellm_glm_config_text() -> str:
+    return (Path(__file__).resolve().parents[1] / "config" / "litellm-glm.yaml").read_text(encoding="utf-8")
+
+
+def _codex_glm_model_catalog_text() -> str:
+    return (Path(__file__).resolve().parents[1] / "config" / "codex-glm-models.json").read_text(encoding="utf-8")
+
+
+def _litellm_service_text() -> str:
+    return (Path(__file__).resolve().parents[1] / "config" / "researchops-litellm-glm.service").read_text(encoding="utf-8")
+
+
+def _ensure_generated_secret(name: str) -> dict[str, Any]:
+    SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
+    existing = SECRET_FILE.read_text(encoding="utf-8") if SECRET_FILE.exists() else "# ResearchOps secrets. Never commit this file.\n"
+    matches = [line for line in existing.splitlines() if line.strip() and not line.lstrip().startswith("#") and "=" in line and line.split("=", 1)[0].strip() == name]
+    if len(matches) > 1:
+        raise ValueError(f"duplicate {name} entries in {SECRET_FILE}")
+    if matches and matches[0].split("=", 1)[1].strip().strip('"').strip("'"):
+        SECRET_FILE.chmod(0o600)
+        return {"name": name, "generated": False, "configured": True, "value_exposed": False}
+    value = "sk-rops-" + secrets.token_urlsafe(32)
+    lines = existing.splitlines()
+    replaced = False
+    for index, line in enumerate(lines):
+        if line.strip() and not line.lstrip().startswith("#") and "=" in line and line.split("=", 1)[0].strip() == name:
+            lines[index] = f"{name}={value}"
+            replaced = True
+            break
+    if not replaced:
+        lines.append(f"{name}={value}")
+    _atomic_text(SECRET_FILE, "\n".join(lines) + "\n")
+    return {"name": name, "generated": True, "configured": True, "value_exposed": False}
+
+
+def litellm_config(
+    *,
+    install: bool = False,
+    path: Path | None = None,
+    service_path: Path | None = None,
+    generate_master_key: bool = False,
+) -> dict[str, Any]:
+    target = (path or LITELLM_CONFIG_FILE).expanduser()
+    service_target = (service_path or LITELLM_SERVICE_FILE).expanduser()
+    if install:
+        for candidate, marker in ((target, LITELLM_CONFIG_MARKER), (service_target, LITELLM_SERVICE_MARKER)):
+            if candidate.exists() and marker not in candidate.read_text(encoding="utf-8"):
+                raise ValueError(f"unmanaged LiteLLM file already exists: {candidate}")
+        _atomic_text(target, _litellm_glm_config_text())
+        _atomic_text(service_target, _litellm_service_text())
+    generated = _ensure_generated_secret("LITELLM_MASTER_KEY") if generate_master_key else {
+        "name": "LITELLM_MASTER_KEY",
+        "generated": False,
+        "configured": bool(_secret("LITELLM_MASTER_KEY")),
+        "value_exposed": False,
+    }
+    return {
+        "installed": install,
+        "config_path": str(target),
+        "service_path": str(service_target),
+        "listen": "127.0.0.1:4000",
+        "responses_url": "http://127.0.0.1:4000/v1/responses",
+        "upstream": "https://api.z.ai/api/paas/v4/chat/completions",
+        "models": ["glm-5.2-none", "glm-5.2-high", "glm-5.2-max"],
+        "upstream_key_configured": bool(_secret("ZAI_API_KEY")),
+        "proxy_key": generated,
+        "secret_values_exposed": False,
+        "install_command": "uv tool install --force 'litellm[proxy]==1.96.0' --with 'fastapi==0.136.3'",
+        "start_commands": [
+            "systemctl --user daemon-reload",
+            "systemctl --user enable --now researchops-litellm-glm.service",
+            "codex -p researchops_glm",
+        ],
+    }
 
 
 def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str, Any]:
@@ -391,13 +502,19 @@ def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str
                 raise ValueError("unmanaged Codex provider table already exists: " + ", ".join(collisions))
             separator = "" if not existing or existing.endswith("\n") else "\n"
             updated = existing + separator + ("\n" if existing else "") + block
-        profile_targets = [(spec, target.parent / f"{spec['profile']}.config.toml") for spec in CODEX_PROVIDER_SPECS]
+        profile_targets = [(spec, target.parent / f"{spec['profile']}.config.toml") for spec in _codex_profile_specs()]
         for _, profile_path in profile_targets:
             if profile_path.exists() and CODEX_PROFILE_MARKER not in profile_path.read_text(encoding="utf-8"):
                 raise ValueError(f"unmanaged Codex profile file already exists: {profile_path}")
+        catalog_path = target.parent / CODEX_GLM_MODEL_CATALOG
+        if catalog_path.exists():
+            existing_catalog = load_json(catalog_path, {}) or {}
+            if existing_catalog.get("researchops_managed") != CODEX_GLM_MODEL_CATALOG_MARKER:
+                raise ValueError(f"unmanaged Codex model catalog already exists: {catalog_path}")
         _atomic_text(target, updated)
+        _atomic_text(catalog_path, _codex_glm_model_catalog_text())
         for spec, profile_path in profile_targets:
-            _atomic_text(profile_path, _codex_profile_text(spec))
+            _atomic_text(profile_path, _codex_profile_text(spec, config_dir=target.parent))
         installed = True
     providers = [
         {
@@ -408,6 +525,8 @@ def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str
             "credential_env": spec["env_key"],
             "codex_profile": spec["profile"],
             "codex_profile_path": str(target.parent / f"{spec['profile']}.config.toml"),
+            "codex_profile_variants": [item["profile"] for item in spec.get("profile_variants", [])],
+            "codex_model_catalog_path": str(target.parent / CODEX_GLM_MODEL_CATALOG) if spec.get("model_catalog") else None,
             "codex_overrides": spec.get("codex_overrides", {}),
         }
         for spec in CODEX_PROVIDER_SPECS
@@ -418,10 +537,14 @@ def codex_config(*, install: bool = False, path: Path | None = None) -> dict[str
         "default_model_changed": False,
         "providers": providers,
         "glm_codex_native": False,
-        "glm_reason": "official GLM API documentation exposes Chat Completions, while Codex custom providers require Responses",
+        "glm_codex_bridge": True,
+        "glm_reason": "GLM remains a Chat Completions upstream; the glm_litellm provider exposes a local Responses bridge",
         "secret_values_written": False,
         "launch_examples": [
             "codex -p researchops_deepseek",
+            "codex -p researchops_glm",
+            "codex -p researchops_glm_none",
+            "codex -p researchops_glm_max",
             "codex -p researchops_mimo_paygo",
             "codex -p researchops_mimo_token_plan",
             "codex -p researchops_minimax_cn",
@@ -439,6 +562,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("secret-template")
     sub.add_parser("secret-status")
     codex = sub.add_parser("codex-config"); codex.add_argument("--install", action="store_true"); codex.add_argument("--path")
+    bridge = sub.add_parser("litellm-config"); bridge.add_argument("--install", action="store_true"); bridge.add_argument("--path"); bridge.add_argument("--service-path"); bridge.add_argument("--generate-master-key", action="store_true")
     doctor = sub.add_parser("doctor"); doctor.add_argument("--probe", action="store_true")
     probe_parser = sub.add_parser("probe"); probe_parser.add_argument("--arm-id", required=True); probe_parser.add_argument("--timeout", type=float, default=60)
     dispatch_parser = sub.add_parser("dispatch"); dispatch_parser.add_argument("--arm-id", required=True); dispatch_parser.add_argument("--request-json"); dispatch_parser.add_argument("--request-file"); dispatch_parser.add_argument("--timeout", type=float, default=120)
@@ -451,6 +575,14 @@ def main(argv: list[str] | None = None) -> int:
     root = Path(args.root).resolve()
     if args.command == "codex-config":
         _emit(codex_config(install=args.install, path=Path(args.path) if args.path else None))
+        return 0
+    if args.command == "litellm-config":
+        _emit(litellm_config(
+            install=args.install,
+            path=Path(args.path) if args.path else None,
+            service_path=Path(args.service_path) if args.service_path else None,
+            generate_master_key=args.generate_master_key,
+        ))
         return 0
     store = IntelligenceStore(root)
     if args.command == "sync":

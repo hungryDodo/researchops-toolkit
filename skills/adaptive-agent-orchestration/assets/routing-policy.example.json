@@ -40,7 +40,7 @@
   "minimum_observations_for_empirical_routing": 5,
   "privacy_provider_allowlist": {
     "public": ["*"],
-    "internal": ["codex-native", "claude-native", "gemini-native", "openai-compatible", "deepseek", "zai", "zhipu-bigmodel-cn", "xiaomi-mimo-paygo", "xiaomi-mimo-token-plan", "minimax-cn", "minimax-global"],
+    "internal": ["codex-native", "claude-native", "gemini-native", "openai-compatible", "deepseek", "zai", "zhipu-bigmodel-cn", "litellm-zai", "xiaomi-mimo-paygo", "xiaomi-mimo-token-plan", "minimax-cn", "minimax-global"],
     "confidential": ["codex-native", "local-openai-compatible"],
     "restricted": ["codex-native"]
   },

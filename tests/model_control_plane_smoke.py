@@ -138,13 +138,42 @@ def main() -> None:
         assert codex_text.count(model_gateway.CODEX_CONFIG_BEGIN) == 1
         assert codex_toml["model"] == "gpt-5.6-sol"
         assert codex_toml["model_providers"]["deepseek"]["env_key"] == "DEEPSEEK_API_KEY"
+        assert codex_toml["model_providers"]["glm_litellm"] == {
+            "name": "GLM 5.2 via local LiteLLM",
+            "base_url": "http://127.0.0.1:4000/v1",
+            "env_key": "LITELLM_MASTER_KEY",
+            "env_key_instructions": "Set LITELLM_MASTER_KEY in the environment before starting Codex.",
+            "wire_api": "responses",
+        }
         assert codex_toml["model_providers"]["mimo_paygo"]["wire_api"] == "responses"
         assert "profiles" not in codex_toml
         deepseek_profile = tomllib.loads((root / "researchops_deepseek.config.toml").read_text(encoding="utf-8"))
+        glm_none_profile = tomllib.loads((root / "researchops_glm_none.config.toml").read_text(encoding="utf-8"))
+        glm_high_profile = tomllib.loads((root / "researchops_glm.config.toml").read_text(encoding="utf-8"))
+        glm_max_profile = tomllib.loads((root / "researchops_glm_max.config.toml").read_text(encoding="utf-8"))
+        glm_catalog = json.loads((root / model_gateway.CODEX_GLM_MODEL_CATALOG).read_text(encoding="utf-8"))
         mimo_profile = tomllib.loads((root / "researchops_mimo_token_plan.config.toml").read_text(encoding="utf-8"))
         assert deepseek_profile["model_provider"] == "deepseek"
+        assert {
+            glm_none_profile["model"]: glm_none_profile["model_reasoning_effort"],
+            glm_high_profile["model"]: glm_high_profile["model_reasoning_effort"],
+            glm_max_profile["model"]: glm_max_profile["model_reasoning_effort"],
+        } == {"glm-5.2-none": "none", "glm-5.2-high": "high", "glm-5.2-max": "max"}
+        assert all(profile["model_provider"] == "glm_litellm" for profile in (glm_none_profile, glm_high_profile, glm_max_profile))
+        assert all(profile["web_search"] == "disabled" for profile in (glm_none_profile, glm_high_profile, glm_max_profile))
+        assert all(profile["model_supports_reasoning_summaries"] is False for profile in (glm_none_profile, glm_high_profile, glm_max_profile))
+        assert all(profile["model_catalog_json"] == str(root / model_gateway.CODEX_GLM_MODEL_CATALOG) for profile in (glm_none_profile, glm_high_profile, glm_max_profile))
+        assert glm_catalog["researchops_managed"] == model_gateway.CODEX_GLM_MODEL_CATALOG_MARKER
+        assert {model["slug"]: model["default_reasoning_level"] for model in glm_catalog["models"]} == {
+            "glm-5.2-none": "none",
+            "glm-5.2-high": "high",
+            "glm-5.2-max": "max",
+        }
+        assert all(model["context_window"] == 1_000_000 for model in glm_catalog["models"])
         assert mimo_profile["web_search"] == "disabled"
-        assert first_codex["providers"][2]["codex_overrides"] == {"web_search": "disabled"}
+        assert next(provider for provider in first_codex["providers"] if provider["id"] == "mimo_paygo")["codex_overrides"] == {"web_search": "disabled"}
+        glm_provider = next(provider for provider in first_codex["providers"] if provider["id"] == "glm_litellm")
+        assert glm_provider["codex_profile_variants"] == ["researchops_glm_none", "researchops_glm_max"]
         assert "experimental_bearer_token" not in codex_text and "sk-" not in codex_text
 
         original_secret_file = model_gateway.SECRET_FILE
@@ -157,11 +186,54 @@ def main() -> None:
             secret_template = model_gateway.secret_template(root)
             secret_template_again = model_gateway.secret_template(root)
             secret_text = model_gateway.SECRET_FILE.read_text(encoding="utf-8")
-            assert set(secret_template["variables"]) >= {"DEEPSEEK_API_KEY", "MIMO_API_KEY", "MINIMAX_API_KEY", "ZAI_API_KEY"}
-            assert set(secret_template["added"]) >= {"MIMO_API_KEY", "MINIMAX_API_KEY", "ZAI_API_KEY"}
+            assert set(secret_template["variables"]) >= {"DEEPSEEK_API_KEY", "LITELLM_MASTER_KEY", "MIMO_API_KEY", "MINIMAX_API_KEY", "ZAI_API_KEY"}
+            assert set(secret_template["added"]) >= {"LITELLM_MASTER_KEY", "MIMO_API_KEY", "MINIMAX_API_KEY", "ZAI_API_KEY"}
             assert secret_template_again["added"] == []
             assert "DEEPSEEK_API_KEY=keep-me" in secret_text and "CUSTOM_VALUE=keep-too" in secret_text
             assert os.stat(model_gateway.SECRET_FILE).st_mode & 0o777 == 0o600
+
+            bridge_config_path = root / "glm.yaml"
+            bridge_service_path = root / "researchops-litellm-glm.service"
+            first_bridge = model_gateway.litellm_config(
+                install=True,
+                path=bridge_config_path,
+                service_path=bridge_service_path,
+                generate_master_key=True,
+            )
+            second_bridge = model_gateway.litellm_config(
+                install=True,
+                path=bridge_config_path,
+                service_path=bridge_service_path,
+                generate_master_key=True,
+            )
+            bridge_config_text = bridge_config_path.read_text(encoding="utf-8")
+            bridge_service_text = bridge_service_path.read_text(encoding="utf-8")
+            generated_secret_text = model_gateway.SECRET_FILE.read_text(encoding="utf-8")
+            generated_master_key = next(
+                line.split("=", 1)[1]
+                for line in generated_secret_text.splitlines()
+                if line.startswith("LITELLM_MASTER_KEY=")
+            )
+            assert generated_master_key.startswith("sk-rops-") and len(generated_master_key) >= 40
+            assert first_bridge["proxy_key"] == {
+                "name": "LITELLM_MASTER_KEY",
+                "generated": True,
+                "configured": True,
+                "value_exposed": False,
+            }
+            assert second_bridge["proxy_key"]["generated"] is False
+            assert first_bridge["secret_values_exposed"] is False
+            assert generated_master_key not in json.dumps(first_bridge)
+            assert bridge_config_text.count("model_name: glm-5.2-") == 3
+            assert "use_chat_completions_api: true" in bridge_config_text
+            assert "reasoning_effort: none" in bridge_config_text
+            assert "reasoning_effort: high" in bridge_config_text
+            assert "reasoning_effort: max" in bridge_config_text
+            assert "EnvironmentFile=%h/.config/rops/secrets.env" in bridge_service_text
+            assert "--host 127.0.0.1 --port 4000" in bridge_service_text
+            assert generated_master_key not in bridge_config_text and generated_master_key not in bridge_service_text
+            assert os.stat(bridge_config_path).st_mode & 0o777 == 0o600
+            assert os.stat(bridge_service_path).st_mode & 0o777 == 0o600
         finally:
             model_gateway.SECRET_FILE = original_secret_file
 
@@ -176,6 +248,8 @@ def main() -> None:
                     "secret_values_exposed": False,
                     "chat_and_responses_protocols": True,
                     "codex_provider_config_secret_safe": True,
+                    "glm_litellm_profiles": ["none", "high", "max"],
+                    "litellm_bridge_config_secret_safe": True,
                     "secret_template_idempotent": True,
                 },
                 indent=2,

@@ -1,6 +1,6 @@
 # Release validation — v2.1.0
 
-- Completed: 2026-08-09T08:02:44+00:00
+- Completed: 2026-08-09T08:48:25+00:00
 - Package preset: `full`
 - Package target: `codex`
 - Python: 3.14.4
@@ -89,10 +89,16 @@
     "secret_values_exposed": false,
     "chat_and_responses_protocols": true,
     "codex_provider_config_secret_safe": true,
+    "glm_litellm_profiles": [
+      "none",
+      "high",
+      "max"
+    ],
+    "litellm_bridge_config_secret_safe": true,
     "secret_template_idempotent": true
   },
   "model-effort-routing": {
-    "execution_arms": 26,
+    "execution_arms": 29,
     "same_model_efforts": {
       "medium_task": "codex/gpt-5.6-sol@medium",
       "high_task": "codex/gpt-5.6-sol@high",
@@ -113,6 +119,10 @@
     "external_model_modes_routable": [
       "deepseek/deepseek-v4-flash@none",
       "deepseek/deepseek-v4-flash@max"
+    ],
+    "glm_litellm_modes_routable": [
+      "litellm-zai/glm-5.2@none",
+      "litellm-zai/glm-5.2@max"
     ]
   },
   "adoption-memory": {

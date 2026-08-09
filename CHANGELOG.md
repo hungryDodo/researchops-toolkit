@@ -10,6 +10,7 @@ All notable user-visible changes are documented here. The project follows semant
 - Persisted every eligible model × reasoning-mode candidate score for each routing decision, rather than storing only the selected arm.
 - Added non-destructive project upgrades for newly introduced model arms and routing allowlists, plus direct-operation restrictions for plan-specific endpoints.
 - Added separately layered managed Codex profiles for external providers; they default to disabling the provider-native web-search declaration after a live MiMo Token Plan probe demonstrated that unsupported tools can reject a request before execution.
+- Added a localhost-only, authenticated LiteLLM 1.96.0 Responses-to-Chat bridge for GLM-5.2, with fixed none/high/max aliases, managed Codex profiles/model catalog, custom-tool round trips, a user service, and bridge-specific routing arms.
 - Model selection now routes over explicit model × reasoning-effort execution arms, with effort-specific evidence, cost, latency, failure patterns, mitigations, and executable Codex parameters.
 - Added reasoning-demand/effort fit, exact/min/max effort constraints, `orchestrate` Lead routing, task-conditioned coordination topology, and model-family-diverse verifier preference.
 - Replaced occupational worker personas with session Lead, bounded read/write work-unit, and fresh-context verifier templates.

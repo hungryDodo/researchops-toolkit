@@ -255,7 +255,7 @@ Each archive contains only the selected Skills, components, and Behavior Packs; 
 | [State and memory](docs/state-and-memory.md) | `.researchops/`, SQLite authority, lifecycle-aware Memory and optional adapters |
 | [Skills and progressive loading](docs/skills-and-bundles.md) | top-level ownership, internal modes, triggers |
 | [Agents and model routing](docs/agents-and-model-routing.md) | provider setup, execution arms, dispatch and evaluation |
-| [External provider configuration](docs/provider-configuration.md) | DeepSeek, GLM, MiMo, MiniMax endpoints, credentials, modes, and Codex compatibility |
+| [External provider configuration](docs/provider-configuration.md) | DeepSeek, GLM/LiteLLM bridge, MiMo, MiniMax endpoints, credentials, modes, and Codex compatibility |
 | [Safety and hygiene](docs/safety-and-hygiene.md) | lifecycle hooks, approvals, archive-first operations |
 | [Migration to v2](docs/migration-v2.md) | legacy state and JSONL migration |
 | [Development and release](docs/development.md) | tests, provenance, packaging, contribution |
@@ -271,6 +271,8 @@ python3 tests/intelligence_smoke.py
 python3 tests/behavior_smoke.py
 python3 tests/model_control_plane_smoke.py
 python3 tests/model_effort_routing_smoke.py
+# After installing the pinned LiteLLM proxy dependency:
+python3 tests/litellm_glm_bridge_smoke.py
 python3 tests/adoption_memory_smoke.py
 python3 -m rops evaluate --out /tmp/researchops-product-benchmark
 python3 -m rops package --out /tmp/researchops-release --preset full --target portable

@@ -29,10 +29,34 @@
       "credential_env": "ZAI_API_KEY",
       "codex_native": false,
       "distinct_reasoning_efforts": ["none", "high", "max"],
-      "compatibility_note": "GLM-5.2 maps none/minimal to no thinking, low/medium to high, and xhigh to max. Official documentation does not expose a Responses endpoint, so use the ResearchOps gateway rather than a Codex custom provider.",
+      "compatibility_note": "GLM-5.2 maps none/minimal to no thinking, low/medium to high, and xhigh to max. This is the direct Chat Completions arm; Codex uses the separate local LiteLLM bridge arm.",
       "official_docs": [
         "https://docs.z.ai/api-reference/introduction",
         "https://docs.z.ai/api-reference/llm/chat-completion",
+        "https://docs.z.ai/guides/capabilities/thinking"
+      ]
+    },
+    {
+      "id": "litellm-zai-glm-5.2",
+      "provider": "litellm-zai",
+      "model_aliases": ["glm-5.2-none", "glm-5.2-high", "glm-5.2-max"],
+      "upstream_model": "zai/glm-5.2",
+      "base_url": "http://127.0.0.1:4000/v1",
+      "upstream_base_url": "https://api.z.ai/api/paas/v4",
+      "api_protocol": "responses",
+      "upstream_protocol": "chat_completions",
+      "credential_env": "LITELLM_MASTER_KEY",
+      "upstream_credential_env": "ZAI_API_KEY",
+      "codex_native": true,
+      "codex_provider": "glm_litellm",
+      "codex_profiles": ["researchops_glm_none", "researchops_glm", "researchops_glm_max"],
+      "adapter_revision": "litellm-1.96.0-responses-to-chat",
+      "distinct_reasoning_efforts": ["none", "high", "max"],
+      "compatibility_note": "Codex sends Responses to a localhost-only authenticated LiteLLM proxy. Fixed model aliases preserve GLM thinking and effort after translation instead of relying on unsupported-parameter inference.",
+      "official_docs": [
+        "https://docs.litellm.ai/docs/response_api",
+        "https://github.com/BerriAI/litellm/blob/main/litellm/responses/litellm_completion_transformation/handler.py",
+        "https://github.com/BerriAI/litellm/blob/main/litellm/llms/zai/chat/transformation.py",
         "https://docs.z.ai/guides/capabilities/thinking"
       ]
     },
