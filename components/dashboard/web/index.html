@@ -1,16 +1,86 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ResearchOps Dashboard</title><link rel="stylesheet" href="styles.css"></head>
-<body><header><div><h1 id="title">ResearchOps Dashboard</h1><p id="objective"></p></div><div class="badges"><span id="phase"></span><span id="health"></span><span id="gate"></span><span id="updated"></span></div></header>
-<main>
-<section class="card status"><h2>Program status</h2><div id="status"></div></section>
-<section class="card routes"><h2>Candidate routes <small id="routes-count"></small></h2><div id="routes"></div></section>
-<section class="card actions"><h2>Human actions <small id="actions-count"></small></h2><div id="actions"></div></section>
-<section class="card proposals"><h2>Safeguard proposals <small id="proposals-count"></small></h2><div id="proposals"></div></section>
-<section class="card experiments"><h2>Experiments <small id="experiments-count"></small></h2><div id="experiments"></div></section>
-<section class="card intelligence"><h2>Model routing <small id="intelligence-count"></small></h2><div id="intelligence"></div></section>
-<section class="card evidence"><h2>Claim & evidence <small id="evidence-count"></small></h2><div id="evidence"></div></section>
-<section class="card storage"><h2>Storage & worktrees <small id="storage-count"></small></h2><div id="storage"></div></section>
-<section class="card hygiene"><h2>Repository hygiene <small id="hygiene-count"></small></h2><div id="hygiene"></div></section>
-<section class="card literature"><h2>Literature <small id="literature-count"></small></h2><div id="literature"></div></section>
-<section class="card decisions"><h2>Decisions & risks <small id="decisions-count"></small></h2><div id="decisions"></div></section>
-<section class="card logs"><h2>Key log <small id="logs-count"></small></h2><div id="logs"></div></section>
-</main><div id="error"></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ResearchOps 项目看板</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="page-header">
+    <div class="title-block">
+      <div class="eyebrow">RESEARCHOPS · 项目执行监控</div>
+      <h1 id="title">ResearchOps 项目看板</h1>
+      <p id="objective">正在加载项目目标……</p>
+    </div>
+    <div class="badges" aria-label="项目状态摘要">
+      <span id="phase"></span>
+      <span id="health"></span>
+      <span id="updated"></span>
+    </div>
+  </header>
+
+  <aside class="gate-rail" aria-label="下一道验证关口">
+    <div class="gate-label">下一道验证关口</div>
+    <div id="gate">正在加载……</div>
+    <div class="refresh-state">页面每 10 秒自动刷新</div>
+  </aside>
+
+  <main>
+    <section class="card status primary-card">
+      <div class="section-heading"><div><h2>当前结论</h2><p>目标、当前工作、阻塞原因与完成度。</p></div></div>
+      <div id="status" class="card-content"></div>
+    </section>
+    <section class="card actions priority-card">
+      <div class="section-heading"><div><h2>需要人工处理</h2><p>只有代理无法完成、确实需要人操作的事项。</p></div><small id="actions-count"></small></div>
+      <div id="actions" class="card-content"></div>
+    </section>
+    <section class="card experiments">
+      <div class="section-heading"><div><h2>实验运行</h2><p>每项实验的目的、状态、结果与证据位置。</p></div><small id="experiments-count"></small></div>
+      <div id="experiments" class="card-content"></div>
+    </section>
+
+    <section class="card evidence wide-card">
+      <div class="section-heading"><div><h2>结论与证据</h2><p>哪些判断已验证、哪些仍是临时或间接证据。</p></div><small id="evidence-count"></small></div>
+      <div id="evidence" class="card-content"></div>
+    </section>
+    <section class="card intelligence wide-card">
+      <div class="section-heading"><div><h2>模型与任务调度</h2><p>模型选择、执行结果、项目适配进度和服务健康。</p></div><small id="intelligence-count"></small></div>
+      <div id="intelligence" class="card-content"></div>
+    </section>
+
+    <section class="card routes">
+      <div class="section-heading"><div><h2>候选技术路线</h2><p>仍在比较的方案、假设和停止条件。</p></div><small id="routes-count"></small></div>
+      <div id="routes" class="card-content"></div>
+    </section>
+    <section class="card decisions">
+      <div class="section-heading"><div><h2>决策与风险</h2><p>已经采用的取舍、残余风险和缓解方式。</p></div><small id="decisions-count"></small></div>
+      <div id="decisions" class="card-content"></div>
+    </section>
+    <section class="card storage">
+      <div class="section-heading"><div><h2>存储与工作树</h2><p>工件占用、待清理空间和并行工作目录。</p></div><small id="storage-count"></small></div>
+      <div id="storage" class="card-content"></div>
+    </section>
+
+    <section class="card proposals">
+      <div class="section-heading"><div><h2>能力与安全建议</h2><p>需要审批或显式启用的新能力与保护措施。</p></div><small id="proposals-count"></small></div>
+      <div id="proposals" class="card-content"></div>
+    </section>
+    <section class="card hygiene">
+      <div class="section-heading"><div><h2>仓库健康</h2><p>临时文件、超长代码、脏工作树和清理项。</p></div><small id="hygiene-count"></small></div>
+      <div id="hygiene" class="card-content"></div>
+    </section>
+    <section class="card literature">
+      <div class="section-heading"><div><h2>论文与资料</h2><p>检索、筛选、纳入和待核验的研究资料。</p></div><small id="literature-count"></small></div>
+      <div id="literature" class="card-content"></div>
+    </section>
+    <section class="card logs">
+      <div class="section-heading"><div><h2>关键进展记录</h2><p>影响后续决策的重要事件，不展示原始日志流。</p></div><small id="logs-count"></small></div>
+      <div id="logs" class="card-content"></div>
+    </section>
+  </main>
+
+  <div id="error" role="alert"></div>
+  <script src="app.js"></script>
+</body>
+</html>

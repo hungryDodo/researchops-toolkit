@@ -115,11 +115,19 @@ def dashboard_round_trip(project: Path) -> dict[str, object]:
                 url = line
                 break
         assert url, (process.stdout.read() if process.stdout else "", process.stderr.read() if process.stderr else "")
+        with urllib.request.urlopen(url + "/", timeout=5) as response:
+            page = response.read().decode("utf-8")
         with urllib.request.urlopen(url + "/view.json", timeout=5) as response:
             payload = json.loads(response.read().decode("utf-8"))
         result.update({
             "served": True,
             "url_has_ephemeral_port": not url.endswith(":0"),
+            "localized_zh_cn": (
+                'lang="zh-CN"' in page
+                and "下一道验证关口" in page
+                and "结论与证据" in page
+                and "需要人工处理" in page
+            ),
             "adoption_mode": payload.get("onboarding", {}).get("adoption_mode"),
             "phase": payload.get("status", {}).get("phase"),
             "memory_visible": bool(payload.get("memory", {}).get("available")),
@@ -279,6 +287,7 @@ def main() -> None:
 
         dashboard = dashboard_round_trip(project)
         assert dashboard["served"] and dashboard["adoption_mode"] == "adopt"
+        assert dashboard["localized_zh_cn"]
         assert dashboard["phase"] != "charter"
         assert dashboard["memory_visible"] and dashboard["routing_visible"]
 
